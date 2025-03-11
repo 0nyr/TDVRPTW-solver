@@ -27,14 +27,34 @@ def green(text): return "\033[92m" + text + "\033[0m"
 # Returns: text in color purple for console.
 def purple(text): return "\033[95m" + text + "\033[0m"
 
-def run_program(bin, input_string="", memlim_gb=1024, silent=False):
-	# Function that sets limit on memory when executable starts.
-	def set_memory_limit():
-		soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-		resource.setrlimit(resource.RLIMIT_AS, (memlim_gb*1024*1024*1024, hard))
 
+
+def set_memory_limit(memlim_gb: int):
+	"""
+	Function that sets limit on memory when executable starts.
+	"""
+	soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+
+	print(f"Setting memory limit to {memlim_gb}GB")
+	memlim_gb_in_bytes = memlim_gb * 1024 * 1024 * 1024
+	print("memlim_gb_in_bytes", memlim_gb_in_bytes)
+	print("soft", soft)
+	print("hard", hard)
+	print("resource.RLIMIT_AS", resource.RLIMIT_AS)
+
+	resource.setrlimit(resource.RLIMIT_AS, (memlim_gb_in_bytes, hard))
+
+def run_program(bin, input_string="", memlim_gb=1024, silent=False):
+	
 	t_start = datetime.datetime.now()
-	process = subprocess.Popen(bin, stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE, preexec_fn=set_memory_limit, universal_newlines = True)
+	process = subprocess.Popen(
+		bin, 
+		stderr=subprocess.PIPE, 
+		stdout=subprocess.PIPE,
+		stdin=subprocess.PIPE, 
+		preexec_fn=set_memory_limit(memlim_gb),
+		universal_newlines = True
+	)
 	if input_string != "": process.stdin.write(input_string) # Write to STDIN.
 	process.stdin.flush()
 
@@ -76,7 +96,7 @@ arg_parser.add_argument("--exps", "-E", nargs="*", help="Only execute selected e
 arg_parser.add_argument("--callgrind", "-C", help="Runs the experiment(s) using callgrind.", action="store_true")
 arg_parser.add_argument("--valgrind", "-V", help="Runs the experiment(s) using valgrind.", action="store_true")
 arg_parser.add_argument("--heaptrack", "-H", help="Runs the experiment(s) using heaptrack.", action="store_true")
-arg_parser.add_argument("--memlimit", "-M", help="Sets a memory limit in GB (default 15GB).", default=15.0)
+arg_parser.add_argument("--memlimit", "-M", help="Sets a memory limit in GB (default 15GB).", default=15)
 arg_parser.add_argument("--silent", "-S", help="Do not print the stderr stream of the experiments to the screen.", action="store_true")
 
 # Read command line parameters.
@@ -87,7 +107,7 @@ selected_experiments = args["exps"]
 use_callgrind = args["callgrind"]
 use_valgrind = args["valgrind"]
 use_heaptrack = args["heaptrack"]
-memlimit_gb = float(args["memlimit"])
+memlimit_gb = args["memlimit"]
 silent = args["silent"]
 
 # The build type when running callgrind or valgrind is 'debug' otherwise it is 'release'.
