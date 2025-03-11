@@ -35,9 +35,9 @@ The following instructions will guide you through the steps to execute the exper
             - Usually on Linux: _/usr/include_
         1. ```export BOOST_BIN=<path_to_boost_lib_binary_file>```
             - Usually on Linux: _/usr/lib/x86_64-linux-gnu/libboost_graph.a_
-1. Go to the networks2020 root directory.
-1. Execute ```python3 runner/runner.py <experiment_file>```
-1. The execution output will be continually saved to the output folder.
+2. Go to the repository root directory.
+3. Execute ```python3 runner/runner.py <experiment_file>```, example: `python runner/runner.py experiments/bp.json`
+4. The execution output will be continually saved to the output folder.
 
 > Experiment files are located in the _experiments_ folder. For more information see Section [Experiments](#Experiments)
 
