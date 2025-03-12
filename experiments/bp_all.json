@@ -1,0 +1,25 @@
+{
+  "datasets": [
+    {"name": "Dabia2013"},
+    {"name": "Ari2018"},
+    {"name": "Rifki2020"},
+    {"name": "Solomon1987"},
+    {"name": "Vu2020"}
+  ],
+  "experiments": [
+    {
+      "name": "BP-CUTS",
+      "executable": "bp",
+      "time_limit": 7200,
+      "cut_limit": 500,
+      "partial": true,
+      "limited_extension": true,
+      "unreachable_strengthened": true,
+      "sort_by_cost": true,
+      "symmetric": false,
+      "iterative_merge": true,
+      "lazy_extension": true,
+      "exact_labeling": true
+    }
+  ]
+}

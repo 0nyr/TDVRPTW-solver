@@ -9,7 +9,7 @@
 
 #include <goc/goc.h>
 
-namespace networks2019
+namespace solver
 {
 // Takes a JSON instance of the vehicle routing problems with the following attributes:
 //	- digraph
@@ -17,6 +17,6 @@ namespace networks2019
 //	- demands
 // Removes arcs (i, j) such that q_i+q_j > Q.
 void preprocess_capacity(nlohmann::json& instance);
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_PREPROCESS_CAPACITY_H

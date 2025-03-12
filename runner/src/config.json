@@ -1,5 +1,5 @@
 {
 	"cmakelists_dir": "../code/",
 	"output_dir": "../out/",
-	"instances_dir": "../instances/"
+	"instances_dir": "../../VRP-benchmarks/formatted_benchmarks/"
 }

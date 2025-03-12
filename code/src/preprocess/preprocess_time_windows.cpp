@@ -13,7 +13,7 @@ using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
-namespace networks2019
+namespace solver
 {
 namespace
 {
@@ -131,4 +131,4 @@ void preprocess_time_windows(json& instance)
 		if (epsilon_bigger(a(i)+travel_time(instance, {i, j}, a(i)), b(j))) remove_arc(instance, i, j);
 	}
 }
-} // namespace networks2019
+} // namespace

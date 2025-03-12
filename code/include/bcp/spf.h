@@ -13,7 +13,7 @@
 
 #include "vrp_instance.h"
 
-namespace networks2019
+namespace solver
 {
 typedef VertexSet SubsetRowCut; // We only consider cuts with n = 3, k = 2. So the set of vertices define the cut.
 class PricingProblem;
@@ -62,6 +62,6 @@ private:
 	std::vector<goc::Variable> y; // variables associated with routes in omega.
 	goc::Matrix<std::vector<int>> omega_by_arc; // omega_by_arc[i][j] = { r \in omega : (i, j) \in path(r) }.
 };
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_SPF_H

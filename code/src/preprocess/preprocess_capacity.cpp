@@ -10,7 +10,7 @@ using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
-namespace networks2019
+namespace solver
 {
 namespace
 {
@@ -35,4 +35,4 @@ void preprocess_capacity(json& instance)
 			if (epsilon_bigger(q[i]+q[j], Q))
 				remove_arc(i, j, instance);
 }
-} // namespace networks2019
+} // namespace

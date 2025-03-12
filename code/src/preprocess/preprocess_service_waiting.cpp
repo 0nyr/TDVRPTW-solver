@@ -10,7 +10,7 @@ using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
-namespace networks2019
+namespace solver
 {
 void preprocess_service_waiting(json& instance)
 {
@@ -49,4 +49,4 @@ void preprocess_service_waiting(json& instance)
 		for (Vertex i: D.Vertices()) instance["service_times"][i] = 0.0;
 	}
 }
-} // namespace networks2019
+} // namespace

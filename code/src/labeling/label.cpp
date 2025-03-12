@@ -9,7 +9,7 @@
 using namespace std;
 using namespace goc;
 
-namespace networks2019
+namespace solver
 {
 GraphPath Label::Path() const
 {
@@ -23,4 +23,4 @@ void Label::Print(ostream& os) const
 {
 	os << "{P: " << Path() << ", v: " << v << ", q: " << q << ", p: " << p << ", D: " << duration << ", cost: " << min_cost << "}";
 }
-} // namespace networks2019
+} // namespace

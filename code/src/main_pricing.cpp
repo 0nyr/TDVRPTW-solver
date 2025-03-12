@@ -20,7 +20,7 @@
 using namespace std;
 using namespace goc;
 using namespace nlohmann;
-using namespace networks2019;
+using namespace solver;
 
 namespace
 {

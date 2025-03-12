@@ -12,7 +12,7 @@
 #include "pricing_problem.h"
 #include "spf.h"
 
-namespace networks2019
+namespace solver
 {
 typedef std::function<void(const PricingProblem& pricing_problem, int node_number, goc::Duration time_limit, goc::CGExecutionLog* cg_execution_log)> BCPPricingFunction;
 
@@ -75,6 +75,6 @@ private:
 	goc::CGSolver cg_solver;
 	goc::BCPExecutionLog log;
 };
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_BP_H

@@ -11,7 +11,7 @@
 using namespace std;
 using namespace goc;
 
-namespace networks2019
+namespace solver
 {
 SPF::SPF(int n) : n(n)
 {
@@ -111,4 +111,4 @@ vector<Route> SPF::InterpretSolution(const Valuation& z) const
 	for (auto& y_value: z) solution.push_back(omega[y_value.first.Index()]);
 	return solution;
 }
-} // namespace networks2019
+} // namespace

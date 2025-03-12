@@ -12,7 +12,7 @@ using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
-namespace networks2019
+namespace solver
 {
 namespace
 {
@@ -43,4 +43,4 @@ void preprocess_triangle_depot(json& instance)
 		}
 	}
 }
-} // namespace networks2019
+} // namespace

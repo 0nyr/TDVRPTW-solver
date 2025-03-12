@@ -1,4 +1,4 @@
-import os
+import os, datetime
 
 from utils.terminal import blue
 from utils.utils import get_a_parent_dir, read_json_from_file
@@ -15,6 +15,11 @@ OUTPUT_DIR =  os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["output_dir"])) # 
 CMAKELISTS_DIR = os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["cmakelists_dir"])) # Directory that contains the root CMakeLists.txt file to compile the project.
 INSTANCES_DIR = os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["instances_dir"])) # Directory where datasets are stored.
 OBJ_DIR = F"{RUNNER_DIR}/obj" # Directory where the object files will be created.
+
+# date formats
+FILEPATH_DATE_FORMAT = "%Y-%m-%d-%H-%M-%S"
+CONSOLE_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+RUNNER_START_TIME = datetime.datetime.now()
 
 # Print constants.
 print("Constants:")

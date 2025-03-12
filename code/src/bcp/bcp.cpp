@@ -11,7 +11,7 @@
 using namespace std;
 using namespace goc;
 
-namespace networks2019
+namespace solver
 {
 BCP::BCP(const Digraph& D, SPF* spf) : D(D), spf(spf), z_lb(-INFTY), z_ub(INFTY), node_seq(0)
 {
@@ -329,4 +329,4 @@ bool BCP::	SeparateCuts(const Valuation& z)
 	if (epsilon_bigger(best_violation, 0.1)) spf->AddCut(best);
 	return epsilon_bigger(best_violation, 0.1);
 }
-} // namespace networks2019
+} // namespace

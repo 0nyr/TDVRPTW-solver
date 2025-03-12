@@ -13,7 +13,7 @@
 using namespace std;
 using namespace goc;
 
-namespace networks2019
+namespace solver
 {
 namespace
 {
@@ -336,4 +336,4 @@ void MonodirectionalLabeling::Clean()
 				delete m;
 	U = vector<DemandLevel>(vrp_.D.VertexCount());
 }
-} // networks2019
+} // solver

@@ -1,5 +1,7 @@
 import resource, datetime, subprocess, os, sys, select
 
+from utils.terminal import purple
+
 def set_memory_limit(memlim_gb: int):
 	"""
 	Function that sets limit on memory when executable starts.
@@ -21,6 +23,10 @@ def run_program(
 	Run a program with the given command line and input string.
 	"""
 	t_start = datetime.datetime.now()
+	
+    # Print the command line.
+	# if not silent: print(purple("command:" + " ".join(bin)))
+	# if not silent: print(purple("input:" + input_string))
 	
     # Start the process.
 	process = subprocess.Popen(

@@ -9,7 +9,7 @@
 
 #include <goc/goc.h>
 
-namespace networks2019
+namespace solver
 {
 // Takes a JSON instance of the vehicle routing problems with the following attributes:
 //	- digraph
@@ -23,6 +23,6 @@ namespace networks2019
 // and removes infeasible arcs.
 // Only applies preprocessing techniques that do not require that all vertices all visited in one route.
 void preprocess_time_windows(nlohmann::json& instance);
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_PREPROCESS_TIME_WINDOWS_H

@@ -13,7 +13,7 @@
 using namespace std;
 using namespace goc;
 
-namespace networks2019
+namespace solver
 {
 namespace
 {
@@ -286,4 +286,4 @@ void BidirectionalLabeling::AddSolution(const goc::GraphPath& p, double min_dura
 	if (!includes_key(S, V)) S[V] = Route({}, 0.0, INFTY);
 	if (S[V].duration > min_duration) S[V] = Route(p, 0.0, min_duration);
 }
-} // namespace networks2019
+} // namespace

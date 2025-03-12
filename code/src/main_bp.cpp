@@ -25,7 +25,7 @@
 using namespace std;
 using namespace goc;
 using namespace nlohmann;
-using namespace networks2019;
+using namespace solver;
 
 double path_cost(const VRPInstance& vrp, PricingProblem pp, GraphPath p)
 {
@@ -110,8 +110,12 @@ int main(int argc, char** argv)
 		int heuristic_level = 0; // 0: relax cost, 1: relax elementarity, 2: exact
 		int max_level = exact_labeling ? 2 : 1; // exact
 		vector<string> level_name = {"Heuristic Cost", "Heuristic Elementarity", "Exact"};
-		bcp.pricing_solver = [&](const PricingProblem &pricing_problem, int node_number, Duration tlimit,
-								 CGExecutionLog *cg_execution_log) {
+		bcp.pricing_solver = [&](
+			const PricingProblem &pricing_problem, 
+			int node_number, 
+			Duration tlimit,
+			CGExecutionLog *cg_execution_log
+		) {
 			Stopwatch iteration_rolex(true);
 			vector<Route> R;
 			while (heuristic_level <= max_level)
@@ -133,7 +137,7 @@ int main(int argc, char** argv)
 				++heuristic_level;
 			}
 			// Add negative reduced cost routes.
-			for (auto &r: R) spf.AddRoute(r);
+			for (auto &route: R) spf.AddRoute(route);
 			if (heuristic_level > max_level)
 			{
 				heuristic_level = 0;

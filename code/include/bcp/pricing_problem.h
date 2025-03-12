@@ -14,7 +14,7 @@
 
 #include "spf.h"
 
-namespace networks2019
+namespace solver
 {
 class PricingProblem : public goc::Printable
 {
@@ -29,6 +29,6 @@ public:
 
 void to_json(nlohmann::json& j, const PricingProblem& p);
 
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_PRICING_PROBLEM_H

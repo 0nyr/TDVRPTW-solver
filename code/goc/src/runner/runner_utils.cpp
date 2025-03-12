@@ -23,8 +23,13 @@ namespace
 // The input that will be added to STDIN.
 stringstream custom_cin;
 }
-void simulate_runner_input(const string& dataset_dir, const string& instance_name, const string& experiment_path,
-							 const string& experiment_name)
+
+void simulate_runner_input(
+	const string& dataset_dir, 
+	const string& instance_name, 
+	const string& experiment_path,
+	const string& experiment_name
+)
 {
 	// Read experiments_old from file.
 	ifstream experiment_file(experiment_path);
@@ -53,7 +58,7 @@ void simulate_runner_input(const string& dataset_dir, const string& instance_nam
 	for (auto& solution: solutions) if (solution["instance_name"] == instance_name) instance_solutions.push_back(solution);
 	custom_cin << instance_solutions;
 	
-	// Move the stream custon_cin to cin.
+	// Move the stream custom_cin to cin.
 	cin.rdbuf(custom_cin.rdbuf());
 }
 } // namespace goc

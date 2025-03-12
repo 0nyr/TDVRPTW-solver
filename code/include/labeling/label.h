@@ -13,7 +13,7 @@
 
 #include "vrp_instance.h"
 
-namespace networks2019
+namespace solver
 {
 class Label : public goc::Printable
 {
@@ -36,6 +36,6 @@ public:
 	
 	virtual void Print(std::ostream& os) const;
 };
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_LABEL_H

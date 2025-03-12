@@ -7,7 +7,7 @@
 using namespace std;
 using namespace goc;
 
-namespace networks2019
+namespace solver
 {
 PWLDominationFunction::PWLDominationFunction(const PWLFunction& f)
 {
@@ -218,4 +218,4 @@ int PWLDominationFunction::AddPieceAfter(int i, const LinearFunction& piece)
 	domain_ = {pieces_[first_].domain.left, pieces_[last_].domain.right};
 	return j;
 }
-} // namespace networks2019
+} // namespace

@@ -10,7 +10,7 @@ using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
-namespace networks2019
+namespace solver
 {
 namespace
 {
@@ -118,4 +118,4 @@ void preprocess_travel_times(json& instance)
 		tau[e.tail][e.head] = compute_travel_time_function(instance, e);
 	instance["travel_times"] = tau;
 }
-} // namespace networks2019
+} // namespace

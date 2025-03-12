@@ -1,15 +1,16 @@
-import sys, os, json, datetime, os, argparse, subprocess, ntpath, select
+import os, json, datetime, os
 
-from utils.terminal import purple, green, red
+from utils.terminal import purple
 from utils.utils import read_json_from_file, save_json_to_file
-from params.constants import OUTPUT_DIR, INSTANCES_DIR, CONFIG, RUNNER_DIR
+from utils.formatting import format_date_for_filepath
+from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
 from compiling.compile import compile
 from running.experiment import run_experiment, instances_for_experiment_file
 from params.args import parse_program_args
 
 def main():
 	args = parse_program_args()
-	experiment_files = args["experiments"]
+	experiment_files: list[str] = args["experiments"] # List of .json experiment files.
 	selected_instances = args["instances"]
 	selected_experiments = args["exps"]
 	build_type = args["build_type"]
@@ -19,15 +20,21 @@ def main():
 
 	# Run experiment files.
 	for experiment_file in experiment_files:
-		experiment_file_json = json.loads(experiment_file.read())
+		experiment_file_json = json.load(open(experiment_file))
 
 		# Outputs of the experiments will be stored in this object.
-		experiment_file_name = ntpath.basename(experiment_file.name.replace(".json", ""))
-		output = {"date": str(datetime.date.today()), "experiment_file": experiment_file_name, "outputs": []}
+		print("experiment_file", experiment_file)
+		print("type of experiment_file", type(experiment_file))
+		output = {
+			"date": str(datetime.date.today()), 
+			"experiment_file": os.path.abspath(experiment_file), 
+			"outputs": []
+		}
 
 		# Periodically, every TSave seconds the output will be saved to the output folder with the name "<date>-<experiment_file_name>.json".
-		TSave = 60
-		output_file_name = F"{datetime.date.today()}-{experiment_file_name}.json"
+		TSave = 5
+		experiment_filename = os.path.basename(experiment_file).replace(".json", "")
+		output_file_name = F"{format_date_for_filepath(RUNNER_START_TIME)}-{experiment_filename}.json"
 		TInit = datetime.datetime.now() # TInit = "timestamp when the experimentation started".
 		TLast = datetime.datetime.now() # TLast = "last time the output was saved".
 
@@ -50,7 +57,8 @@ def main():
 
 				# Run the experiment.
 				print(purple(F"[{instance['dataset_name']}] {instance['instance_name']} - {experiment['name']} ({datetime.datetime.now()})"), flush=True)
-				output["outputs"].append(run_experiment(args, experiment, instance, solutions))
+				res = run_experiment(args, experiment, instance, solutions)
+				output["outputs"].append(res)
 				
 				# If TSave seconds have passed since TLast then save output.
 				if (datetime.datetime.now() - TLast).total_seconds() >= TSave:

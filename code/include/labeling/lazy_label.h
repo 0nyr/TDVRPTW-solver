@@ -10,7 +10,7 @@
 #include "label.h"
 #include "vrp_instance.h"
 
-namespace networks2019
+namespace solver
 {
 class LazyLabel
 {
@@ -24,6 +24,6 @@ public:
 	
 	LazyLabel(Label* parent, goc::Vertex v, TimeUnit makespan);
 };
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_LAZY_LABEL_H

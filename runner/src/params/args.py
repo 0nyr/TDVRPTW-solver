@@ -2,6 +2,7 @@ import argparse, os
 
 from .constants import *
 from utils.terminal import *
+from utils.utils import check_files_exist
 
 def parse_program_args():
     """
@@ -10,7 +11,7 @@ def parse_program_args():
 
     # Set command line parameters.
     arg_parser = argparse.ArgumentParser(description="Runs the experiment file(s) specified.")
-    arg_parser.add_argument("experiments", metavar="EXP_FILE", help="JSON experiment file(s) with the experiments to run.", type=argparse.FileType('r'), nargs='+')
+    arg_parser.add_argument("experiments", metavar="EXP_FILE", help="JSON experiment file(s) with the experiments to run.", type=str, nargs='+')
     arg_parser.add_argument("--instances", "-I", nargs="*", help="Only execute experiment(s) on selected instances (with these names).")
     arg_parser.add_argument("--exps", "-E", nargs="*", help="Only execute selected experiment(s) (with these names).")
     arg_parser.add_argument("--callgrind", "-C", help="Runs the experiment(s) using callgrind.", action="store_true")
@@ -34,17 +35,20 @@ def parse_program_args():
     build_type = "debug" if use_callgrind or use_valgrind else "release"
     args["build_type"] = build_type
 
+    # file checks
+    check_files_exist(experiment_files)
+
     print("Program arguments:")
     for key, value in args.items():
         msg = "    + " + str(key) + ": "
-        if type(value) == list:
+        if type(value) == list and len(value) > 0:
             msg += "[\n"
             for v in value:
-                msg += str(v) + "\n"
-            msg += "]"
+                msg += " "*8 + str(v) + "\n"
+            msg += "    ]"
         else:
             msg += str(value)
         print(blue(msg))
     print()
-    
+
     return args

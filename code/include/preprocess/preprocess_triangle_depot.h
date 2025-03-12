@@ -9,7 +9,7 @@
 
 #include <goc/goc.h>
 
-namespace networks2019
+namespace solver
 {
 // Takes a JSON instance of the vehicle routing problems with the following attributes:
 //	- digraph
@@ -19,6 +19,6 @@ namespace networks2019
 // 	- end_depot
 // Removes arcs that are worse than going to the depot and leaving again.
 void preprocess_triangle_depot(nlohmann::json& instance);
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_PREPROCESS_TRIANGLE_DEPOT_H

@@ -17,7 +17,7 @@
 #include "lazy_label.h"
 #include "bcp/pricing_problem.h"
 
-namespace networks2019
+namespace solver
 {
 
 // LBQueue is the queue to use in the labeling algorithm.
@@ -93,6 +93,6 @@ private:
 	PricingProblem pp_;
 	Label no_label; // null object pattern of the label to avoid using ifs.
 };
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_MONODIRECTIONAL_LABELING_H

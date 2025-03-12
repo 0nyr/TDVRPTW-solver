@@ -18,7 +18,7 @@
 #include "lazy_label.h"
 #include "monodirectional_labeling.h"
 
-namespace networks2019
+namespace solver
 {
 class BidirectionalLabeling
 {
@@ -66,6 +66,6 @@ private:
 	// We only keep the best solution for each set of visited vertices.
 	std::unordered_map<VertexSet, goc::Route> S;
 };
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_BIDIRECTIONAL_LABELING_H

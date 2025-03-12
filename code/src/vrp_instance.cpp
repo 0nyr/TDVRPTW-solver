@@ -10,7 +10,7 @@ using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
-namespace networks2019
+namespace solver
 {
 TimeUnit VRPInstance::TravelTime(goc::Arc e, TimeUnit t0) const
 {
@@ -142,4 +142,4 @@ void from_json(const json& j, VRPInstance& instance)
 		for (Vertex k: instance.D.Vertices()) instance.LDT[k][i] = LDT_i[k];
 	}
 }
-} // namespace networks2019
+} // namespace

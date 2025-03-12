@@ -15,7 +15,7 @@
 #define MAX_N 102
 #endif
 
-namespace networks2019
+namespace solver
 {
 typedef double TimeUnit; // Represents time.
 typedef double CapacityUnit; // Represents the capacity.
@@ -79,6 +79,6 @@ void to_json(nlohmann::json& j, const VRPInstance& instance);
 
 // Parses an instance.
 void from_json(const nlohmann::json& j, VRPInstance& instance);
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_VRP_INSTANCE_H

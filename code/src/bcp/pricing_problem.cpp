@@ -10,7 +10,7 @@ using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
-namespace networks2019
+namespace solver
 {
 void PricingProblem::Print(std::ostream& os) const
 {
@@ -24,4 +24,4 @@ void to_json(json& j, const PricingProblem& p)
 	j["cuts"] = p.S;
 	j["cuts_duals"] = p.sigma;
 }
-} // namespace networks2019
+} // namespace

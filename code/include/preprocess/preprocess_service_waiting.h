@@ -9,7 +9,7 @@
 
 #include <goc/goc.h>
 
-namespace networks2019
+namespace solver
 {
 // Takes a JSON instance of the vehicle routing problems with the following attributes:
 //	- digraph
@@ -22,6 +22,6 @@ namespace networks2019
 // 	(ii) 	a'_i = a_i + s_i, b'_i = b_i + s_i for each i \in V.
 // 	(iii) 	\tau'_ij(t) = max(a_j, t+\tau_ij(t)) - t + s_j for each ij \in A.
 void preprocess_service_waiting(nlohmann::json& instance);
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_PREPROCESS_SERVICE_WAITING_H

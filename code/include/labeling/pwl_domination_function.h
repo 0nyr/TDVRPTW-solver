@@ -11,7 +11,7 @@
 
 #include "goc/goc.h"
 
-namespace networks2019
+namespace solver
 {
 // This class represents a piecewise linear function with domination functionality.
 // Basically, domination between PWL functions depends on which one is smaller than the other.
@@ -56,6 +56,6 @@ private:
 	int first_, last_, size_;
 	goc::Interval domain_; // minimum and maximum values of t where f(t) is in domain.
 };
-} // namespace networks2019
+} // namespace
 
 #endif //NETWORKS2019_PWL_DOMINATION_FUNCTION_H
