@@ -29,7 +29,6 @@ if(NOT Boost_FOUND)
     message(FATAL_ERROR "Boost not found! Make sure BOOST_INCLUDE and BOOST_BIN are correctly set.")
 endif()
 
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++14")
 
 include_directories(include)

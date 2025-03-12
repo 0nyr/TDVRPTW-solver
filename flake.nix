@@ -17,7 +17,7 @@
 
         pythonPackages = pkgs.python313Packages;
 
-        # Boost paths
+        # Boost paths, see: https://stackoverflow.com/questions/43425262/nix-boost-install-misses-headers
         boostDev = pkgs.boost.dev;  # Headers
         boostOut = pkgs.boost.out;  # Libraries
       in

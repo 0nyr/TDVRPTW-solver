@@ -1,0 +1,35 @@
+import json, os
+
+def read_json_from_file(file_path: str):
+	"""
+	Load JSON content from a file.
+	"""
+	with open(file_path, "r") as f:
+		return json.loads(f.read())
+
+def save_json_to_file(file_path, json_object):
+	"""
+	Save JSON content to a file.
+	"""
+	with open(file_path, "w") as f:
+		f.write(json.dumps(json_object))
+
+def create_dir(dir_path):
+	"""
+	Creates the directory at the specified path if it does not exist.
+	"""
+	if not os.path.isdir(dir_path): 
+		os.mkdir(dir_path)
+		
+def get_a_parent_dir(
+        current_dir: str, # the current directory
+        parenting_level: int, # the number of parent directories to go up
+    ) -> str:
+    """
+    Returns the path of the parent directory of the current directory.
+    """
+    parent_dir = current_dir
+    if parenting_level > 0:
+        for _ in range(parenting_level):
+            parent_dir = os.path.abspath(os.path.join(parent_dir, os.pardir))
+    return parent_dir
