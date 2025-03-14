@@ -69,6 +69,9 @@
         "variant": "cpp",
         "strstream": "cpp",
         "source_location": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "forward_list": "cpp",
+        "text_encoding": "cpp",
+        "valarray": "cpp"
     }
 }

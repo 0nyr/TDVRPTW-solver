@@ -32,55 +32,40 @@ def tags_selection_function(
 
     return False
 
-def instances_for_experiment_file(
-        experiment_file_json: dict[str, Any],
-        selected_instances: Optional[list[str]]
-    ):
-    LERA_ROMERO_BENCHMARKS = [
-        "dabia_et_al_2013",
-        "networks_2019",
-        "networks_2019b"
-    ]
-    if any(benchmark["name"] in LERA_ROMERO_BENCHMARKS for benchmark in experiment_file_json["datasets"]):
-        return instances_for_experiment_file_lera_romero_benchmark(experiment_file_json, selected_instances)
-    
-    # VRP-benchmarks style instances selection.
-    instances: list[str] = []
-    for dataset in experiment_file_json["datasets"]:
+def get_entries_from_index_file(
+        instance_dir: str
+    ) -> list[dict[str, Any]]|None:
+    """
+    Get the entries from the index file of the instance directory.
+    If no index file is found, return None.
+    """
+    index_file_path = F"{instance_dir}/index.json"
+    if not os.path.isfile(index_file_path):
+        return None
+    return read_json_from_file(index_file_path)
 
-        # get all subdirectories of the dataset directory
-        dataset_subdirs = os.listdir(F"{INSTANCES_DIR}/{dataset['name']}")
+def get_instance_entry(
+        list_of_entries: list[dict[str, Any]],
+        instance_filename: str
+    ) -> dict[str, Any]:
+    """
+    Get the entry from the list of entries that matches the instance name.
+    """
+    for entry in list_of_entries:
+        if entry["instance_filename"] == instance_filename:
+            return entry
+    return None
 
-        if "n" in dataset:
-            # filter out directories that do not match the n values
-            dataset_subdirs_filtered = []
-            for subdir in dataset_subdirs:
-                n_subdir = int(subdir.split("=")[1])
-                if n_subdir in dataset["n"]:
-                    dataset_subdirs_filtered.append(subdir)
-            dataset_subdirs = dataset_subdirs_filtered
-
-        for subdir in dataset_subdirs:
-            subdir_path = F"{INSTANCES_DIR}/{dataset['name']}/{subdir}"
-            for instance_file in os.listdir(subdir_path):
-                if instance_file.endswith(".json"):
-                    instance_name = instance_file.replace(".json", "")
-                    if selected_instances != None and instance_name not in selected_instances: 
-                        continue # not a selected instance
-                
-                    instance = read_json_from_file(F"{subdir_path}/{instance_file}")
-                    instance["instance_name"] = instance_name
-                    instance["dataset_name"] = dataset["name"]
-                    instances.append(instance)
-
-    return instances
-
-def instances_for_experiment_file_lera_romero_benchmark(
+def instances_for_experiment(
         experiment_file_json: dict[str, Any],
         selected_instances: Optional[list[str]]
     ):
     """
-    Lera-Romero' style benchmark instances selection.
+    Lera-Romero's style benchmark instances selection.
+
+    Get the instances that are specified in the experiment file,
+    from instance directories or dataset directories.
+    Apply some filters to the instances, such as SELECT filters.
 
     Returns: the instances that are specified in the experiment file.
     They can be from many datasets and the datasets may have SELECT filters.
@@ -88,29 +73,60 @@ def instances_for_experiment_file_lera_romero_benchmark(
     Meaning: select all instances from dataset ejor2019 that 
     either not containts TAG1 or contains both TAG2 and TAG3.
     """
+    # VRP-benchmarks style instances selection.
     instances: list[str] = []
-    
     for dataset in experiment_file_json["datasets"]:
-        dataset_dir = F"{INSTANCES_DIR}/{dataset['name']}"
-        dataset_index = read_json_from_file(F"{dataset_dir}/index.json")
-        
+
+        # get all subdirectories of the dataset directory
+        dataset_dir = f"{INSTANCES_DIR}/{dataset['name']}"
+        dataset_subdirs = os.listdir(dataset_dir)
+        instance_dirs = []
+
+        # check that dataset_subdirs contains only directories
+        if all(os.path.isdir(f"{dataset_dir}/{subdir}") for subdir in dataset_subdirs):
+            if "n" in dataset:
+                # filter out directories that do not match the n values
+                dataset_subdirs_filtered = []
+                for subdir in dataset_subdirs:
+                    n_subdir = int(subdir.split("=")[1])
+                    if n_subdir in dataset["n"]:
+                        dataset_subdirs_filtered.append(subdir)
+                
+                for subdir in dataset_subdirs_filtered:
+                    instance_dirs.append(f"{dataset_dir}/{subdir}")
+        else:
+            # the dataset_dir itself is the instance directory
+            instance_dirs.append(dataset_dir)
+
         if "select" in dataset:
             tag_sets = dataset["select"].split("|")
             tag_sets = [s.split(" ") for s in tag_sets]
             tag_sets = [[t.strip() for t in s if t.strip()] for s in tag_sets if any(t.strip() for t in s)]
-            
-        for entry in dataset_index:
-            if selected_instances != None and entry["instance_name"] not in selected_instances: continue # Only leave instances with names matching the filter (if filter is * then all).
-            
-            if "select" in dataset and not tags_selection_function(entry["tags"], tag_sets): 
-                continue # Filter out instances that do not match selection criteria.
-            
-            instance = read_json_from_file(F"{dataset_dir}/{entry['file_name']}")
-            instance["instance_name"] = entry["instance_name"]
-            instance["dataset_name"] = dataset["name"]
-            instances.append(instance)
-        
-    print("instances", instances)
+
+        # actual instance selection
+        for instance_dir in instance_dirs:
+            entries = get_entries_from_index_file(instance_dir)
+
+            for instance_filename in os.listdir(instance_dir):
+                if instance_filename.endswith(".json"):
+                    # determine if the instance should be selected
+                    if instance_filename == "index.json":
+                        continue
+                    if selected_instances != None and instance_filename not in selected_instances: 
+                        continue # not a selected instance
+                    if "select" in dataset and entries != None:
+                        entry = get_instance_entry(entries, instance_filename)
+                        if not tags_selection_function(entry["tags"], tag_sets): 
+                            continue # Filter out instances that do not match selection criteria.
+
+                    # selected instance
+                    instance = {
+                        "dataset_name": dataset["name"],
+                        "instance_dirpath": instance_dir,
+                        "instance_filename": instance_filename,
+                    }
+                    instances.append(instance)
+
     return instances
 
 def run_experiment(
@@ -129,7 +145,6 @@ def run_experiment(
     solutions: instance known solutions of the solutions.json file of the dataset.
     Returns: a JSON object with the output of the execution.
     
-    The base format of the JSON object is {"dataset_name":string, "instance_name":string, "experiment_name":string, "success":bool, "stderr":string}.
     If success == true: it also has the attributes {"execution_log":json, "solution":json}
     If success == false: it also has the attributes {"exit_code":number, ""}
     """
@@ -164,9 +179,10 @@ def run_experiment(
 
     # If experiment finished successfuly, return the observation and the metadata.
     return {
-        "dataset_name":instance["dataset_name"], 
-        "instance_name":instance["instance_name"], 
-        "experiment_name":experiment["name"], 
+        "dataset_name": instance["dataset_name"], 
+        "instance_dirpath": instance["instance_dirpath"],
+        "instance_filename": instance["instance_filename"], 
+        "experiment_name": experiment["name"], 
         "stderr": result["stderr"], 
         "stdout": stdout_json, 
         "exit_code": result["exit_code"],

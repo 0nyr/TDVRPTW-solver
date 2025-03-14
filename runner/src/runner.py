@@ -5,7 +5,7 @@ from utils.utils import read_json_from_file, save_json_to_file
 from utils.formatting import format_date_for_filepath
 from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
 from compiling.compile import compile
-from running.experiment import run_experiment, instances_for_experiment_file
+from running.experiment import run_experiment, instances_for_experiment
 from params.args import parse_program_args
 
 def main():
@@ -39,15 +39,15 @@ def main():
 		TLast = datetime.datetime.now() # TLast = "last time the output was saved".
 
 		# For each instances specified in the experiment file.
-		instances = instances_for_experiment_file(
+		instances = instances_for_experiment(
 			experiment_file_json, 
 			selected_instances
 		)
 		for instance in instances:
 			# Get instance solutions from the dataset directory.
 			solutions = []
-			if os.path.isfile(F"{INSTANCES_DIR}/{instance['dataset_name']}/solutions.json"):
-				solutions = read_json_from_file(F"{INSTANCES_DIR}/{instance['dataset_name']}/solutions.json")
+			if os.path.isfile(f"{instance["instance_dirpath"]}/solutions.json"):
+				solutions = read_json_from_file(F"{INSTANCES_DIR}/{instance["dataset_name"]}/solutions.json")
 				solutions = [s for s in solutions if s["instance_name"] == instance["instance_name"]]
 
 			# For each experiment defined in the experiment file.
@@ -56,7 +56,7 @@ def main():
 				if selected_experiments != None and experiment["name"] not in selected_experiments: continue
 
 				# Run the experiment.
-				print(purple(F"[{instance['dataset_name']}] {instance['instance_name']} - {experiment['name']} ({datetime.datetime.now()})"), flush=True)
+				print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]} ({datetime.datetime.now()})"), flush=True)
 				res = run_experiment(args, experiment, instance, solutions)
 				output["outputs"].append(res)
 				

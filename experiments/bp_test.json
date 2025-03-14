@@ -1,0 +1,25 @@
+{
+    "datasets": [
+        {
+            "name": "Dabia2013", 
+            "n": [27],
+            "select": "RC201"
+        }
+    ],
+    "experiments": [
+        {
+            "name": "BP-CUTS",
+            "executable": "bp",
+            "time_limit": 7200,
+            "cut_limit": 500,
+            "partial": true,
+            "limited_extension": true,
+            "unreachable_strengthened": true,
+            "sort_by_cost": true,
+            "symmetric": false,
+            "iterative_merge": true,
+            "lazy_extension": true,
+            "exact_labeling": true
+        }
+    ]
+}
