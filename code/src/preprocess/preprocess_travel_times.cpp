@@ -18,9 +18,9 @@ namespace
 // Returns: INFTY if it is infeasible to depart inside the horizon.
 double departing_time(const json& instance, Arc e, double tf)
 {
-	int c = instance["clusters"][e.tail][e.head]; // cluster of arc e.
-	vector<Interval> T = instance["speed_zones"]; // T[k] = speed zone k.
-	vector<double> speed = instance["cluster_speeds"][c]; // speed[k] = speed of traversing e in speed zone k.
+	int c = instance["zones"][e.tail][e.head]; // cluster of arc e.
+	vector<Interval> T = instance["time_steps"]; // T[k] = speed zone k.
+	vector<double> speed = instance["speeds"][c]; // speed[k] = speed of traversing e in speed zone k.
 	double d = instance["distances"][e.tail][e.head]; // distance of arc e.
 	double t = tf;
 	for (int k = (int)T.size()-1; k >= 0; --k)
@@ -42,9 +42,9 @@ double departing_time(const json& instance, Arc e, double tf)
 // Returns: INFTY if it is infeasible to arrive inside the horizon.
 double travel_time(const json& instance, Arc e, double t0)
 {
-	int c = instance["clusters"][e.tail][e.head]; // cluster of arc e.
-	vector<Interval> T = instance["speed_zones"]; // T[k] = speed zone k.
-	vector<double> speed = instance["cluster_speeds"][c]; // speed[k] = speed of traversing e in speed zone k.
+	int c = instance["zones"][e.tail][e.head]; // cluster of arc e.
+	vector<Interval> T = instance["time_steps"]; // T[k] = speed zone k.
+	vector<double> speed = instance["speeds"][c]; // speed[k] = speed of traversing e in speed zone k.
 	double d = instance["distances"][e.tail][e.head]; // distance of arc e.
 	double t = t0;
 	for (int k = 0; k < T.size(); ++k)
@@ -72,7 +72,7 @@ double ready_time(const json& instance, Arc e, double t0)
 PWLFunction compute_travel_time_function(const json& instance, Arc e)
 {
 	// Calculate speed breakpoints.
-	vector<Interval> speed_zones = instance["speed_zones"];
+	vector<Interval> speed_zones = instance["time_steps"];
 	vector<double> speed_breakpoints;
 	for (auto& z: speed_zones) speed_breakpoints.push_back(z.left);
 	speed_breakpoints.push_back(speed_zones.back().right);
@@ -112,7 +112,9 @@ PWLFunction compute_travel_time_function(const json& instance, Arc e)
 
 void preprocess_travel_times(json& instance)
 {
-	Digraph D = instance["digraph"];
+	clog << " - IGP Travel Times" << endl;
+
+	Digraph D = instance;
 	Matrix<PWLFunction> tau(D.VertexCount(), D.VertexCount());
 	for (Arc e: D.Arcs())
 		tau[e.tail][e.head] = compute_travel_time_function(instance, e);

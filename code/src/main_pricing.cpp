@@ -8,7 +8,7 @@
 #include <vector>
 #include <goc/goc.h>
 
-#include "vrp_instance.h"
+#include "instance/vrp_instance.h"
 #include "preprocess/preprocess_travel_times.h"
 #include "preprocess/preprocess_capacity.h"
 #include "preprocess/preprocess_time_windows.h"

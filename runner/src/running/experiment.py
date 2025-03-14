@@ -162,10 +162,13 @@ def run_experiment(
     elif use_callgrind: executable = ["valgrind", "--tool=callgrind", executable_path]
     elif use_heaptrack: executable = ["heaptrack", executable_path]
 
+    # load instance JSON file
+    instance_json_data = read_json_from_file(F"{instance['instance_dirpath']}/{instance['instance_filename']}")
+
     # Execute experiment.
     result = run_program(
         executable, 
-        f"{json.dumps(experiment)}{json.dumps(instance)}{json.dumps(solutions)}", 
+        f"{json.dumps(experiment)}{json.dumps(instance_json_data)}{json.dumps(solutions)}", 
         memlimit_gb, 
         silent
     )

@@ -25,14 +25,13 @@ stringstream custom_cin;
 }
 
 void simulate_runner_input(
-	const string& dataset_dir, 
-	const string& instance_name, 
-	const string& experiment_path,
+	const string& instance_dirpath, 
+	const string& instance_filename,
+	const string& experiment_filepath,
 	const string& experiment_name
-)
-{
+) {
 	// Read experiments_old from file.
-	ifstream experiment_file(experiment_path);
+	ifstream experiment_file(experiment_filepath);
 	if (!experiment_file.good()) fail("The experiment file does not exist.");
 	json experiment_set, experiment;
 	experiment_file >> experiment_set;
@@ -43,19 +42,20 @@ void simulate_runner_input(
 	
 	// Read instance file.
 	json instance;
-	ifstream instance_stream(dataset_dir + "/" + instance_name + ".json");
-	if (!instance_stream.good()) fail("The instance file does not exist.");
+	string instance_filepath = instance_dirpath + "/" + instance_filename;
+	ifstream instance_stream(instance_filepath);
+	if (!instance_stream.good()) fail("The instance file could not be found at " + instance_filepath);
 	instance_stream >> instance;
 	custom_cin << instance;
 	instance_stream.close();
 	
 	// Read instance solutions if exists, otherwise output empty array.
-	ifstream solutions_file(dataset_dir + "/solutions.json");
+	ifstream solutions_file(instance_dirpath + "/solutions.json");
 	json solutions = {};
 	if (solutions_file.good()) solutions_file >> solutions;
 	solutions_file.close();
 	json instance_solutions = vector<json>();
-	for (auto& solution: solutions) if (solution["instance_name"] == instance_name) instance_solutions.push_back(solution);
+	for (auto& solution: solutions) if (solution["instance_filename"] == instance_filename) instance_solutions.push_back(solution);
 	custom_cin << instance_solutions;
 	
 	// Move the stream custom_cin to cin.

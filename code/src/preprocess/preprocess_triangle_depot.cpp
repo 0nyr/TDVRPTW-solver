@@ -5,8 +5,9 @@
 //
 
 #include "preprocess/preprocess_triangle_depot.h"
+#include "preprocess/preprocess_utils.h"
 
-#include "vrp_instance.h"
+#include "instance/vrp_instance.h"
 
 using namespace std;
 using namespace goc;
@@ -14,19 +15,6 @@ using namespace nlohmann;
 
 namespace solver
 {
-namespace
-{
-// Removes the arc ij from the instance.
-void remove_arc(Vertex i, Vertex j, json& instance)
-{
-	if (instance["digraph"]["arcs"][i][j] == 0) return;
-	instance["digraph"]["arcs"][i][j] = 0;
-	int arc_count = instance["digraph"]["arc_count"];
-	instance["digraph"]["arc_count"] = arc_count - 1;
-	if (has_key(instance, "travel_times")) instance["travel_times"][i][j] = vector<json>({});
-}
-}
-
 void preprocess_triangle_depot(json& instance)
 {
 	VRPInstance vrp = instance;
@@ -39,7 +27,7 @@ void preprocess_triangle_depot(json& instance)
 			TimeUnit b_i = max(vrp.tw[i]), a_j = min(vrp.tw[j]);
 			double t0_ij = vrp.TravelTime({i, d}, b_i) + vrp.TravelTime({o, j}, vrp.ArrivalTime({i, d}, b_i));
 			if (epsilon_smaller_equal(t0_ij, a_j - b_i))
-				remove_arc(i, j, instance);
+				remove_arc(instance, i, j);
 		}
 	}
 }

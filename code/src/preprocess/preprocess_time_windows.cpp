@@ -5,6 +5,7 @@
 //
 
 #include "preprocess/preprocess_time_windows.h"
+#include "preprocess/preprocess_utils.h"
 
 #include <vector>
 #include <queue>
@@ -55,41 +56,49 @@ double earliest_departure(json& instance, Vertex i, Vertex k)
 }
 
 // Earliest arrival time from i to all vertices if departing at a_i.
-vector<double> compute_EAT(json& instance, Vertex i)
-{
-	return compute_earliest_arrival_time(instance["digraph"], i, instance["time_windows"][i][0], [&] (Vertex u, Vertex v, double t0) {
-		return travel_time(instance, {u, v}, t0);
-	});
+vector<double> compute_EAT(
+	const Digraph& D,
+	json& instance, 
+	Vertex i
+) {
+	return compute_earliest_arrival_time(
+		D,
+		i, 
+		instance["time_windows"][i][0], 
+		[&] (Vertex u, Vertex v, double t0) {
+			return travel_time(instance, {u, v}, t0);
+		}
+	);
 }
 
 // Latest departure time from all vertices to j if arriving to j at tf.
-vector<double> compute_LDT(json& instance, Vertex j)
-{
-	return compute_latest_departure_time(instance["digraph"], j, instance["time_windows"][j][1], [&] (Vertex u, Vertex v, double t0) {
-		return departing_time(instance, {u, v}, t0);
-	});
-}
-
-// Removes the arc ij from the instance.
-void remove_arc(json& instance, Vertex i, Vertex j)
-{
-	if (instance["digraph"]["arcs"][i][j] == 0) return;
-	instance["digraph"]["arcs"][i][j] = 0;
-	int arc_count = instance["digraph"]["arc_count"];
-	instance["digraph"]["arc_count"] = arc_count - 1;
-	if (has_key(instance, "travel_times")) instance["travel_times"][i][j] = vector<json>({});
+vector<double> compute_LDT(
+	const Digraph& D,
+	json& instance, 
+	Vertex j
+) {
+	return compute_latest_departure_time(
+		D, 
+		j, 
+		instance["time_windows"][j][1], 
+		[&] (Vertex u, Vertex v, double t0) {
+			return departing_time(instance, {u, v}, t0);
+		}
+	);
 }
 
 // Returns: if the instance includes the arc.
-bool includes_arc(json& instance, Arc ij)
+bool includes_arc(json& instance, Arc ij)  
 {
-	return instance["digraph"]["arcs"][ij.tail][ij.head] == 1;
+	return instance["arcs"][ij.tail][ij.head] == 1;
 }
 }
 
 void preprocess_time_windows(json& instance)
 {
-	Digraph D = instance["digraph"];
+	clog << " - Time Windows" << endl;
+
+	Digraph D = instance;
 	int n = D.VertexCount();
 	auto& V = D.Vertices();
 	auto a = [&] (Vertex i) -> double { return instance["time_windows"][i][0]; };
@@ -101,8 +110,8 @@ void preprocess_time_windows(json& instance)
 	
 	// Initialize EAT, LDT.
 	Matrix<double> EAT(n,n), LDT(n,n);
-	for (int i = 0; i < n; ++i) EAT[i] = compute_EAT(instance, i);
-	for (int j = 0; j < n; ++j) LDT[j] = compute_LDT(instance, j);
+	for (int i = 0; i < n; ++i) EAT[i] = compute_EAT(D, instance, i);
+	for (int j = 0; j < n; ++j) LDT[j] = compute_LDT(D, instance, j);
 	// Transpose LDT so LDT[i][j] is latest departure time from i to reach j.
 	for (int i = 0; i < n; ++i) for (int j = i+1; j < n; ++j) swap(LDT[i][j], LDT[j][i]);
 	
@@ -127,7 +136,7 @@ void preprocess_time_windows(json& instance)
 	// Remove infeasible tw arcs.
 	for (Arc ij: D.Arcs())
 	{
-		int i = ij.tail, j = ij.head;
+		goc::Vertex i = ij.tail, j = ij.head;
 		if (epsilon_bigger(a(i)+travel_time(instance, {i, j}, a(i)), b(j))) remove_arc(instance, i, j);
 	}
 }

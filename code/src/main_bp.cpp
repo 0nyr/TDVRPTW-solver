@@ -10,13 +10,8 @@
 
 #include <goc/goc.h>
 
-#include "vrp_instance.h"
-#include "preprocess/preprocess_travel_times.h"
-#include "preprocess/preprocess_capacity.h"
-#include "preprocess/preprocess_time_windows.h"
-#include "preprocess/preprocess_service_waiting.h"
-#include "preprocess/preprocess_triangle_depot.h"
-
+#include "instance/vrp_instance.h"
+#include "instance/load_igp.h"
 #include "bcp/bcp.h"
 #include "bcp/spf.h"
 #include "bcp/pricing_problem.h"
@@ -27,12 +22,20 @@ using namespace goc;
 using namespace nlohmann;
 using namespace solver;
 
-double path_cost(const VRPInstance& vrp, PricingProblem pp, GraphPath p)
+// Returns: the cost of a path.
+// NOTE: Calculated as the duration of the path minus the sum of 
+// the profits of the vertices minus the sum of the duals of the cuts.
+double path_cost(
+	const VRPInstance& vrp, 
+	PricingProblem pp, 
+	GraphPath path
+)
 {
-	VertexSet ppp;
-	for (Vertex i: p) ppp.set(i);
-	return vrp.BestDurationRoute(p).duration - sum<Vertex>(p, [&] (Vertex v) { return pp.P[v]; })
-	- sum<int>(range(0, pp.S.size()), [&] (int i) { return intersection(pp.S[i], ppp).count() >= 2 ? pp.sigma[i] : 0.0; });
+	VertexSet column;
+	for (Vertex i: path) column.set(i);
+	return vrp.BestDurationRoute(path).duration 
+		- sum<Vertex>(path, [&] (Vertex v) { return pp.P[v]; })
+		- sum<int>(range(0, pp.S.size()), [&] (int i) { return intersection(pp.S[i], column).count() >= 2 ? pp.sigma[i] : 0.0; });
 }
 
 int main(int argc, char** argv)
@@ -41,10 +44,14 @@ int main(int argc, char** argv)
 	{
 		json output; // STDOUT output will go into this JSON.
 
-		if (argc > 1) simulate_runner_input("instances/dabia_et_al_2013", "R210_50", "experiments/bp.json", "BP-CUTS");
+		if (argc > 1) simulate_runner_input("instances/for_testing", "C101-n=27-13a0175de063b6b4de3fc2395adbb80f367b5968.json", "experiments/bp_test.json", "BP-CUTS");
 
 		json experiment, instance, solutions;
 		cin >> experiment >> instance >> solutions;
+		clog << "Experiment: " << experiment << endl;
+		clog << "Instance: " << instance << endl;
+		clog << "Solutions: " << solutions << endl;
+		load_igp(instance);
 
 		// Parse experiment.
 		Duration time_limit = value_or_default(experiment, "time_limit", 2.0_hr);
@@ -72,14 +79,6 @@ int main(int argc, char** argv)
 		clog << "Symmetric: " << symmetric << endl;
 		clog << "Iterative merge: " << iterative_merge << endl;
 		clog << "Exact labeling: " << exact_labeling << endl;
-
-		// Preprocess instance JSON.
-		clog << "Preprocessing..." << endl;
-		preprocess_capacity(instance);
-		preprocess_travel_times(instance);
-		preprocess_service_waiting(instance);
-		preprocess_time_windows(instance);
-		preprocess_triangle_depot(instance);
 
 		// Parse instance.
 		VRPInstance vrp = instance;

@@ -11,7 +11,7 @@
 
 #include "goc/goc.h"
 
-#include "vrp_instance.h"
+#include "instance/vrp_instance.h"
 
 namespace solver
 {

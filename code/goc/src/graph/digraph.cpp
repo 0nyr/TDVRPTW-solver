@@ -127,7 +127,7 @@ void Digraph::Print(ostream& os) const
 
 void from_json(const json& j, Digraph& D)
 {
-	int n = j["vertex_count"];
+	int n = j["nb_vertices"];
 	D = Digraph(n);
 	auto& arcs_json = j["arcs"];
 	for (int i = 0; i < n; ++i)
@@ -138,7 +138,7 @@ void from_json(const json& j, Digraph& D)
 
 void to_json(json& j, const Digraph& D)
 {
-	j["vertex_count"] = D.VertexCount();
+	j["nb_vertices"] = D.VertexCount();
 	j["arc_count"] = D.ArcCount();
 	// Build adjacency matrix.
 	Matrix<int> M(D.VertexCount(), D.VertexCount(), 0);

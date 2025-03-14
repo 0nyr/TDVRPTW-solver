@@ -18,7 +18,7 @@ namespace goc
 {
 // Represents a solution to a Vehicle Routing Problem.
 // This solution has a value, and a set of routes.
-// - It knows how te serialize itself in JSON to be compatible with Kaleidoscope kd_type "vrp_solution".
+// - It knows how to serialize itself in JSON to be compatible with Kaleidoscope kd_type "vrp_solution".
 class VRPSolution : public Printable
 {
 public:

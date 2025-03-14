@@ -1,11 +1,4 @@
-//
-// Created by Gonzalo Lera Romero.
-// Grupo de Optimizacion Combinatoria (GOC).
-// Departamento de Computacion - Universidad de Buenos Aires.
-//
-
-#ifndef NETWORKS2019_VRP_INSTANCE_H
-#define NETWORKS2019_VRP_INSTANCE_H
+#pragma once
 
 #include <vector>
 #include <goc/goc.h>
@@ -81,4 +74,3 @@ void to_json(nlohmann::json& j, const VRPInstance& instance);
 void from_json(const nlohmann::json& j, VRPInstance& instance);
 } // namespace
 
-#endif //NETWORKS2019_VRP_INSTANCE_H

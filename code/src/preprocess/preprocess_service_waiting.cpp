@@ -14,7 +14,9 @@ namespace solver
 {
 void preprocess_service_waiting(json& instance)
 {
-	Digraph D = instance["digraph"];
+	clog << " - Service Waiting" << endl;
+
+	Digraph D = instance;
 	Matrix<PWLFunction> tau = instance["travel_times"];
 	auto s = [&] (Vertex i) -> double { return instance["service_times"][i]; };
 	auto a = [&] (Vertex i) -> double { return instance["time_windows"][i][0]; };

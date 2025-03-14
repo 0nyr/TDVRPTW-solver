@@ -17,8 +17,12 @@ namespace goc
 // inputs the 'experiment_name'. Also if the instance has solutions in the corresponding solutions.json file then it
 // inputs those solutions too.
 // Effect: adds to STDIN << experiment << instance << solutions;
-void simulate_runner_input(const std::string& dataset_dir, const std::string& instance_name,
-							 const std::string& experiment_path, const std::string& experiment_name);
+void simulate_runner_input(
+	const std::string& instance_dirpath, 
+	const std::string& instance_filename,
+	const std::string& experiment_filepath, 
+	const std::string& experiment_name
+);
 } // namespace goc
 
 #endif // GOC_RUNNER_RUNNER_UTILS_H

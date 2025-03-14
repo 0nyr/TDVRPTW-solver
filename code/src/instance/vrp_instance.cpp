@@ -4,7 +4,7 @@
 // Departamento de Computacion - Universidad de Buenos Aires.
 //
 
-#include "vrp_instance.h"
+#include "instance/vrp_instance.h"
 
 using namespace std;
 using namespace goc;
@@ -101,21 +101,22 @@ void to_json(json& j, const VRPInstance& instance)
 	j["end_depot"] = instance.d;
 	j["horizon"] = vector<TimeUnit>({0, instance.T});
 	j["time_windows"] = instance.tw;
-	j["capacity"] = instance.Q;
+	j["vehicle_capacity"] = instance.Q;
 	j["demands"] = instance.q;
 	j["travel_times"] = instance.tau;
 }
 
 void from_json(const json& j, VRPInstance& instance)
 {
-	int n = j["digraph"]["vertex_count"];
-	instance.D = j["digraph"];
+	int n = j["nb_vertices"];
+	instance.D = j;
 	instance.o = j["start_depot"];
 	instance.d = j["end_depot"];
 	instance.T = j["horizon"][1];
 	instance.tw = vector<Interval>(j["time_windows"].begin(), j["time_windows"].end());
-	instance.Q = value_or_default(j, "capacity", 1.0);
+	instance.Q = value_or_default(j, "vehicle_capacity", 1.0);
 	instance.q = vector<CapacityUnit>(j["demands"].begin(), j["demands"].end());
+	
 	// Add travel time functions.
 	instance.tau = instance.arr = instance.dep = instance.pretau = Matrix<PWLFunction>(n, n);
 	for (Vertex u: instance.D.Vertices())
@@ -128,12 +129,14 @@ void from_json(const json& j, VRPInstance& instance)
 			instance.pretau[u][v] = PWLFunction::IdentityFunction(instance.dep[u][v].Domain()) - instance.dep[u][v];
 		}
 	}
+	
 	// Add travel functions for (i, i) (for boundary reasons).
 	for (Vertex u: instance.D.Vertices())
 	{
 		instance.tau[u][u] = instance.pretau[u][u] = PWLFunction::ConstantFunction(0.0, instance.tw[u]);
 		instance.dep[u][u] = instance.arr[u][u] = PWLFunction::IdentityFunction(instance.tw[u]);
 	}
+	
 	// Set LDT.
 	instance.LDT = Matrix<TimeUnit>(n, n);
 	for (Vertex i: instance.D.Vertices())

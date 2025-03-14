@@ -12,7 +12,7 @@
 
 #include "goc/goc.h"
 
-#include "vrp_instance.h"
+#include "instance/vrp_instance.h"
 #include "label.h"
 #include "lazy_label.h"
 #include "bcp/pricing_problem.h"
