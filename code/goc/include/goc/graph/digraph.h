@@ -71,7 +71,7 @@ public:
 	bool IncludesArc(const Arc& e) const;
 	
 	// Returns: number of vertices in the digraph.
-	int VertexCount() const;
+	int NbVertices() const;
 	
 	// Returns: number of arcs in the digraph.
 	int ArcCount() const;

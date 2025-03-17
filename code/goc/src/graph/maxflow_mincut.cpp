@@ -26,7 +26,7 @@ typedef BoostDigraph::edge_descriptor BoostArc;
 pair<double, STCut> maxflow_mincut(const Digraph& D, const function<double(int i, int j)>& c, int s, int t)
 {
 	// n = number of vertices.
-	int n = D.VertexCount();
+	int n = D.NbVertices();
 	
 	// Build boost network B to work with.
 	BoostDigraph B;

@@ -99,7 +99,7 @@ void preprocess_time_windows(json& instance)
 	clog << " - Time Windows" << endl;
 
 	Digraph D = instance;
-	int n = D.VertexCount();
+	int n = D.NbVertices();
 	auto& V = D.Vertices();
 	auto a = [&] (Vertex i) -> double { return instance["time_windows"][i][0]; };
 	auto b = [&] (Vertex i) -> double { return instance["time_windows"][i][1]; };

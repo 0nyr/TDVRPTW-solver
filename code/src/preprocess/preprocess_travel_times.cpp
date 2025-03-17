@@ -108,6 +108,12 @@ PWLFunction compute_travel_time_function(const json& instance, Arc e)
 	
 	return tau;
 }
+
+// Computes the euclidean distance between two points.
+double euclidean_distance(double x1, double y1, double x2, double y2)
+{
+	return sqrt(pow(x1-x2, 2) + pow(y1-y2, 2));
+}
 }
 
 void preprocess_travel_times(json& instance)
@@ -115,9 +121,34 @@ void preprocess_travel_times(json& instance)
 	clog << " - IGP Travel Times" << endl;
 
 	Digraph D = instance;
-	Matrix<PWLFunction> tau(D.VertexCount(), D.VertexCount());
-	for (Arc e: D.Arcs())
+	Matrix<PWLFunction> tau(D.NbVertices(), D.NbVertices());
+	for (Arc e: D.Arcs()) 
+	{
 		tau[e.tail][e.head] = compute_travel_time_function(instance, e);
+		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
+	}
 	instance["travel_times"] = tau;
 }
+
+void preprocess_constant_travel_times(nlohmann::json& instance)
+{
+	clog << " - Constant Travel Times" << endl;
+	Interval horizon = instance["horizon"];
+
+	Digraph D = instance;
+	Matrix<PWLFunction> tau(D.NbVertices(), D.NbVertices());
+	for (Arc e: D.Arcs())
+	{
+		// We consider the distance as the travel time.
+		double distance = euclidean_distance(
+			instance["coordinates"][e.head][0], instance["coordinates"][e.head][1],
+			instance["coordinates"][e.tail][0], instance["coordinates"][e.tail][1]
+		); 
+		tau[e.tail][e.head] = PWLFunction::ConstantFunction(distance, Interval(horizon.left, horizon.right - distance));
+		
+		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
+	}
+	instance["travel_times"] = tau;
+}
+
 } // namespace

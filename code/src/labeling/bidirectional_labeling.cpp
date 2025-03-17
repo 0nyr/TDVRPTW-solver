@@ -84,7 +84,7 @@ BLBExecutionLog BidirectionalLabeling::Run(const PricingProblem& pricing_problem
 {
 	// Clean solution pool.
 	S.clear();
-	M[0] = M[1] = vector<MonodirectionalLabeling::DemandLevel>(vrp_.D.VertexCount());
+	M[0] = M[1] = vector<MonodirectionalLabeling::DemandLevel>(vrp_.D.NbVertices());
 	
 	// Set pricing problem.
 	vrp_.D.AddArcs(pp_.A); // Add previously forbidden arcs.
@@ -220,7 +220,7 @@ void BidirectionalLabeling::LastArcMerge(LBQueue& qf, const MonodirectionalLabel
 	TimeUnit T = vrp_.T;
 	
 	// Create M_ijq structure.
-	Matrix<VectorMap<CapacityUnit, vector<Label*>>> M(vrp_.D.VertexCount(), vrp_.D.VertexCount());
+	Matrix<VectorMap<CapacityUnit, vector<Label*>>> M(vrp_.D.NbVertices(), vrp_.D.NbVertices());
 	for (Vertex v: vrp_.D.Vertices())
 		for (auto& entry: Lb[v])
 			for (auto& m: entry.second)

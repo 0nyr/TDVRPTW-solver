@@ -44,7 +44,7 @@ MonodirectionalLabeling::MonodirectionalLabeling(
 	processed_count = 0;
 	
 	t_m = vrp.T;
-	U = vector<DemandLevel>(vrp.D.VertexCount());
+	U = vector<DemandLevel>(vrp.D.NbVertices());
 	
 	// no-label is a label that represents the empty path.
 	no_label.parent = nullptr;
@@ -336,6 +336,6 @@ void MonodirectionalLabeling::Clean()
 		for (auto& entry_2: entry)
 			for (Label* m: entry_2.second)
 				delete m;
-	U = vector<DemandLevel>(vrp_.D.VertexCount());
+	U = vector<DemandLevel>(vrp_.D.NbVertices());
 }
 } // solver

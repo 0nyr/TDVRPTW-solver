@@ -86,7 +86,7 @@ bool Graph::IncludesEdge(const Edge& e) const
 	return adjacency_matrix_[e.tail][e.head];
 }
 
-int Graph::VertexCount() const
+int Graph::NbVertices() const
 {
 	return (int) vertices_.size();
 }
@@ -114,13 +114,13 @@ void from_json(const json& j, Graph& G)
 
 void to_json(json& j, const Graph& G)
 {
-	j["vertex_count"] = G.VertexCount();
+	j["vertex_count"] = G.NbVertices();
 	j["edge_count"] = G.EdgeCount();
 	
 	// Build adjacency matrix.
-	Matrix<int> M(G.VertexCount(), G.VertexCount(), 0);
-	for (int i = 0; i < G.VertexCount(); ++i)
-		for (int j = 0; j < G.VertexCount(); ++j)
+	Matrix<int> M(G.NbVertices(), G.NbVertices(), 0);
+	for (int i = 0; i < G.NbVertices(); ++i)
+		for (int j = 0; j < G.NbVertices(); ++j)
 			M[i][j] = G.IncludesEdge({i,j}) ? 1 : 0;
 	j["edges"] = M;
 }

@@ -103,7 +103,7 @@ bool Digraph::IncludesArc(const Arc& e) const
 	return adjacency_matrix_[e.tail][e.head];
 }
 
-int Digraph::VertexCount() const
+int Digraph::NbVertices() const
 {
 	return (int) vertices_.size();
 }
@@ -115,7 +115,7 @@ int Digraph::ArcCount() const
 
 Digraph Digraph::Reverse() const
 {
-	Digraph reverse_graph(VertexCount());
+	Digraph reverse_graph(NbVertices());
 	for (auto& e: Arcs()) reverse_graph.AddArc(e.Reverse());
 	return reverse_graph;
 }
@@ -138,12 +138,12 @@ void from_json(const json& j, Digraph& D)
 
 void to_json(json& j, const Digraph& D)
 {
-	j["nb_vertices"] = D.VertexCount();
+	j["nb_vertices"] = D.NbVertices();
 	j["arc_count"] = D.ArcCount();
 	// Build adjacency matrix.
-	Matrix<int> M(D.VertexCount(), D.VertexCount(), 0);
-	for (int i = 0; i < D.VertexCount(); ++i)
-		for (int j = 0; j < D.VertexCount(); ++j)
+	Matrix<int> M(D.NbVertices(), D.NbVertices(), 0);
+	for (int i = 0; i < D.NbVertices(); ++i)
+		for (int j = 0; j < D.NbVertices(); ++j)
 			M[i][j] = D.IncludesArc({i,j}) ? 1 : 0;
 	j["arcs"] = M;
 }

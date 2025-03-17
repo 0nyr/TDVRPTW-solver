@@ -54,9 +54,9 @@ int main(int argc, char** argv)
 
 		json experiment, instance, solutions;
 		cin >> experiment >> instance >> solutions;
-		clog << "Experiment: " << experiment << endl;
-		clog << "Instance: " << instance << endl;
-		clog << "Solutions: " << solutions << endl;
+		// clog << "Experiment: " << experiment << endl;
+		// clog << "Instance: " << instance << endl;
+		// clog << "Solutions: " << solutions << endl;
 		load_igp(instance);
 
 		// Parse experiment.
@@ -71,7 +71,6 @@ int main(int argc, char** argv)
 		bool symmetric = value_or_default(experiment, "symmetric", false);
 		bool iterative_merge = value_or_default(experiment, "iterative_merge", true);
 		bool exact_labeling = value_or_default(experiment, "exact_labeling", true);
-
 
 		// Show experiment details.
 		clog << "Time limit: " << time_limit << "s." << endl;
@@ -93,7 +92,7 @@ int main(int argc, char** argv)
 		clog << "Running BCP algorithm..." << endl;
 
 		// Create SPF and add initial routes (o, i, d).
-		SPF spf(vrp.D.VertexCount());
+		SPF spf(vrp.D.NbVertices());
 		for (Vertex i: exclude(vrp.D.Vertices(), {vrp.o, vrp.d}))
 			spf.AddRoute(vrp.BestDurationRoute({vrp.o, i, vrp.d}));
 

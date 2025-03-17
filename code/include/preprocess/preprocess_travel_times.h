@@ -21,6 +21,8 @@ namespace solver
 //	- time_windows (optional).
 // Adds the travel_times attribute to a JSON instance with a matrix of piecewise linear functions.
 void preprocess_travel_times(nlohmann::json& instance);
+
+void preprocess_constant_travel_times(nlohmann::json& instance);
 } // namespace
 
 #endif //NETWORKS2019_PREPROCESS_TRAVEL_TIMES_H

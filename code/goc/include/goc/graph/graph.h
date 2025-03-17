@@ -61,7 +61,7 @@ public:
 	bool IncludesEdge(const Edge& e) const;
 	
 	// Returns: number of vertices in the graph.
-	int VertexCount() const;
+	int NbVertices() const;
 	
 	// Returns: number of edges in the graph.
 	int EdgeCount() const;

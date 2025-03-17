@@ -224,7 +224,7 @@ void BCP::BranchNode(Node* node)
 	Stopwatch rolex_branch(true);
 	
 	// Calculate z[x_ij] values.
-	Matrix<double> x(D.VertexCount(), D.VertexCount(), 0.0);
+	Matrix<double> x(D.NbVertices(), D.NbVertices(), 0.0);
 	for (auto& y_val: node->opt)
 	{
 		auto& r = spf->RouteOf(y_val.first);
@@ -306,11 +306,11 @@ bool BCP::	SeparateCuts(const Valuation& z)
 	// Brute force enumeration of all cuts, check the most violated.
 	double best_violation = 0.0;
 	SubsetRowCut best;
-	for (Vertex i = 1; i < D.VertexCount()-1; ++i)
+	for (Vertex i = 1; i < D.NbVertices()-1; ++i)
 	{
-		for (Vertex j = i + 1; j < D.VertexCount() - 1; ++j)
+		for (Vertex j = i + 1; j < D.NbVertices() - 1; ++j)
 		{
-			for (Vertex k = j + 1; k < D.VertexCount() - 1; ++k)
+			for (Vertex k = j + 1; k < D.NbVertices() - 1; ++k)
 			{
 				double violation = -1.0;
 				for (int r = 0; r < z_visited.size(); ++r)

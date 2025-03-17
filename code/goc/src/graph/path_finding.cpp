@@ -18,12 +18,12 @@ namespace goc
 GraphPath longest_path(const Digraph& D, Vertex s, Vertex t)
 {
 	// Calculate topological order.
-	vector<Vertex> topo = range(0, D.VertexCount());
+	vector<Vertex> topo = range(0, D.NbVertices());
 	sort(topo.begin(), topo.end(), [&] (Vertex v1, Vertex v2) { return D.IncludesArc({v2, v1}); });
 	
 	// Calculate max distance and parents.
-	vector<int> max_dist(D.VertexCount(), -INT_MAX);
-	vector<Vertex> parent(D.VertexCount(), -1);
+	vector<int> max_dist(D.NbVertices(), -INT_MAX);
+	vector<Vertex> parent(D.NbVertices(), -1);
 	parent[t] = -1;
 	max_dist[t] = 0;
 	for (auto& v: topo)
@@ -49,8 +49,8 @@ GraphPath longest_path(const Digraph& D, Vertex s, Vertex t)
 vector<double> compute_earliest_arrival_time(const Digraph& D, Vertex s, double t0, const function<double(Vertex, Vertex, double)>& tt)
 {
 	priority_queue<pair<double, Vertex>, vector<pair<double, Vertex>>, greater<>> q;
-	vector<bool> visited(D.VertexCount(), false);
-	vector<double> EAT(D.VertexCount(), INFTY); // EAT[j] = Earliest arrival time to vertex j
+	vector<bool> visited(D.NbVertices(), false);
+	vector<double> EAT(D.NbVertices(), INFTY); // EAT[j] = Earliest arrival time to vertex j
 	q.push({t0, s});
 	while (!q.empty())
 	{
@@ -76,8 +76,8 @@ vector<double> compute_earliest_arrival_time(const Digraph& D, Vertex s, double 
 vector<double> compute_latest_departure_time(const Digraph& D, Vertex s, double t0, const function<double(Vertex, Vertex, double)>& dep)
 {
 	priority_queue<pair<double, Vertex>> q;
-	vector<bool> visited(D.VertexCount(), false);
-	vector<double> LDT(D.VertexCount(), -INFTY);
+	vector<bool> visited(D.NbVertices(), false);
+	vector<double> LDT(D.NbVertices(), -INFTY);
 	q.push({t0, s});
 	while (!q.empty())
 	{
