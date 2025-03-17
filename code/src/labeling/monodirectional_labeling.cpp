@@ -32,13 +32,15 @@ double beta(Label* l, bool partial)
 }
 }
 
-MonodirectionalLabeling::MonodirectionalLabeling(const VRPInstance& vrp) : vrp_(vrp)
+MonodirectionalLabeling::MonodirectionalLabeling(
+	const VRPInstance& vrp
+) : vrp_(vrp), correcting(false)
 {
 	cross = true;
 	process_limit = INT_MAX;
 	time_limit = 2.0_hr;
 	partial = limited_extension = lazy_extension = unreachable_strengthened = sort_by_cost = true;
-	relax_elementary_check = relax_cost_check = correcting = false;
+	relax_elementary_check = relax_cost_check = false;
 	processed_count = 0;
 	
 	t_m = vrp.T;

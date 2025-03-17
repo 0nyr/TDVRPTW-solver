@@ -8,7 +8,7 @@ if ("${CMAKE_BUILD_TYPE}" MATCHES release OR "${CMAKE_BUILD_TYPE}" MATCHES Relea
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DNDEBUG")
 elseif ("${CMAKE_BUILD_TYPE}" MATCHES debug OR "${CMAKE_BUILD_TYPE}" MATCHES Debug)
     message("-- Compiling in Debug Mode")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og -Wall -Wextra")
 endif()
 
 # Add include directory.
@@ -21,7 +21,9 @@ include_directories(goc/include)
 # Create library with source codes.
 add_library(
     solver 
-    src/vrp_instance.cpp 
+    src/instance/vrp_instance.cpp 
+    src/instance/load_igp.cpp 
+    src/preprocess/preprocess_utils.cpp
     src/preprocess/preprocess_capacity.cpp 
     src/preprocess/preprocess_time_windows.cpp 
     src/preprocess/preprocess_service_waiting.cpp 

@@ -73,5 +73,6 @@
         "forward_list": "cpp",
         "text_encoding": "cpp",
         "valarray": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/onyr/code/phd/TDVRPTW-solver/code"
 }

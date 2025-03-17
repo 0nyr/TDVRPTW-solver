@@ -25,7 +25,7 @@ namespace
 // arr'_vu(t) := T-dep_uv(T-t)
 VRPInstance reverse_instance(const VRPInstance& vrp)
 {
-	VRPInstance r = vrp;
+	VRPInstance r = vrp; // default shallow copy.
 	swap(r.o, r.d);
 	r.D = vrp.D.Reverse();
 	for (Vertex v: r.D.Vertices()) r.tw[v] = {vrp.T - vrp.tw[v].right, vrp.T - vrp.tw[v].left};
@@ -77,6 +77,7 @@ BidirectionalLabeling::BidirectionalLabeling(const VRPInstance& vrp)
 	lbl_[0].cross = false, lbl_[1].cross = true;
 	partial = limited_extension = lazy_extension = unreachable_strengthened = sort_by_cost = true;
 	relax_elementary_check = relax_cost_check = false;
+	correcting = false;
 }
 
 BLBExecutionLog BidirectionalLabeling::Run(const PricingProblem& pricing_problem, vector<Route>* R)

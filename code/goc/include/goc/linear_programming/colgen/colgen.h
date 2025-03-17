@@ -26,12 +26,13 @@ namespace goc
 // lp_solver: Linear relaxation solver.
 // options: Which options of the execution to keep track of.
 // Returns: the execution log of the column generation with the specified options.
-CGExecutionLog solve_colgen(Formulation* formulation,
-				   std::ostream* screen_output,
-				   Duration time_limit,
-				   const PricingFunction& pricing_function,
-				   LPSolver* lp_solver,
-				   const std::unordered_set<CGOption>& options);
+CGExecutionLog solve_colgen(
+	Formulation* formulation,
+	std::ostream* screen_output,
+	Duration time_limit,
+	const PricingFunction& pricing_function,
+	LPSolver* lp_solver,
+	const std::unordered_set<CGOption>& options);
 } // namespace goc
 
 #endif //GOC_LINEAR_PROGRAMMING_COLGEN_COLGEN_H

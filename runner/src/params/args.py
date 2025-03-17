@@ -19,6 +19,7 @@ def parse_program_args():
     arg_parser.add_argument("--heaptrack", "-H", help="Runs the experiment(s) using heaptrack.", action="store_true")
     arg_parser.add_argument("--memlimit", "-M", help="Sets a memory limit in GB (default 15GB).", default=15)
     arg_parser.add_argument("--silent", "-S", help="Do not print the stderr stream of the experiments to the screen.", action="store_true")
+    arg_parser.add_argument("--clean-build", help="Clean the obj/ directory before compiling.", action="store_true")
 
     # Read command line parameters.
     args = vars(arg_parser.parse_args())

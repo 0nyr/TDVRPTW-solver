@@ -44,7 +44,13 @@ int main(int argc, char** argv)
 	{
 		json output; // STDOUT output will go into this JSON.
 
-		if (argc > 1) simulate_runner_input("instances/for_testing", "C101-n=27-13a0175de063b6b4de3fc2395adbb80f367b5968.json", "experiments/bp_test.json", "BP-CUTS");
+		if (argc > 1) 
+			simulate_runner_input(
+				"instances/for_testing", 
+				"C101-n=27-b4428082af125a468942b4c4a31ae36a2224e960.json", 
+				"experiments/bp_test.json", 
+				"BP-CUTS"
+			);
 
 		json experiment, instance, solutions;
 		cin >> experiment >> instance >> solutions;

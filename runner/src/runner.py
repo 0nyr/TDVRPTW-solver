@@ -13,10 +13,9 @@ def main():
 	experiment_files: list[str] = args["experiments"] # List of .json experiment files.
 	selected_instances = args["instances"]
 	selected_experiments = args["exps"]
-	build_type = args["build_type"]
 
 	# Compile project.
-	if not compile(build_type): exit(0)
+	if not compile(args): exit(0)
 
 	# Run experiment files.
 	for experiment_file in experiment_files:
