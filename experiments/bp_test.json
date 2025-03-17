@@ -4,6 +4,16 @@
             "name": "Dabia2013", 
             "n": [27],
             "select": "RC201"
+        },
+        {
+            "name": "Solomon1987", 
+            "n": [27],
+            "select": "RC201"
+        },
+        {
+            "name": "Ari2018", 
+            "n": [17],
+            "select": "Ari1-n=17-00bf7cc8"
         }
     ],
     "experiments": [

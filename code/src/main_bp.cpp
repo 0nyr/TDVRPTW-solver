@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 		if (argc > 1) 
 			simulate_runner_input(
 				"instances/for_testing", 
-				"C101-n=27-b4428082af125a468942b4c4a31ae36a2224e960.json", 
+				"Ari1-n=17-00bf7cc8d47a156268eb6fa52fd053cda8d5b184.json", 
 				"experiments/bp_test.json", 
 				"BP-CUTS"
 			);

@@ -26,7 +26,7 @@ const vector<string>COMMON_REQUIRED_KEYS = {
     "arc_count",
     "arcs",   
 };
-const vector<string>SOLONOM1987_REQUIRED_KEYS = {
+const vector<string>SOLONOM_REQUIRED_KEYS = {
     "coordinates",
 };
 const vector<string>DABIA_REQUIRED_KEYS = {
@@ -51,9 +51,9 @@ void check_required_keys(
             throw runtime_error("The JSON instance is missing the key: " + key);
 }
 
-void load_solomon1987(nlohmann::json& instance)
+void load_solomon(nlohmann::json& instance)
 {
-    check_required_keys(instance, SOLONOM1987_REQUIRED_KEYS);
+    check_required_keys(instance, SOLONOM_REQUIRED_KEYS);
     
     clog << "Preprocessing..." << endl;
     preprocess_capacity(instance);
@@ -63,10 +63,23 @@ void load_solomon1987(nlohmann::json& instance)
     preprocess_triangle_depot(instance);
 }
 
-void load_dabia2013(nlohmann::json& instance)
+void load_dabia(nlohmann::json& instance)
 {
     // Dabia2013 is based on Solomon1987.
-    check_required_keys(instance, SOLONOM1987_REQUIRED_KEYS);
+    check_required_keys(instance, SOLONOM_REQUIRED_KEYS);
+    check_required_keys(instance, DABIA_REQUIRED_KEYS);
+    
+    clog << "Preprocessing..." << endl;
+    preprocess_capacity(instance);
+    preprocess_travel_times(instance);
+    preprocess_service_waiting(instance);
+    preprocess_time_windows(instance);
+    preprocess_triangle_depot(instance);
+}
+
+void load_ari(nlohmann::json& instance)
+{
+    // Like Dabia's benchmark, Ari's instances are IGPs.
     check_required_keys(instance, DABIA_REQUIRED_KEYS);
     
     clog << "Preprocessing..." << endl;
@@ -85,11 +98,16 @@ void load_igp(nlohmann::json& instance)
     
     string benchmark_basename = instance["benchmark_basename"];
     if (benchmark_basename == "Dabia2013")
-        load_dabia2013(instance);
+        load_dabia(instance);
     else if (benchmark_basename == "Solomon1987")
-        load_solomon1987(instance);
+        load_solomon(instance);
+    else if (
+        benchmark_basename == "Ari2018" ||
+        benchmark_basename == "Vu2020"
+    )
+        load_ari(instance);
     else
-        throw runtime_error("The benchmark_basename is not supported: " + benchmark_basename);
+        throw runtime_error("The benchmark_basename is not supported: " + benchmark_basename + ". If you need to add support for this benchmark, please modify the load.cpp file.");
 
     // int n = j["nb_vertices"];
     // Digraph D = j;
