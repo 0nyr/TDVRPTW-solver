@@ -1,12 +1,13 @@
 import os, json, datetime, os
 
 from utils.terminal import purple
-from utils.utils import read_json_from_file, save_json_to_file
+from utils.utils import read_json_from_file, save_json_to_file, save_csv_to_file
 from utils.formatting import format_date_for_filepath
 from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
 from compiling.compile import compile
 from running.experiment import run_experiment, instances_for_experiment
 from params.args import parse_program_args
+from output.csv_output import get_csv_res
 
 def main():
 	args = parse_program_args()
@@ -34,6 +35,7 @@ def main():
 		TSave = 5
 		experiment_filename = os.path.basename(experiment_file).replace(".json", "")
 		output_file_name = F"{format_date_for_filepath(RUNNER_START_TIME)}-{experiment_filename}.json"
+		csv_output_filepath = F"{OUTPUT_DIR}/csv/{output_file_name.replace('.json', '.csv')}"
 		TInit = datetime.datetime.now() # TInit = "timestamp when the experimentation started".
 		TLast = datetime.datetime.now() # TLast = "last time the output was saved".
 
@@ -58,6 +60,9 @@ def main():
 				print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]} ({datetime.datetime.now()})"), flush=True)
 				res = run_experiment(args, experiment, instance, solutions)
 				output["outputs"].append(res)
+
+				# Save the CSV output.
+				save_csv_to_file(csv_output_filepath, get_csv_res(res))
 				
 				# If TSave seconds have passed since TLast then save output.
 				if (datetime.datetime.now() - TLast).total_seconds() >= TSave:

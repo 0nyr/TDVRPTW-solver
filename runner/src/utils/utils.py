@@ -47,3 +47,19 @@ def check_files_exist(filepaths: list[str]):
     """
     for filepath in filepaths:
         check_file_exists(filepath)
+
+def save_csv_to_file(file_path: str, csv_content: dict):
+    """
+    Save a CSV content to a file.
+    If the file doesn't exists, it will be created,
+    with the header as the first line.
+    """
+    parent_dir = os.path.dirname(file_path)
+    create_dir(parent_dir)
+
+    if not os.path.isfile(file_path):
+        with open(file_path, "w") as f:
+            f.write(f"{';'.join(csv_content.keys())}\n")
+    
+    with open(file_path, "a") as f:
+        f.write(f"{';'.join(map(str, csv_content.values()))}\n")
