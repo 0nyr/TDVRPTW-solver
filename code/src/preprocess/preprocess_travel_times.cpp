@@ -69,7 +69,7 @@ double ready_time(const json& instance, Arc e, double t0)
 }
 
 // Precondition: no speeds are 0.
-PWLFunction compute_travel_time_function(const json& instance, Arc e)
+PWLFunction compute_igp_travel_time_function(const json& instance, Arc e)
 {
 	// Calculate speed breakpoints.
 	vector<Interval> speed_zones = instance["time_steps"];
@@ -114,21 +114,82 @@ double euclidean_distance(double x1, double y1, double x2, double y2)
 {
 	return sqrt(pow(x1-x2, 2) + pow(y1-y2, 2));
 }
+
+inline double get_raw_travel_time_from_td_cost_matrix(
+	const json& instance,
+	int nb_vertices, 
+    int i, 
+    int j, 
+    size_t time_step
+) {
+	return instance["td_cost_matrix"][i*nb_vertices + j][time_step];
 }
 
-void preprocess_travel_times(json& instance)
-{
-	clog << " - IGP Travel Times" << endl;
+PWLFunction compute_piecewise_constant_travel_time_function(
+	const json& instance, Arc e
+) {
+	vector<double> B;
+	vector<double> T;
+	vector<Interval> time_steps = instance["time_steps"];
+	int nb_vertices = instance["nb_vertices"];
 
-	Digraph D = instance;
-	Matrix<PWLFunction> tau(D.NbVertices(), D.NbVertices());
-	for (Arc e: D.Arcs()) 
+	for (size_t ts = 0; ts < time_steps.size(); ++ts) 
 	{
-		tau[e.tail][e.head] = compute_travel_time_function(instance, e);
-		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
+		// start of time step
+		const double t_start = time_steps[ts].left;
+		const double travel_time = get_raw_travel_time_from_td_cost_matrix(instance, nb_vertices, e.tail, e.head, ts);
+		
+		// end of time step
+		double t_end = time_steps[ts].right;
+
+		// check if the raw travel time is decreasing
+		// in the next time step, if there is one
+		if (ts + 1 < time_steps.size()) 
+		{
+			const double next_travel_time = get_raw_travel_time_from_td_cost_matrix(instance, nb_vertices, e.tail, e.head, ts + 1);
+			const double next_t_start = time_steps[ts + 1].left;
+			assert(next_t_start == t_end && "Time steps must be contiguous");
+			
+			if (next_travel_time < travel_time) 
+			{
+				// travel time decrease must be limited by a
+				// slope of -1. Do the math
+				t_end = next_travel_time + t_end - travel_time;
+			}
+			else if (next_travel_time > travel_time)
+			{
+				// decrease the time step duration by EPS
+            	// to avoid discontinuity
+				t_end -= EPS;
+			}
+		}
+
+		B.push_back(t_start);
+		T.push_back(travel_time);
+		B.push_back(t_end);
+		T.push_back(travel_time);
 	}
-	instance["travel_times"] = tau;
+
+	// filter out duplicates from B and remove associated T values
+	vector<double> B_filtered;
+	vector<double> T_filtered;
+	for (size_t i = 0; i < B.size(); ++i) 
+	{
+		if (find(B_filtered.begin(), B_filtered.end(), B[i]) == B_filtered.end()) 
+		{
+			B_filtered.push_back(B[i]);
+			T_filtered.push_back(T[i]);
+		}
+	}
+
+	// Create travel time function.
+	PWLFunction tau;
+	for (int i = 0; i < (int)B_filtered.size()-1; ++i)
+		tau.AddPiece(LinearFunction(Point2D(B_filtered[i], T_filtered[i]), Point2D(B_filtered[i+1], T_filtered[i+1])));	
+	
+	return tau;
 }
+} // anonymous namespace
 
 void preprocess_constant_travel_times(nlohmann::json& instance)
 {
@@ -146,6 +207,34 @@ void preprocess_constant_travel_times(nlohmann::json& instance)
 		); 
 		tau[e.tail][e.head] = PWLFunction::ConstantFunction(distance, Interval(horizon.left, horizon.right - distance));
 		
+		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
+	}
+	instance["travel_times"] = tau;
+}
+
+void preprocess_igp_travel_times(json& instance)
+{
+	clog << " - IGP Travel Times" << endl;
+
+	Digraph D = instance;
+	Matrix<PWLFunction> tau(D.NbVertices(), D.NbVertices());
+	for (Arc e: D.Arcs()) 
+	{
+		tau[e.tail][e.head] = compute_igp_travel_time_function(instance, e);
+		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
+	}
+	instance["travel_times"] = tau;
+}
+
+void preprocess_piecewise_constant_travel_times(json& instance)
+{
+	clog << " - Piecewise Constant Travel Times" << endl;
+
+	Digraph D = instance;
+	Matrix<PWLFunction> tau(D.NbVertices(), D.NbVertices());
+	for (Arc e: D.Arcs()) 
+	{
+		tau[e.tail][e.head] = compute_piecewise_constant_travel_time_function(instance, e);
 		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
 	}
 	instance["travel_times"] = tau;

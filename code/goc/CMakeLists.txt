@@ -38,6 +38,7 @@ add_library(
     src/graph/arc.cpp 
     src/graph/digraph.cpp 
     src/math/interval.cpp 
+    src/math/partitioned_interval.cpp 
     src/math/linear_function.cpp 
     src/linear_programming/model/variable.cpp 
     src/linear_programming/model/expression.cpp 

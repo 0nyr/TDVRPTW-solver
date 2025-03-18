@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 		// Preprocess instance JSON.
 		clog << "Preprocessing..." << endl;
 		preprocess_capacity(instance);
-		preprocess_travel_times(instance);
+		preprocess_igp_travel_times(instance);
 		preprocess_service_waiting(instance);
 		preprocess_time_windows(instance);
 		preprocess_triangle_depot(instance);

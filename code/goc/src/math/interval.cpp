@@ -53,6 +53,11 @@ bool Interval::IsPoint() const
 	return epsilon_equal(left, right);
 }
 
+Interval Interval::Union(const Interval& r) const
+{
+	return Interval(min(left, r.left), max(right, r.right));
+}
+
 void Interval::Print(std::ostream& os) const
 {
 	os << "[" << left << ", " << right << "]";

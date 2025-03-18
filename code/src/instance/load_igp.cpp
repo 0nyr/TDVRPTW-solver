@@ -37,6 +37,11 @@ const vector<string>DABIA_REQUIRED_KEYS = {
     "time_steps",
     "distances",
 };
+const vector<string>RIFKI_REQUIRED_KEYS = {
+    "td_cost_matrix",
+    "nb_time_steps",
+    "time_steps",
+};
 
 namespace solver
 {
@@ -71,7 +76,7 @@ void load_dabia(nlohmann::json& instance)
     
     clog << "Preprocessing..." << endl;
     preprocess_capacity(instance);
-    preprocess_travel_times(instance);
+    preprocess_igp_travel_times(instance);
     preprocess_service_waiting(instance);
     preprocess_time_windows(instance);
     preprocess_triangle_depot(instance);
@@ -84,7 +89,20 @@ void load_ari(nlohmann::json& instance)
     
     clog << "Preprocessing..." << endl;
     preprocess_capacity(instance);
-    preprocess_travel_times(instance);
+    preprocess_igp_travel_times(instance);
+    preprocess_service_waiting(instance);
+    preprocess_time_windows(instance);
+    preprocess_triangle_depot(instance);
+}
+
+void load_rifki(nlohmann::json& instance)
+{
+    // Rifki2020 is based on Solomon1987.
+    check_required_keys(instance, RIFKI_REQUIRED_KEYS);
+    
+    clog << "Preprocessing..." << endl;
+    preprocess_capacity(instance);
+    preprocess_piecewise_constant_travel_times(instance);
     preprocess_service_waiting(instance);
     preprocess_time_windows(instance);
     preprocess_triangle_depot(instance);
@@ -106,6 +124,8 @@ void load_igp(nlohmann::json& instance)
         benchmark_basename == "Vu2020"
     )
         load_ari(instance);
+    else if (benchmark_basename == "Rifki2020")
+        load_rifki(instance);
     else
         throw runtime_error("The benchmark_basename is not supported: " + benchmark_basename + ". If you need to add support for this benchmark, please modify the load.cpp file.");
 

@@ -44,6 +44,9 @@ public:
 	
 	// Returns: if the domain is [a, a] for some a.
 	bool IsPoint() const;
+
+	// Returns: the union of the intervals.
+	Interval Union(const Interval& r) const;
 	
 	// Prints the interval.
 	// Format: [left, right].

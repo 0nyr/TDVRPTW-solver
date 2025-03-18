@@ -279,6 +279,39 @@ PWLFunction PWLFunction::RestrictImage(const Interval& image) const
 	return f;
 }
 
+// TODO: could be optimized if sure that the 
+// function has continuous subdomains.
+PartitionedInterval PWLFunction::DomainBreakpoints() const
+{
+	PartitionedInterval pi;
+	for (auto& p: pieces_) pi.add(p.domain);
+	return pi;
+}
+
+PartitionedInterval PWLFunction::ImageBreakpoints() const
+{
+	PartitionedInterval pi;
+	for (auto& p: pieces_) pi.add(p.image);
+	return pi;
+}
+
+bool PWLFunction::check_invariant() const
+{
+	if (pieces_.empty()) return domain_ == Interval(INFTY, -INFTY) && image_ == Interval(INFTY, -INFTY);
+	
+	// Check that the domain is the union of the pieces domains.
+	Interval domain = pieces_.front().domain;
+	for (auto& p: pieces_) domain = domain.Union(p.domain);
+	if (domain != domain_) return false;
+	
+	// Check that the image is the union of the pieces images.
+	Interval image = pieces_.front().image;
+	for (auto& p: pieces_) image = image.Union(p.image);
+	if (image != image_) return false;
+	
+	return true;
+}
+
 void PWLFunction::Print(std::ostream& os) const
 {
 	os << "[";

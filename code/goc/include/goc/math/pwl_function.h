@@ -12,6 +12,7 @@
 
 #include "goc/lib/json.hpp"
 #include "goc/math/interval.h"
+#include "goc/math/partitioned_interval.h"
 #include "goc/math/linear_function.h"
 #include "goc/print/printable.h"
 
@@ -21,7 +22,7 @@ namespace goc
 // Invariant: the linear functions are non overlapping and are increasing in domain.
 // Invariant: the function is stored normalized. A function is normalized iif no two consecutive pieces have the same
 // 			  slope, intercept, and share the end and beginning of their domains.
-// Example: [p1={(1,2),(2,3)},p2={(2,3),(3,4)}] is not normalized. [p1={(1,2),(3,4)}] is normalized.
+// Example: [segment1={(1,2),(2,3)},segment2={(2,3),(3,4)}] is not normalized. [segment1={(1,2),(3,4)}] is normalized.
 class PWLFunction : public Printable
 {
 public:
@@ -110,6 +111,16 @@ public:
 	// Returns: the restricted function.
 	PWLFunction RestrictImage(const Interval& image) const;
 	
+	// Returns all the breakpoints (stored preimages) of the function.
+	// Observation: if Empty() then returns [INFTY, -INFTY].
+	PartitionedInterval DomainBreakpoints() const;
+
+	// Returns: all the breakpoints (store images) of the function.
+	// Observation: if Empty() then returns [INFTY, -INFTY].
+	PartitionedInterval ImageBreakpoints() const;
+
+	bool check_invariant() const;
+
 	// Prints the function.
 	// Format: [p1, p2, ..., pn].
 	virtual void Print(std::ostream& os) const;
