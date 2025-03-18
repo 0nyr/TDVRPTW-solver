@@ -125,6 +125,19 @@ inline double get_raw_travel_time_from_td_cost_matrix(
 	return instance["td_cost_matrix"][i*nb_vertices + j][time_step];
 }
 
+void check_tau(
+	const PWLFunction& tau, const Arc& e
+) {
+	if (tau.check_invariant())
+		clog << "*";
+	else
+	{
+		std::ostringstream oss;
+		oss << "Invariant error for tau[" << e.tail << "][" << e.head << "]: " << to_string(tau);
+		throw runtime_error(oss.str());
+	}
+}
+
 PWLFunction compute_piecewise_constant_travel_time_function(
 	const json& instance, Arc e
 ) {
@@ -206,8 +219,8 @@ void preprocess_constant_travel_times(nlohmann::json& instance)
 			instance["coordinates"][e.tail][0], instance["coordinates"][e.tail][1]
 		); 
 		tau[e.tail][e.head] = PWLFunction::ConstantFunction(distance, Interval(horizon.left, horizon.right - distance));
-		
-		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
+		check_tau(tau[e.tail][e.head], e);
+		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << to_string(tau[e.tail][e.head]) << endl;
 	}
 	instance["travel_times"] = tau;
 }
@@ -221,7 +234,8 @@ void preprocess_igp_travel_times(json& instance)
 	for (Arc e: D.Arcs()) 
 	{
 		tau[e.tail][e.head] = compute_igp_travel_time_function(instance, e);
-		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
+		check_tau(tau[e.tail][e.head], e);
+		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << to_string(tau[e.tail][e.head]) << endl;
 	}
 	instance["travel_times"] = tau;
 }
@@ -235,7 +249,8 @@ void preprocess_piecewise_constant_travel_times(json& instance)
 	for (Arc e: D.Arcs()) 
 	{
 		tau[e.tail][e.head] = compute_piecewise_constant_travel_time_function(instance, e);
-		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << tau[e.tail][e.head] << endl;
+		check_tau(tau[e.tail][e.head], e);
+		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << to_string(tau[e.tail][e.head]) << endl;
 	}
 	instance["travel_times"] = tau;
 }

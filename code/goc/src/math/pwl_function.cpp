@@ -6,6 +6,7 @@
 
 #include "goc/math/pwl_function.h"
 
+#include "goc/print/print_utils.h"
 #include "goc/exception/exception_utils.h"
 #include "goc/string/string_utils.h"
 #include "goc/math/number_utils.h"
@@ -354,6 +355,41 @@ void to_json(json& j, const PWLFunction& f)
 {
 	j = vector<LinearFunction>();
 	for (auto& p: f.Pieces()) j.push_back(p);
+}
+
+string to_string(const PWLFunction& f)
+{
+	ostringstream msg;
+	msg << "PWLFunction" << endl;
+
+	// print domain and image intervals
+	msg << setw(14) << f.Domain() << setw(14) << f.Image() << endl;
+	
+	vector<double> xs;
+	vector<double> ys;
+	for (size_t i = 0; i < f.Pieces().size(); ++i)
+	{
+		auto&p = f.Pieces()[i];
+		xs.push_back(p.domain.left);
+		xs.push_back(p.domain.right);
+		ys.push_back(p.image.left);
+		ys.push_back(p.image.right);
+		
+		if (i >= f.Pieces().size() - 1) // if last piece
+		{
+			msg << setw(26) << setprecision(6) << fixed << p.domain.left << setw(26) << setprecision(6) << fixed << p.image.left << endl;
+			msg << setw(26) << setprecision(6) << fixed << p.domain.right << setw(26) << setprecision(6) << fixed << p.image.right << endl; 
+		}
+		else
+		{
+			msg << setw(26) << setprecision(6) << fixed << p.domain.left << setw(26) << setprecision(6) << fixed << p.image.left << endl;
+		}
+	}
+	// print vectors, using goc/print/print_utils.h '<<'
+	print_padded_vectors(msg, xs, ys);
+	// msg << f.DomainBreakpoints();
+	// msg << f.ImageBreakpoints();
+	return msg.str();
 }
 
 PWLFunction operator+(const PWLFunction& f, const PWLFunction& g)

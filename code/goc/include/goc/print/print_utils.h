@@ -39,6 +39,86 @@ std::ostream& print_iterable(std::ostream& os, const Collection& collection, cha
 	return os;
 }
 
+template<typename T>
+void print_padded_vectors(
+    std::ostream& os,
+    const std::vector<T>& vec1,
+    const std::vector<T>& vec2
+) {
+    static_assert(std::is_floating_point<T>::value, "print_padded_vectors requires floating point types");
+
+    // Both vectors must have the same size.
+    assert(vec1.size() == vec2.size() && "Both vectors must have the same size");
+
+    if (vec1.empty()) {
+        os << "[]" << std::endl;
+        os << "[]" << std::endl;
+        return;
+    }
+    
+    // Convert each element of both vectors to its string representation.
+    // std::showpoint forces a decimal point.
+    std::vector<std::string> str_vec1, str_vec2;
+    str_vec1.reserve(vec1.size());
+    str_vec2.reserve(vec2.size());
+    
+    for (const auto& val : vec1) {
+        std::ostringstream oss;
+        oss << std::showpoint << val;
+        str_vec1.push_back(oss.str());
+    }
+    for (const auto& val : vec2) {
+        std::ostringstream oss;
+        oss << std::showpoint << val;
+        str_vec2.push_back(oss.str());
+    }
+    
+    // Compute the maximum integer part length and maximum fraction length
+    // across both vectors.
+    size_t max_int_len = 0;
+    size_t max_frac_len = 0;
+    
+    auto update_lengths = [&](const std::string& s) {
+        size_t pos = s.find('.');
+        size_t int_len = (pos == std::string::npos) ? s.size() : pos;
+        size_t frac_len = (pos == std::string::npos) ? 0 : s.size() - pos - 1;
+        max_int_len = std::max(max_int_len, int_len);
+        max_frac_len = std::max(max_frac_len, frac_len);
+    };
+
+    for (const auto& s : str_vec1) {
+        update_lengths(s);
+    }
+    for (const auto& s : str_vec2) {
+        update_lengths(s);
+    }
+    
+    // Helper lambda to print a vector using the computed field widths.
+    auto print_vector = [&](const std::vector<std::string>& sv) {
+        os << "[";
+        bool first = true;
+        for (const auto& s : sv) {
+            if (!first) {
+                os << ", ";
+            } else {
+                first = false;
+            }
+            size_t pos = s.find('.');
+            size_t int_len = (pos == std::string::npos) ? s.size() : pos;
+            size_t frac_len = (pos == std::string::npos) ? 0 : s.size() - pos - 1;
+            size_t left_padding = (max_int_len > int_len) ? (max_int_len - int_len) : 0;
+            size_t right_padding = (max_frac_len > frac_len) ? (max_frac_len - frac_len) : 0;
+            os << std::string(left_padding, ' ') << s << std::string(right_padding, ' ');
+        }
+        os << "]";
+    };
+
+    print_vector(str_vec1);
+    os << std::endl;
+    print_vector(str_vec2);
+    os << std::endl;
+}
+
 // Prints the pair in the ostream os.
 // The output format is "(first, second)".
 // Precondition: The types T1, T2 must have the <<(ostream&) operator implemented.

@@ -143,6 +143,8 @@ void from_json(const nlohmann::json& j, PWLFunction& f);
 
 void to_json(nlohmann::json& j, const PWLFunction& f);
 
+std::string to_string(const PWLFunction& f);
+
 // Returns: the function h(x) = f(x)+g(x).
 // Observation: only returns h(x) for x \in dom(f) \cap dom(g).
 PWLFunction operator+(const PWLFunction& f, const PWLFunction& g);
