@@ -143,62 +143,80 @@ PWLFunction compute_piecewise_constant_travel_time_function(
 ) {
 	vector<double> B;
 	vector<double> T;
-	vector<Interval> time_steps = instance["time_steps"];
-	int nb_vertices = instance["nb_vertices"];
+	double t1, t2;
+	const vector<Interval> time_steps = instance["time_steps"];
+	const size_t nb_time_steps = time_steps.size();
+	const int nb_vertices = instance["nb_vertices"];
+	Interval horizon = instance["horizon"];
+	const double epsilon_time_step_duration = (horizon.right - horizon.left) / (100 * nb_time_steps);
 
-	for (size_t ts = 0; ts < time_steps.size(); ++ts) 
+	// Add start point
+	B.push_back(time_steps[0].left);
+	T.push_back(get_raw_travel_time_from_td_cost_matrix(instance, nb_vertices, e.tail, e.head, 0));
+
+	for (size_t ts = 0; ts < nb_time_steps - 1; ++ts) 
 	{
-		// start of time step
-		const double t_start = time_steps[ts].left;
+		// handling time step transitions
+		// NOTE: We are sure that there is a next time step
 		const double travel_time = get_raw_travel_time_from_td_cost_matrix(instance, nb_vertices, e.tail, e.head, ts);
+		const double next_travel_time = get_raw_travel_time_from_td_cost_matrix(instance, nb_vertices, e.tail, e.head, ts + 1);
+
+		// x-axis breakpoints
+		t1 = t2 = time_steps[ts].right;
+		const double time_step_end = time_steps[ts + 1].left;
+		assert(t1 == time_step_end  && "Time steps must be contiguous");
+
+		if (next_travel_time < travel_time) 
+		{
+			// travel time decrease must be limited by a
+			// slope of -1. Do the math
+			t1 = time_step_end + next_travel_time - travel_time;
+		}
+		else if (next_travel_time > travel_time)
+		{
+			// modify x-axis breakpoints to avoid discontinuity
+			t1 -= epsilon_time_step_duration;
+			t2 += epsilon_time_step_duration;
+		}
+		else
+		{
+			// same slope, do not add extra breakpoints
+			continue;
+		}
+
+		// check that t1 is within its time step range
+		if (t1 < time_steps[ts].left || t1 > time_steps[ts].right)
+		{
+			std::ostringstream oss;
+			oss << "t1 = " << t1 << " is not within the time step range [" << time_steps[ts].left << ", " << time_steps[ts].right << "]";
+			throw runtime_error(oss.str());
+		}
+		// do same for t2
+		if (t2 < time_steps[ts + 1].left || t2 > time_steps[ts + 1].right)
+		{
+			std::ostringstream oss;
+			oss << "t2 = " << t2 << " is not within the time step range [" << time_steps[ts].left << ", " << time_steps[ts].right << "]";
+			throw runtime_error(oss.str());
+		}
 		
-		// end of time step
-		double t_end = time_steps[ts].right;
-
-		// check if the raw travel time is decreasing
-		// in the next time step, if there is one
-		if (ts + 1 < time_steps.size()) 
-		{
-			const double next_travel_time = get_raw_travel_time_from_td_cost_matrix(instance, nb_vertices, e.tail, e.head, ts + 1);
-			const double next_t_start = time_steps[ts + 1].left;
-			assert(next_t_start == t_end && "Time steps must be contiguous");
-			
-			if (next_travel_time < travel_time) 
-			{
-				// travel time decrease must be limited by a
-				// slope of -1. Do the math
-				t_end = next_travel_time + t_end - travel_time;
-			}
-			else if (next_travel_time > travel_time)
-			{
-				// decrease the time step duration by EPS
-            	// to avoid discontinuity
-				t_end -= EPS;
-			}
-		}
-
-		B.push_back(t_start);
+		// save breakpoints
+		B.push_back(t1);
 		T.push_back(travel_time);
-		B.push_back(t_end);
-		T.push_back(travel_time);
+		B.push_back(t2);
+		T.push_back(next_travel_time);
 	}
 
-	// filter out duplicates from B and remove associated T values
-	vector<double> B_filtered;
-	vector<double> T_filtered;
-	for (size_t i = 0; i < B.size(); ++i) 
-	{
-		if (find(B_filtered.begin(), B_filtered.end(), B[i]) == B_filtered.end()) 
-		{
-			B_filtered.push_back(B[i]);
-			T_filtered.push_back(T[i]);
-		}
-	}
+	// Add end point
+	B.push_back(time_steps.back().right);
+	T.push_back(get_raw_travel_time_from_td_cost_matrix(instance, nb_vertices, e.tail, e.head, nb_time_steps - 1));
+
+	clog << "B and T vectors for arc " << e.tail << " -> " << e.head << endl;
+	print_padded_vectors(clog, B, T);
 
 	// Create travel time function.
 	PWLFunction tau;
-	for (int i = 0; i < (int)B_filtered.size()-1; ++i)
-		tau.AddPiece(LinearFunction(Point2D(B_filtered[i], T_filtered[i]), Point2D(B_filtered[i+1], T_filtered[i+1])));	
+	for (int i = 0; i < (int)B.size()-1; ++i)
+		tau.AddPiece(LinearFunction(Point2D(B[i], T[i]), Point2D(B[i+1], T[i+1])));	
 	
 	return tau;
 }
