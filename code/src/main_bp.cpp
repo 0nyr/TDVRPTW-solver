@@ -16,6 +16,7 @@
 #include "bcp/spf.h"
 #include "bcp/pricing_problem.h"
 #include "labeling/bidirectional_labeling.h"
+#include "goc/log/timed_solutions.h"
 
 using namespace std;
 using namespace goc;
@@ -149,22 +150,24 @@ int main(int argc, char** argv)
 				lbl.merge_start = 0;
 			}
 		};
-		VRPSolution solution(INFTY, {});
-		auto log = bcp.Run(&solution);
+		TimedSolutions<VRPSolution> timed_solutions({});
+		auto log = bcp.Run(timed_solutions);
 
 		output["Exact"] = log;
-		output["Best solution"] = solution;
+		output["timed_solutions"] = timed_solutions;
 
 		clog << "Time: " << log.time << endl;
 		clog << "#Nodes: " << log.nodes_closed << endl;
 		clog << "Status: " << log.status << endl;
-		if (solution.value == INFTY) clog << "No solution found." << endl;
-		if (solution.value != INFTY)
+		if (timed_solutions.empty())
+			clog << "No solution found." << endl;
+		else
 		{
+			auto& best_solution = timed_solutions.last_solution();
 			clog << "Best solution:" << endl;
-			clog << "\tValue: " << solution.value << endl;
+			clog << "\tValue: " << best_solution.value << endl;
 			clog << "\tRoutes:" << endl;
-			for (auto &r: solution.routes) clog << "\t\t" << r << endl;
+			for (auto& r: best_solution.routes) clog << "\t\t" << r << endl;
 		}
 
 		// Send JSON output to cout.

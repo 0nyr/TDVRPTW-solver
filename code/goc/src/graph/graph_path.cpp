@@ -35,4 +35,13 @@ bool has_cycle(GraphPath p, int max_size)
 	
 	return false;
 }
+
+bool operator==(const GraphPath& p1, const GraphPath& p2)
+{
+	if (p1.size() != p2.size()) return false;
+	for (int i = 0; i < p1.size(); ++i)
+		if (p1[i] != p2[i]) return false;
+	return true;
+}
+
 } // namespace goc

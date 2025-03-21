@@ -51,7 +51,7 @@ BCP::BCP(const Digraph& D, SPF* spf) : D(D), spf(spf), z_lb(-INFTY), z_ub(INFTY)
 	};
 }
 
-BCPExecutionLog BCP::Run(VRPSolution* solution)
+BCPExecutionLog BCP::Run(TimedVrpSolution& timed_solutions)
 {
 	// Init variables.
 	log.variable_count = spf->formulation->VariableCount();
@@ -72,13 +72,13 @@ BCPExecutionLog BCP::Run(VRPSolution* solution)
 	// Create root node and solve.
 	clog << "Processing root node." << endl;
 	Node* root = new Node{0, INFTY, {}};
-	ProcessNode(root);
+	ProcessNode(root, timed_solutions);
 	log.root_time = rolex.Peek();
 
 	if (!q.empty())
 	{
 		clog << "Solving BC with existing columns to get an UB." << endl;
-		FreezeHeuristic();
+		FreezeHeuristic(timed_solutions);
 		
 		clog << "Branching." << endl;
 		
@@ -92,20 +92,20 @@ BCPExecutionLog BCP::Run(VRPSolution* solution)
 			if (log.nodes_closed >= node_limit) { log.status = BCStatus::NodeLimitReached; break; }
 			
 			// Pop node.
-			Node* n = q.top();
+			Node* bbnode = q.top();
 			q.pop();
 			log.nodes_open--;
 			log.nodes_closed++;
 			
-			if (epsilon_bigger(z_ub, n->bound))
+			if (epsilon_bigger(z_ub, bbnode->bound))
 			{
-				z_lb = n->bound; // Update z_lb here, because we use Best Bound selection.
-				BranchNode(n);
+				z_lb = bbnode->bound; // Update z_lb here, because we use Best Bound selection.
+				BranchNode(bbnode, timed_solutions);
 				
 				// Output to console.
 				if (tstream.RegisterAttempt()) tstream.WriteRow({STR(rolex.Peek()), STR(log.nodes_closed), STR(log.nodes_open), STR(z_lb), STR(z_ub), STR(spf->formulation->VariableCount())});
 			}
-			delete n;
+			delete bbnode;
 		}
 		if (q.empty()) z_lb = z_ub;
 		
@@ -128,10 +128,6 @@ BCPExecutionLog BCP::Run(VRPSolution* solution)
 	if (z_ub != INFTY) log.best_int_solution = ub;
 	if (z_lb != -INFTY) log.best_bound = z_lb;
 	
-	// If solution was found, assign it to the result.
-	if (z_ub != INFTY) solution->routes = spf->InterpretSolution(ub);
-	if (z_ub != INFTY) solution->value = log.best_int_value;
-	
 	log.final_variable_count = spf->formulation->VariableCount();
 	log.final_constraint_count = spf->formulation->ConstraintCount();
 	
@@ -145,7 +141,7 @@ double BCP::EstimateBound(Node* node)
 	return lp_log.status == LPStatus::Optimum ? *lp_log.incumbent_value : INFTY;
 }
 
-void BCP::ProcessNode(Node* node)
+void BCP::ProcessNode(Node* node, TimedVrpSolution& timed_solutions)
 {
 	node_seq++;
 	spf->SetForbiddenArcs(node->A);
@@ -200,6 +196,15 @@ void BCP::ProcessNode(Node* node)
 			{
 				z_ub = node->bound;
 				ub = node->opt;
+				// print the new UB and associated solution.
+				clog << "New UB: " << z_ub << " at node " << node->index;
+				Duration tsol = rolex.Peek();
+				clog << " - Time since algo start: " << tsol << endl;
+				auto routes = spf->InterpretSolution(ub);
+				clog << routes << endl;
+				VRPSolution sol{z_ub, routes};
+				clog << sol << endl;
+				timed_solutions.add(tsol, sol);
 			}
 			log.nodes_closed++;
 			delete node;
@@ -219,7 +224,7 @@ void BCP::ProcessNode(Node* node)
 	}
 }
 
-void BCP::BranchNode(Node* node)
+void BCP::BranchNode(Node* node, TimedVrpSolution& timed_solutions)
 {
 	Stopwatch rolex_branch(true);
 	
@@ -276,10 +281,10 @@ void BCP::BranchNode(Node* node)
 	*log.branching_time += rolex_branch.Pause();
 	// Process new children to the queue.
 	for (Node& candidate: best_candidate)
-		ProcessNode(new Node(candidate));
+		ProcessNode(new Node(candidate), timed_solutions);
 }
 
-void BCP::FreezeHeuristic()
+void BCP::FreezeHeuristic(TimedVrpSolution& timed_solutions)
 {
 	BCSolver bc_solver;
 	bc_solver.time_limit = time_limit;
@@ -288,10 +293,20 @@ void BCP::FreezeHeuristic()
 	{
 		z_ub = bc_log.best_int_value;
 		ub = *bc_log.best_int_solution;
+
+		// print the new UB and associated solution.
+		clog << "New UB: " << z_ub << " in freeze heuristic";
+		Duration tsol = rolex.Peek();
+		clog << " - Time since algo start: " << tsol << endl;
+		auto routes = spf->InterpretSolution(ub);
+		clog << routes << endl;
+		VRPSolution sol{z_ub, routes};
+		clog << sol << endl;
+		timed_solutions.add(tsol, sol);
 	}
 }
 
-bool BCP::	SeparateCuts(const Valuation& z)
+bool BCP::SeparateCuts(const Valuation& z)
 {
 	// Parse basis variables.
 	vector<VertexSet> z_visited; // z_visited[i] = vertices visited by basis variable i.

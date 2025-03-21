@@ -19,6 +19,10 @@ typedef std::vector<Vertex> GraphPath;
 
 // Returns: if the path 'p' contains a cycle of size 'max_size' vertices or less.
 bool has_cycle(GraphPath p, int max_size=INT_MAX);
+
+// Returns: if two paths are equal.
+bool operator==(const GraphPath& p1, const GraphPath& p2);
+
 } // namespace goc
 
 #endif //GOC_GRAPH_GRAPH_PATH_H

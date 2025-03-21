@@ -13,7 +13,11 @@ def get_csv_res(
     # JSON stdout
     stdout_data = res["stdout"]
     if isinstance(stdout_data, dict):
-        objective_value = stdout_data["Best solution"]["value"]
+        timed_solutions: list[dict] = stdout_data["timed_solutions"]
+        # if empty, set to Infinity
+        objective_value = float("inf")
+        if len(timed_solutions) > 0:
+            objective_value = timed_solutions[-1]["solution"]["value"]
 
         # check key "Exact" in stdout_data
         if "Exact" in stdout_data:

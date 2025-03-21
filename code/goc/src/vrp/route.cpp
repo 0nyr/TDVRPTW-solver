@@ -37,4 +37,9 @@ void from_json(const json& j, Route& r)
 	r.t0 = j["t0"];
 	r.duration = j["duration"];
 }
+
+bool operator==(const Route& r1, const Route& r2)
+{
+	return r1.path == r2.path && r1.t0 == r2.t0 && r1.duration == r2.duration;
+}
 } // namespace goc

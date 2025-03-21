@@ -210,8 +210,10 @@ PWLFunction compute_piecewise_constant_travel_time_function(
 	B.push_back(time_steps.back().right);
 	T.push_back(get_raw_travel_time_from_td_cost_matrix(instance, nb_vertices, e.tail, e.head, nb_time_steps - 1));
 
+	#ifdef PRINT_TRAVEL_TIMES_PREPROCESSING
 	clog << "B and T vectors for arc " << e.tail << " -> " << e.head << endl;
 	print_padded_vectors(clog, B, T);
+	#endif
 
 	// Create travel time function.
 	PWLFunction tau;
@@ -237,8 +239,11 @@ void preprocess_constant_travel_times(nlohmann::json& instance)
 			instance["coordinates"][e.tail][0], instance["coordinates"][e.tail][1]
 		); 
 		tau[e.tail][e.head] = PWLFunction::ConstantFunction(distance, Interval(horizon.left, horizon.right - distance));
+		
+		#ifdef PRINT_TRAVEL_TIMES_PREPROCESSING
 		check_tau(tau[e.tail][e.head], e);
 		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << to_string(tau[e.tail][e.head]) << endl;
+		#endif
 	}
 	instance["travel_times"] = tau;
 }
@@ -252,8 +257,11 @@ void preprocess_igp_travel_times(json& instance)
 	for (Arc e: D.Arcs()) 
 	{
 		tau[e.tail][e.head] = compute_igp_travel_time_function(instance, e);
+		
+		#ifdef PRINT_TRAVEL_TIMES_PREPROCESSING
 		check_tau(tau[e.tail][e.head], e);
 		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << to_string(tau[e.tail][e.head]) << endl;
+		#endif
 	}
 	instance["travel_times"] = tau;
 }
@@ -267,8 +275,10 @@ void preprocess_piecewise_constant_travel_times(json& instance)
 	for (Arc e: D.Arcs()) 
 	{
 		tau[e.tail][e.head] = compute_piecewise_constant_travel_time_function(instance, e);
+		#ifdef PRINT_TRAVEL_TIMES_PREPROCESSING
 		check_tau(tau[e.tail][e.head], e);
 		clog << "   - Arc " << e.tail << " -> " << e.head << " = " << to_string(tau[e.tail][e.head]) << endl;
+		#endif
 	}
 	instance["travel_times"] = tau;
 }

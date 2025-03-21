@@ -40,6 +40,9 @@ void to_json(nlohmann::json& j, const VRPSolution& solution);
 // Parses an solution.
 void from_json(const nlohmann::json& j, VRPSolution& solution);
 
+// Returns: if two solutions are equal.
+bool operator==(const VRPSolution& s1, const VRPSolution& s2);
+
 } // namespace goc
 
 #endif //GOC_VRP_VRP_SOLUTION_H

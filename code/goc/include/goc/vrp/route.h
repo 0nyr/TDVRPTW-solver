@@ -38,6 +38,9 @@ public:
 void to_json(nlohmann::json& j, const Route& r);
 void from_json(const nlohmann::json& j, Route& r);
 
+// Returns: if two routes are equal.
+bool operator==(const Route& r1, const Route& r2);
+
 } // namespace goc
 
 #endif //GOC_VRP_ROUTE_H
