@@ -84,16 +84,17 @@ def instances_for_experiment(
 
         # check that dataset_subdirs contains only directories
         if all(os.path.isdir(f"{dataset_dir}/{subdir}") for subdir in dataset_subdirs):
+            dataset_subdirs_to_add = dataset_subdirs
             if "n" in dataset:
                 # filter out directories that do not match the n values
-                dataset_subdirs_filtered = []
+                dataset_subdirs_to_add = []
                 for subdir in dataset_subdirs:
                     n_subdir = int(subdir.split("=")[1])
                     if n_subdir in dataset["n"]:
-                        dataset_subdirs_filtered.append(subdir)
-                
-                for subdir in dataset_subdirs_filtered:
-                    instance_dirs.append(f"{dataset_dir}/{subdir}")
+                        dataset_subdirs_to_add.append(subdir)
+
+            for subdir in dataset_subdirs_to_add:
+                instance_dirs.append(f"{dataset_dir}/{subdir}")
         else:
             # the dataset_dir itself is the instance directory
             instance_dirs.append(dataset_dir)

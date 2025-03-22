@@ -14,6 +14,7 @@ def parse_program_args():
     arg_parser.add_argument("experiments", metavar="EXP_FILE", help="JSON experiment file(s) with the experiments to run.", type=str, nargs='+')
     arg_parser.add_argument("--instances", "-I", nargs="*", help="Only execute experiment(s) on selected instances (with these names).")
     arg_parser.add_argument("--exps", "-E", nargs="*", help="Only execute selected experiment(s) (with these names).")
+    arg_parser.add_argument("--carry-on", "-CO", help="Carry on the experiment from provided .csv output file.", type=str)
     arg_parser.add_argument("--callgrind", "-C", help="Runs the experiment(s) using callgrind.", action="store_true")
     arg_parser.add_argument("--valgrind", "-V", help="Runs the experiment(s) using valgrind.", action="store_true")
     arg_parser.add_argument("--heaptrack", "-H", help="Runs the experiment(s) using heaptrack.", action="store_true")
@@ -38,6 +39,8 @@ def parse_program_args():
 
     # file checks
     check_files_exist(experiment_files)
+    if args["carry_on"] is not None:
+        check_files_exist([args["carry_on"]])
 
     print("Program arguments:")
     for key, value in args.items():

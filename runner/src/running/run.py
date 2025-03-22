@@ -8,7 +8,7 @@ def set_memory_limit(memlim_gb: int):
 	"""
 	soft, hard = resource.getrlimit(resource.RLIMIT_AS)
 
-	print(f"Setting memory limit to {memlim_gb}GB")
+	#print(f"Setting memory limit to {memlim_gb}GB")
 	memlim_gb_in_bytes = memlim_gb * 1024 * 1024 * 1024
 
 	resource.setrlimit(resource.RLIMIT_AS, (memlim_gb_in_bytes, hard))

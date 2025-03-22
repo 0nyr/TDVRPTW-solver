@@ -12,7 +12,7 @@ def save_json_to_file(file_path, json_object):
     Save JSON content to a file.
     """
     with open(file_path, "w") as f:
-        f.write(json.dumps(json_object, indent=4))
+        f.write(json.dumps(json_object, indent=2))
 
 def create_dir(dir_path):
     """
@@ -63,3 +63,22 @@ def save_csv_to_file(file_path: str, csv_content: dict):
     
     with open(file_path, "a") as f:
         f.write(f"{';'.join(map(str, csv_content.values()))}\n")
+
+def load_csv_from_file(
+        file_path: str,
+        separator: str = ";"
+    ):
+    """
+    Load a CSV content from a file.
+    """
+    with open(file_path, "r") as f:
+        lines = f.readlines()
+        header = lines[0].strip().split(separator)
+        data = [dict(zip(header, line.strip().split(separator))) for line in lines[1:]]
+    return data
+
+def get_filename_from_path(file_path: str):
+    """
+    Get the filename from a file path.
+    """
+    return os.path.basename(file_path)

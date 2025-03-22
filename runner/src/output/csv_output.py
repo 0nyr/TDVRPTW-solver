@@ -11,11 +11,19 @@ def get_csv_res(
     commit_hash = os.popen("git rev-parse HEAD").read().strip()
 
     # JSON stdout
+    objective_value = float("inf")
     stdout_data = res["stdout"]
+    status = "Unknown"
+    lp_time = 0
+    cut_time = 0
+    pricing_time = 0
+    nodes_closed = 0
+    final_constraint_count = 0
+    final_variable_count = 0
     if isinstance(stdout_data, dict):
         timed_solutions: list[dict] = stdout_data["timed_solutions"]
         # if empty, set to Infinity
-        objective_value = float("inf")
+        
         if len(timed_solutions) > 0:
             objective_value = timed_solutions[-1]["solution"]["value"]
 

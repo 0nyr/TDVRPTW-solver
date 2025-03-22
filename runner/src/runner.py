@@ -1,13 +1,14 @@
 import os, json, datetime, os
 
 from utils.terminal import purple
-from utils.utils import read_json_from_file, save_json_to_file, save_csv_to_file
+from utils.utils import read_json_from_file, save_json_to_file, save_csv_to_file, load_csv_from_file, get_filename_from_path
 from utils.formatting import format_date_for_filepath
 from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
 from compiling.compile import compile
 from running.experiment import run_experiment, instances_for_experiment
 from params.args import parse_program_args
 from output.csv_output import get_csv_res
+from tqdm import tqdm
 
 def main():
 	args = parse_program_args()
@@ -32,10 +33,12 @@ def main():
 		}
 
 		# Periodically, every TSave seconds the output will be saved to the output folder with the name "<date>-<experiment_file_name>.json".
-		TSave = 5
+		TSave = 30
 		experiment_filename = os.path.basename(experiment_file).replace(".json", "")
 		output_file_name = F"{format_date_for_filepath(RUNNER_START_TIME)}-{experiment_filename}.json"
 		csv_output_filepath = F"{OUTPUT_DIR}/csv/{output_file_name.replace('.json', '.csv')}"
+		if args["carry_on"] is not None:
+			csv_output_filepath = args["carry_on"]
 		TInit = datetime.datetime.now() # TInit = "timestamp when the experimentation started".
 		TLast = datetime.datetime.now() # TLast = "last time the output was saved".
 
@@ -44,6 +47,10 @@ def main():
 			experiment_file_json, 
 			selected_instances
 		)
+
+		# prepare experiment runs
+		experiment_runs:list[tuple] = []
+
 		for instance in instances:
 			# Get instance solutions from the dataset directory.
 			solutions = []
@@ -57,18 +64,40 @@ def main():
 				if selected_experiments != None and experiment["name"] not in selected_experiments: continue
 
 				# Run the experiment.
-				print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]} ({datetime.datetime.now()})"), flush=True)
-				res = run_experiment(args, experiment, instance, solutions)
-				output["outputs"].append(res)
-
-				# Save the CSV output.
-				save_csv_to_file(csv_output_filepath, get_csv_res(res))
+				#print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]} ({datetime.datetime.now()})"), flush=True)
 				
-				# If TSave seconds have passed since TLast then save output.
-				if (datetime.datetime.now() - TLast).total_seconds() >= TSave:
-					output["time"] = (datetime.datetime.now() - TInit).total_seconds()
-					save_json_to_file(F"{OUTPUT_DIR}/{output_file_name}", output)
-					TLast = datetime.datetime.now()
+				experiment_runs.append((experiment, instance, solutions))
+		
+		# If carry-on, filter out runs (instance & experiment) that have already been run.
+		nb_removed = 0
+		if args["carry_on"] is not None:
+			carry_on_data = load_csv_from_file(args["carry_on"])
+			indexes_to_remove = []
+			for idx, run in enumerate(experiment_runs):
+				experiment_to_remove = run[0]["name"]
+				instance_to_remove = run[1]["instance_filename"]
+				if any([experiment_to_remove == cod["experiment_name"] and instance_to_remove == get_filename_from_path(cod["instance_filepath"]) for cod in carry_on_data]):
+					print("Marking for removal", experiment_to_remove, instance_to_remove)
+					indexes_to_remove.append(idx)
+					nb_removed += 1
+			# Remove the runs in reverse order to avoid index issues.
+			for idx in sorted(indexes_to_remove, reverse=True):
+				del experiment_runs[idx]
+		print("Removed", nb_removed, "runs.")
+					
+		print(purple(f"Running {len(experiment_runs)} runs..."), flush=True)
+		for experiment, instance, solutions in tqdm(experiment_runs, desc="Running experiments"):
+			res = run_experiment(args, experiment, instance, solutions)
+			output["outputs"].append(res)
+
+			# Save the CSV output.
+			save_csv_to_file(csv_output_filepath, get_csv_res(res))
+
+			# If TSave seconds have passed since TLast then save output.
+			if (datetime.datetime.now() - TLast).total_seconds() >= TSave:
+				output["time"] = (datetime.datetime.now() - TInit).total_seconds()
+				save_json_to_file(F"{OUTPUT_DIR}/{output_file_name}", output)
+				TLast = datetime.datetime.now()
 		
 		# Having finished all experiments from the experimentation_file, save the final output.
 		output["time"] = (datetime.datetime.now() - TInit).total_seconds()
