@@ -69,8 +69,8 @@ def main():
 				experiment_runs.append((experiment, instance, solutions))
 		
 		# If carry-on, filter out runs (instance & experiment) that have already been run.
-		nb_removed = 0
 		if args["carry_on"] is not None:
+			print("Original number of runs:", len(experiment_runs))
 			carry_on_data = load_csv_from_file(args["carry_on"])
 			indexes_to_remove = []
 			for idx, run in enumerate(experiment_runs):
@@ -79,13 +79,13 @@ def main():
 				if any([experiment_to_remove == cod["experiment_name"] and instance_to_remove == get_filename_from_path(cod["instance_filepath"]) for cod in carry_on_data]):
 					print("Marking for removal", experiment_to_remove, instance_to_remove)
 					indexes_to_remove.append(idx)
-					nb_removed += 1
 			# Remove the runs in reverse order to avoid index issues.
 			for idx in sorted(indexes_to_remove, reverse=True):
 				del experiment_runs[idx]
-		print("Removed", nb_removed, "runs.")
-					
+			print("Removed", len(indexes_to_remove), "runs from the list of runs to execute.")
+
 		print(purple(f"Running {len(experiment_runs)} runs..."), flush=True)
+		if args["dry_run"]: return
 		for experiment, instance, solutions in tqdm(experiment_runs, desc="Running experiments"):
 			res = run_experiment(args, experiment, instance, solutions)
 			output["outputs"].append(res)

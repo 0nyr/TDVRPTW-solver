@@ -26,6 +26,31 @@ PartitionedInterval::PartitionedInterval(
     }
 }
 
+PartitionedInterval::PartitionedInterval(const Interval& interval): breakpoints_()
+{
+    // If the interval is empty, do nothing.
+    if (interval.Empty())
+        return;
+
+    // Add the left and right bounds of the interval.
+    // NOTE: Since it's an interval, the bounds are included.
+    breakpoints_.push_back(interval.left);
+    breakpoints_.push_back(interval.right);
+}
+
+PartitionedInterval::PartitionedInterval(const std::vector<Interval>& intervals): breakpoints_()
+{
+    if (intervals.empty())
+        return;
+
+    // Add the left bound of first interval.
+    breakpoints_.push_back(intervals.front().left);
+
+    // Then add the right bound of each interval.
+    for (const Interval& interval: intervals)
+        add(interval.right);
+}
+
 void PartitionedInterval::add(double breakpoint) 
 {
     // If the partitioned interval is empty, add the breakpoint.

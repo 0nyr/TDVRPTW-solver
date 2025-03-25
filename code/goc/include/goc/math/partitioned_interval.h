@@ -9,6 +9,7 @@
 
 namespace goc 
 {
+typedef unsigned int IntervalIndex; // Index of an interval in a partitioned interval.
 
 // This class represent a closed partitioned interval [left, ..., right].
 // The interval is subdivided by a sorted vector of breakpoints that represent
@@ -23,6 +24,12 @@ public:
 
     // Constructs a PartitionedInterval with a sorted vector of breakpoints.
     PartitionedInterval(const std::vector<double>& breakpoints);
+
+    // Constructs a PartitionedInterval with a single interval [left, right].
+    PartitionedInterval(const Interval& interval);
+
+    // Constructs a PartitionedInterval with a sorted contiguous vector of intervals.
+    PartitionedInterval(const std::vector<Interval>& intervals);
 
     // Adds a breakpoint to the partitioned interval.
     // Keeps the sorted breakpoints invariant.
@@ -46,6 +53,10 @@ public:
     // or [breakpoint, breakpoint] if it is the last one.
     Interval find_interval(double value) const;
 
+    // Returns the interval segment at specified index.
+    // If the index is out of bounds, the empty interval is returned.
+    Interval get_interval(int index) const;
+
     // Prints the PartitionedInterval.
     // Format: [left, breakpoints[1], ..., right].
     virtual void Print(std::ostream& os) const;
@@ -54,6 +65,10 @@ public:
     double left() const;
     double right() const;
     const std::vector<double>& get_breakpoints() const;
+    
+    // Returns the number of intervals in the partitioned interval.
+    // If point interval, returns 0. If empty, returns 0.
+    inline size_t nb_intervals() const { return empty() ? 0 : breakpoints_.size() - 1; }
 
 private:
     // Stores the breakpoints in strictly increasing order.

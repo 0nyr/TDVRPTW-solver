@@ -141,8 +141,8 @@ void check_tau(
 PWLFunction compute_piecewise_constant_travel_time_function(
 	const json& instance, Arc e
 ) {
-	vector<double> B;
-	vector<double> T;
+	vector<double> B; // x-axis breakpoints (departure times)
+	vector<double> T; // y-axis breakpoints (travel times)
 	double t1, t2;
 	const vector<Interval> time_steps = instance["time_steps"];
 	const size_t nb_time_steps = time_steps.size();
