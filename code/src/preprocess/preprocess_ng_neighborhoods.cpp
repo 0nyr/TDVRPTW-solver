@@ -1,7 +1,11 @@
 #include "preprocess/preprocess_ng_neighborhoods.h"
 #include "goc/math/math_utils.h"
+#include "instance/vrp_instance.h"
 
 #include <vector>
+#include <queue>
+#include <algorithm>
+#include <cstdint>
 
 using namespace std;
 using namespace goc;
@@ -9,6 +13,48 @@ using namespace nlohmann;
 
 namespace solver
 {
+// Solve a one-to-all makespan minimization time dependent 
+// shortest path for a given vertex (source), at a given departure time.
+// Returns: the optimal makespan of every other vertex from the source.
+// NOTE: Due to FIFO property, waiting is not allowed.
+// WARNING: Different from compute_EAT_from_departure_time
+// because this function considers the time windows.
+vector<double> solve_one_to_all_makespan_minimization(
+    const VRPInstance& vrp,
+    Vertex source,
+    TimeUnit departure_time
+) {
+    int n = vrp.D.NbVertices();
+    vector<double> makespans(n, INFTY); // all makespans are in [0, INFTY).
+    makespans[source] = 0.0;
+
+    // Initialize the priority queue.
+    priority_queue<pair<double, Vertex>, vector<pair<double, Vertex>>, greater<pair<double, Vertex>>> Q;
+    Q.push({0.0, source});
+
+    // Dijkstra's algorithm.
+    while (!Q.empty())
+    {
+        auto [makespan, i] = Q.top();
+        Q.pop();
+
+        // Update the makespan of the successors.
+        for (Vertex j: vrp.D.Successors(i))
+        {
+            double travel_time = vrp.TravelTime({i, j}, makespan);
+            // Check for improvement, and TW feasibility.
+            if (makespan + travel_time < makespans[j] &&
+                makespan + travel_time <= vrp.tw[j].right)
+            {
+                makespans[j] = max(makespan + travel_time, vrp.tw[j].left);
+                Q.push({makespan + travel_time, j});
+            }
+        }
+    }
+
+    return makespans;
+}
+
 namespace
 {
 // Partition the time horizon into intervals following the given strategy.
@@ -63,17 +109,100 @@ PartitionedInterval partition_time_horizon(
 }
 } // anonymous namespace  
 
-void preprocess_ng_neighborhoods(nlohmann::json& instance)
-{
+void preprocess_ng_neighborhoods(
+    nlohmann::json& instance,
+    TDNGNeighborhoodsTimeStrategy horizon_partitioning_strategy,
+    uint32_t nb_neighbors_to_keep
+) {
     clog << " - NG neighborhoods" << endl;
 
     // Step 1: Determine time periods to compute the neighborhoods on.
     const Interval horizon = instance["horizon"];
     const vector<Interval> time_steps = instance["time_steps"];
-    PartitionedInterval partitioned_horizon = partition_time_horizon(horizon, time_steps, TDNGNeighborhoodsTimeStrategy::TimeStepSpecific);
+    PartitionedInterval partitioned_horizon = partition_time_horizon(
+        horizon, 
+        time_steps, 
+        horizon_partitioning_strategy
+    );
 
-    Digraph D = instance;
-	int n = D.NbVertices();
-	auto& V = D.Vertices();
+    VRPInstance vrp = instance;
+    Vertex start_depot = instance["start_depot"];
+	const int n = vrp.D.NbVertices();
+	const auto& V = vrp.D.Vertices();
+    const Matrix<PWLFunction> taus = instance["travel_times"];
+    const vector<Interval> tws = instance["time_windows"];
+    const int nb_horizon_partitions = partitioned_horizon.nb_intervals();
+    vector<vector<vector<Vertex>>> td_ng_neighbors(n, // for each vertex
+        vector<vector<Vertex>>(n, // for each time period
+            vector<Vertex>() // neighbors
+        )
+    );
+    clog << "TD NG Neighbors processing..." << endl;
+    for (Vertex i: V)
+    {
+        for (int t = 0; t < nb_horizon_partitions; ++t)
+        {   
+            // Step 2: Solve a one-to-all makespan minimization 
+            // time dependent shortest path for each vertex, 
+            // for each time period.
+            vector<double> makespans_i_t = solve_one_to_all_makespan_minimization(
+                vrp, 
+                i, 
+                partitioned_horizon.get_interval(t).left
+            );
+
+            // Step 3: Determine the neighborhoods, i.e., the closest 
+            // neighbors for each vertex, for each time period.
+            vector<Vertex> neighbors = V;
+            // Sort the vertices by makespan.
+            sort(neighbors.begin(), neighbors.end(), 
+                [&makespans_i_t](Vertex u, Vertex v) -> bool
+                {
+                    return makespans_i_t[u] < makespans_i_t[v];
+                }
+            );
+
+            // print each vertex and its makespan
+            clog << " - Vertex " << i << " in period " << t << " at time " << partitioned_horizon.get_interval(t).left << " makespans: ";
+            for (Vertex j: neighbors)
+            {
+                clog << j;
+                if (j == i) clog << " (self)";
+                clog << " -> " << makespans_i_t[j];
+                if (j != neighbors.back()) clog << ", ";
+            }
+            clog << endl;
+            // Remove the vertex itself
+            //neighbors.erase(remove(neighbors.begin(), neighbors.end(), i), neighbors.end());
+            // Remove the vertex itself, which is always the closest.
+            neighbors.erase(neighbors.begin());
+
+            // Keep only the closest neighbors.
+            if (neighbors.size() > nb_neighbors_to_keep)
+                neighbors.resize(nb_neighbors_to_keep);
+            // Store the neighbors.
+            td_ng_neighbors[i][t] = neighbors;
+        }
+    }
+
+    // Step 4: Store the neighborhoods.
+    instance["td_ng_neighbors"] = td_ng_neighbors;
+
+    // debug print
+    #ifndef PRINT_NEIGHBORHOODS_PREPROCESSING
+    #define PRINT_NEIGHBORHOODS_PREPROCESSING
+    #endif
+    #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
+    clog << "TD NG Neighbors:" << endl;
+    for (Vertex i: V)
+    {
+        clog << " - Vertex " << i << ":" << endl;
+        for (int t = 0; t < nb_horizon_partitions; ++t)
+        {
+            clog << "   - Time period " << t << "[t=" << partitioned_horizon.get_interval(t).left << "]: ";
+            clog << "     " << td_ng_neighbors[i][t] << endl;
+        }
+    }
+    #endif
 }
 } // namespace

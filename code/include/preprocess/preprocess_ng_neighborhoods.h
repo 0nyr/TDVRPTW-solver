@@ -13,15 +13,12 @@ enum class TDNGNeighborhoodsTimeStrategy
     Static // Time-dependent neighborhoods are static, they do not change over time.
 };
 
-// Enum of aggregation strategies for the TDNGNeighborhoods calculation of "closest neighbors".
-enum class TDNGNeighborhoodsAggregationStrategy
-{
-    NoAggregation, // Does not aggregate travel times per period. Use directly the time dependent travel times.
-    MinTravelTime, // Aggregates travel times per period by the minimum travel time.
-    AverageTravelTime, // Aggregates travel times per period by the average travel time.
-    MaxTravelTime, // Aggregates travel times per period by the maximum travel time.
-};
-
 // Determine the NG neighborhoods of each vertex.
-void preprocess_ng_neighborhoods(nlohmann::json& instance);
+// Assumes preprocess_service_waiting was called (i.e. instance has no service nor waiting times).
+// Assumes preprocess_time_windows was called (i.e. instance has shrinked time windows).
+void preprocess_ng_neighborhoods(
+    nlohmann::json& instance,
+    TDNGNeighborhoodsTimeStrategy horizon_partitioning_strategy,
+    uint32_t nb_neighbors_to_keep
+);
 } // namespace

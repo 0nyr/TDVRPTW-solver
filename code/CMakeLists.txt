@@ -32,12 +32,13 @@ add_library(
     src/preprocess/preprocess_time_windows.cpp 
     src/preprocess/preprocess_service_waiting.cpp 
     src/preprocess/preprocess_travel_times.cpp 
+    src/preprocess/preprocess_triangle_depot.cpp 
+    src/preprocess/preprocess_ng_neighborhoods.cpp 
     src/labeling/label.cpp 
     src/labeling/monodirectional_labeling.cpp 
     src/labeling/lazy_label.cpp 
     src/labeling/pwl_domination_function.cpp 
     src/labeling/bidirectional_labeling.cpp 
-    src/preprocess/preprocess_triangle_depot.cpp 
     src/bcp/pricing_problem.cpp 
     src/bcp/spf.cpp 
     src/bcp/bcp.cpp

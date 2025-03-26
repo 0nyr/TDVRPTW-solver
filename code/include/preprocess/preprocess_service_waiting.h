@@ -16,7 +16,7 @@ namespace solver
 //	- travel_times
 //	- time_windows (optional)
 //	- service_times (optional)
-// We transform the instances into ones without service times nor waiting times. In order to do this we apply
+// We transform the instances into ones without service times nor waiting times (due to TW earliest arrival). In order to do this we apply
 // the preprocessing technique from Lera-Romero & Miranda-Bront 2019 (2.1).
 // 	(i) 	s'i = 0.
 // 	(ii) 	a'_i = a_i + s_i, b'_i = b_i + s_i for each i \in V.

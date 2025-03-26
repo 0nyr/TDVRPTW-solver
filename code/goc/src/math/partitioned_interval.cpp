@@ -143,6 +143,20 @@ Interval PartitionedInterval::find_interval(double value) const {
     return Interval(*lower, *it);
 }
 
+Interval PartitionedInterval::get_interval(int index) const 
+{
+    // If the partitioned interval is empty, return an empty interval.
+    if (empty())
+        return Interval();
+
+    // If the index is out of bounds, return an empty interval.
+    if (index < 0 || index >= (int)breakpoints_.size() - 1)
+        return Interval();
+
+    // Return the interval segment at the specified index.
+    return Interval(breakpoints_[index], breakpoints_[index + 1]);
+}
+
 void PartitionedInterval::Print(std::ostream& os) const 
 {
     if (empty()) 

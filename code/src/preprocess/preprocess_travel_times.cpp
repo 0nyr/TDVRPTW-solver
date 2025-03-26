@@ -16,7 +16,7 @@ namespace
 {
 // Calculates the time to depart to traverse arc e arriving at tf.
 // Returns: INFTY if it is infeasible to depart inside the horizon.
-double departing_time(const json& instance, Arc e, double tf)
+double igp_departing_time(const json& instance, Arc e, double tf)
 {
 	int c = instance["zones"][e.tail][e.head]; // cluster of arc e.
 	vector<Interval> T = instance["time_steps"]; // T[k] = speed zone k.
@@ -40,7 +40,7 @@ double departing_time(const json& instance, Arc e, double tf)
 
 // Calculates the travel time to traverse arc e departing at t0.
 // Returns: INFTY if it is infeasible to arrive inside the horizon.
-double travel_time(const json& instance, Arc e, double t0)
+double igp_travel_time(const json& instance, Arc e, double t0)
 {
 	int c = instance["zones"][e.tail][e.head]; // cluster of arc e.
 	vector<Interval> T = instance["time_steps"]; // T[k] = speed zone k.
@@ -62,9 +62,9 @@ double travel_time(const json& instance, Arc e, double t0)
 }
 
 // Returns the time when we arrive at the end of arc e if departing at t0.
-double ready_time(const json& instance, Arc e, double t0)
+double igp_ready_time(const json& instance, Arc e, double t0)
 {
-	double tt = travel_time(instance, e, t0);
+	double tt = igp_travel_time(instance, e, t0);
 	return tt == INFTY ? tt : t0 + tt;
 }
 
@@ -82,13 +82,13 @@ PWLFunction compute_igp_travel_time_function(const json& instance, Arc e)
 	// 	- B2: times t such that we arrive to head(e) at a speed breakpoint.
 	vector<double> B1;
 	for (double t: speed_breakpoints)
-		if (travel_time(instance, e, t) != INFTY)
+		if (igp_travel_time(instance, e, t) != INFTY)
 			B1.push_back(t);
 		
 	vector<double> B2;
 	for (double t: speed_breakpoints)
-		if (departing_time(instance, e, t) != INFTY)
-			B2.push_back(departing_time(instance, e, t));
+		if (igp_departing_time(instance, e, t) != INFTY)
+			B2.push_back(igp_departing_time(instance, e, t));
 	
 	// Merge breakpoints in order in a set B.
 	vector<double> B(B1.size()+B2.size());
@@ -99,7 +99,7 @@ PWLFunction compute_igp_travel_time_function(const json& instance, Arc e)
 	
 	// Calculate travel times for each t \in B.
 	vector<double> T;
-	for (double t: B) T.push_back(travel_time(instance, e, t));
+	for (double t: B) T.push_back(igp_travel_time(instance, e, t));
 	
 	// Create travel time function.
 	PWLFunction tau;

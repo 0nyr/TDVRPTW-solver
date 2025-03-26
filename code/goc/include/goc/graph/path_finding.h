@@ -25,6 +25,7 @@ GraphPath longest_path(const Digraph& D, Vertex s, Vertex t);
 //	- t0: start vertex initial time.
 //	- tt(i, j, t0): travel time departing from i at t0 to j (INFTY if infeasible).
 // Returns: the earliest arrival time to all vertices from s.
+// NOTE: Time-Dependant Dijkstra.
 std::vector<double> compute_earliest_arrival_time(const Digraph& D, Vertex s, double t0, const std::function<double(Vertex, Vertex, double)>& tt);
 
 //	- D: digraph.

@@ -128,14 +128,5 @@ void load_igp(nlohmann::json& instance)
         load_rifki(instance);
     else
         throw runtime_error("The benchmark_basename is not supported: " + benchmark_basename + ". If you need to add support for this benchmark, please modify the load.cpp file.");
-
-    // int n = j["nb_vertices"];
-    // Digraph D = j;
-    // Vertex o = j["start_depot"];
-	// Vertex d = j["end_depot"];
-	// TimeUnit T = j["horizon"][1];
-    // vector<goc::Interval> tw = vector<Interval>(j["time_windows"].begin(), j["time_windows"].end());
-    // CapacityUnit Q = j["vehicle_capacity"];
-    // vector<CapacityUnit> q = vector<CapacityUnit>(j["demands"].begin(), j["demands"].end());
 }
 } // namespace

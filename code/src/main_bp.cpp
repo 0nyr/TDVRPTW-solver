@@ -17,6 +17,8 @@
 #include "bcp/pricing_problem.h"
 #include "labeling/bidirectional_labeling.h"
 #include "goc/log/timed_solutions.h"
+#include "goc/math/math_utils.h"
+#include "preprocess/preprocess_ng_neighborhoods.h"
 
 using namespace std;
 using namespace goc;
@@ -72,6 +74,9 @@ int main(int argc, char** argv)
 		bool symmetric = value_or_default(experiment, "symmetric", false);
 		bool iterative_merge = value_or_default(experiment, "iterative_merge", true);
 		bool exact_labeling = value_or_default(experiment, "exact_labeling", true);
+		bool ng_routes = value_or_default(experiment, "ng_routes", true);
+	    int ng_nb_neighbors = double(fast_log2((uint32_t)instance["nb_vertices"])) * 1.7;
+		int ng_max_neighbors = max((int)((double)instance["nb_vertices"] / 2.0), ng_nb_neighbors);
 
 		// Show experiment details.
 		clog << "Time limit: " << time_limit << "s." << endl;
@@ -85,6 +90,19 @@ int main(int argc, char** argv)
 		clog << "Symmetric: " << symmetric << endl;
 		clog << "Iterative merge: " << iterative_merge << endl;
 		clog << "Exact labeling: " << exact_labeling << endl;
+		clog << "Nb vertices: " << instance["nb_vertices"] << endl;
+		clog << "NG routes: " << ng_routes << endl;
+		if (ng_routes)
+		{
+			clog << "NG nb neighbors: " << ng_nb_neighbors << endl;
+			clog << "NG max neighbors: " << ng_max_neighbors << endl;
+		}
+
+		preprocess_ng_neighborhoods(
+			instance,
+			TDNGNeighborhoodsTimeStrategy::TimeStepSpecific,
+			ng_nb_neighbors
+		); 
 
 		// Parse instance.
 		VRPInstance vrp = instance;
@@ -111,6 +129,9 @@ int main(int argc, char** argv)
 		lbl.unreachable_strengthened = unreachable_strengthened;
 		lbl.sort_by_cost = sort_by_cost;
 		lbl.symmetric = symmetric;
+		lbl.ng_routes = ng_routes;
+		lbl.ng_nb_neighbors = ng_nb_neighbors;
+		lbl.ng_max_neighbors = ng_max_neighbors;
 
 		int heuristic_level = 0; // 0: relax cost, 1: relax elementarity, 2: exact
 		int max_level = exact_labeling ? 2 : 1; // exact
