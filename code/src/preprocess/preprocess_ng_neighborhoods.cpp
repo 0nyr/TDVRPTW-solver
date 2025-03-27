@@ -25,34 +25,41 @@ vector<double> solve_one_to_all_makespan_minimization(
     TimeUnit departure_time
 ) {
     int n = vrp.D.NbVertices();
-    vector<double> makespans(n, INFTY); // all makespans are in [0, INFTY).
-    makespans[source] = 0.0;
+
+    if (vrp.tw[source].right < departure_time)
+        // The source is not reachable at the given departure time
+        return {};
+
+    //vector<double> makespans(n, INFTY); // all makespans are in [0, INFTY).
+    vector<double> arrival_times(n, INFTY); // all arrival times are in [0, INFTY).
+    //makespans[source] = 0.0; // arrival time, considering no waiting time and start at departure_time.
+    arrival_times[source] = max(departure_time, vrp.tw[source].left); // arrival time, considering no waiting time and start at departure_time.
 
     // Initialize the priority queue.
     priority_queue<pair<double, Vertex>, vector<pair<double, Vertex>>, greater<pair<double, Vertex>>> Q;
-    Q.push({0.0, source});
+    Q.push({arrival_times[source], source});
 
     // Dijkstra's algorithm.
     while (!Q.empty())
     {
-        auto [makespan, i] = Q.top();
+        auto [arrival_time_at_i, i] = Q.top();
         Q.pop();
 
         // Update the makespan of the successors.
         for (Vertex j: vrp.D.Successors(i))
         {
-            double travel_time = vrp.TravelTime({i, j}, makespan);
+            // Note: TW and service times are already considered in the function.
+            double arrival_time_at_j = vrp.ArrivalTime({i, j}, arrival_time_at_i);
             // Check for improvement, and TW feasibility.
-            if (makespan + travel_time < makespans[j] &&
-                makespan + travel_time <= vrp.tw[j].right)
+            if (arrival_time_at_j < arrival_times[j])
             {
-                makespans[j] = max(makespan + travel_time, vrp.tw[j].left);
-                Q.push({makespan + travel_time, j});
+                arrival_times[j] = arrival_time_at_j;
+                Q.push({arrival_time_at_j, j});
             }
         }
     }
 
-    return makespans;
+    return arrival_times;
 }
 
 namespace
@@ -133,8 +140,8 @@ void preprocess_ng_neighborhoods(
     const vector<Interval> tws = instance["time_windows"];
     const int nb_horizon_partitions = partitioned_horizon.nb_intervals();
     vector<vector<vector<Vertex>>> td_ng_neighbors(n, // for each vertex
-        vector<vector<Vertex>>(n, // for each time period
-            vector<Vertex>() // neighbors
+        vector<vector<Vertex>>(nb_horizon_partitions, // for each time period
+            vector<Vertex>() // neighbors, empty (no neighbors) by default
         )
     );
     clog << "TD NG Neighbors processing..." << endl;
@@ -150,10 +157,20 @@ void preprocess_ng_neighborhoods(
                 i, 
                 partitioned_horizon.get_interval(t).left
             );
+            if (makespans_i_t.empty()) continue; // The vertex is not reachable at the given departure time for the given time period.
 
             // Step 3: Determine the neighborhoods, i.e., the closest 
             // neighbors for each vertex, for each time period.
             vector<Vertex> neighbors = V;
+            // Remove all vertices that have INFTY makespan.
+            neighbors.erase(remove_if(neighbors.begin(), neighbors.end(), 
+                [&makespans_i_t](Vertex j) -> bool
+                {
+                    return makespans_i_t[j] == INFTY;
+                }
+            ), neighbors.end());
+            if (neighbors.empty()) continue; // No neighbors for the vertex.
+            
             // Sort the vertices by makespan.
             sort(neighbors.begin(), neighbors.end(), 
                 [&makespans_i_t](Vertex u, Vertex v) -> bool
@@ -173,9 +190,9 @@ void preprocess_ng_neighborhoods(
             }
             clog << endl;
             // Remove the vertex itself
-            //neighbors.erase(remove(neighbors.begin(), neighbors.end(), i), neighbors.end());
-            // Remove the vertex itself, which is always the closest.
-            neighbors.erase(neighbors.begin());
+            neighbors.erase(remove(neighbors.begin(), neighbors.end(), i), neighbors.end());
+            // Remove the vertex itself, which is always the closest. WRONG in TD context.
+            //neighbors.erase(neighbors.begin());
 
             // Keep only the closest neighbors.
             if (neighbors.size() > nb_neighbors_to_keep)

@@ -36,7 +36,7 @@ void preprocess_service_waiting(json& instance)
 			tau[i][j] = arr - id;
 		}
 	}
-	instance["travel_times"] = tau;
+	instance["travel_times"] = tau; // After this, travel times now include service times, waiting if early arrival (TW.left), and shrinked domain due to TW.right.
 	
 	// (ii) a'_i = a_i + s_i, b'_i = b_i + s_i for each i \in V.
 	if (has_key(instance, "time_windows"))

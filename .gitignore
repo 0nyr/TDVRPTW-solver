@@ -50,6 +50,7 @@ output/*
 
 # Ignore compiled files.
 **/obj/**
+build/
 
 # Ignore python execution files
 **/__pycache__

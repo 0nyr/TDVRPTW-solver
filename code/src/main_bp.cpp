@@ -32,8 +32,7 @@ double path_cost(
 	const VRPInstance& vrp, 
 	PricingProblem pp, 
 	GraphPath path
-)
-{
+) {
 	VertexSet column;
 	for (Vertex i: path) column.set(i);
 	return vrp.BestDurationRoute(path).duration 
@@ -78,6 +77,11 @@ int main(int argc, char** argv)
 	    int ng_nb_neighbors = double(fast_log2((uint32_t)instance["nb_vertices"])) * 1.7;
 		int ng_max_neighbors = max((int)((double)instance["nb_vertices"] / 2.0), ng_nb_neighbors);
 
+		// Show instance details.
+		clog << "Instance: " << instance["instance_basename"] << endl;
+		clog << "Benchmark: " << instance["benchmark_basename"] << endl;
+		clog << "Nb vertices: " << instance["nb_vertices"] << endl;
+
 		// Show experiment details.
 		clog << "Time limit: " << time_limit << "s." << endl;
 		clog << "Cut limit: " << cut_limit << endl;
@@ -90,7 +94,6 @@ int main(int argc, char** argv)
 		clog << "Symmetric: " << symmetric << endl;
 		clog << "Iterative merge: " << iterative_merge << endl;
 		clog << "Exact labeling: " << exact_labeling << endl;
-		clog << "Nb vertices: " << instance["nb_vertices"] << endl;
 		clog << "NG routes: " << ng_routes << endl;
 		if (ng_routes)
 		{

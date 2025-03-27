@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.10)
 project(solver)
 
 # specify C++ 26 standard
@@ -14,6 +14,7 @@ elseif ("${CMAKE_BUILD_TYPE}" MATCHES debug OR "${CMAKE_BUILD_TYPE}" MATCHES Deb
     message("-- Compiling in Debug Mode")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og -Wall -Wextra")
 endif()
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # used to generate compile_commands.json for VSCode intellisense/warnings
 
 # Add include directory.
 include_directories("include/")
