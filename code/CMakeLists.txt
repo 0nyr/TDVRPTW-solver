@@ -35,6 +35,7 @@ add_library(
     src/preprocess/preprocess_travel_times.cpp 
     src/preprocess/preprocess_triangle_depot.cpp 
     src/preprocess/preprocess_ng_neighborhoods.cpp 
+    src/preprocess/preprocess_validity.cpp 
     src/labeling/label.cpp 
     src/labeling/monodirectional_labeling.cpp 
     src/labeling/lazy_label.cpp 

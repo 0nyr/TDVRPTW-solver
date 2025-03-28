@@ -18,7 +18,8 @@
 #include "labeling/bidirectional_labeling.h"
 #include "goc/log/timed_solutions.h"
 #include "goc/math/math_utils.h"
-#include "preprocess/preprocess_ng_neighborhoods.h"
+#include "preprocess/preprocess_validity.h"
+#include "labeling/ng_neighborhoods.h"
 
 using namespace std;
 using namespace goc;
@@ -78,7 +79,7 @@ int main(int argc, char** argv)
 		int ng_max_neighbors = max((int)((double)instance["nb_vertices"] / 2.0), ng_nb_neighbors);
 
 		// Show instance details.
-		clog << "Instance: " << instance["instance_basename"] << endl;
+		clog << "Instance: " << instance["instance_basename"] << " - " << value_or_default(instance, "instance_filename", "(filename missing)") << endl;
 		clog << "Benchmark: " << instance["benchmark_basename"] << endl;
 		clog << "Nb vertices: " << instance["nb_vertices"] << endl;
 
@@ -101,11 +102,12 @@ int main(int argc, char** argv)
 			clog << "NG max neighbors: " << ng_max_neighbors << endl;
 		}
 
-		preprocess_ng_neighborhoods(
-			instance,
-			TDNGNeighborhoodsTimeStrategy::TimeStepSpecific,
-			ng_nb_neighbors
-		); 
+		preprocess_validity(instance);
+		// preprocess_ng_neighborhoods(
+		// 	instance,
+		// 	TDNGNeighborhoodsTimeStrategy::TimeStepSpecific,
+		// 	ng_nb_neighbors
+		// ); 
 
 		// Parse instance.
 		VRPInstance vrp = instance;
@@ -118,12 +120,24 @@ int main(int argc, char** argv)
 		for (Vertex i: exclude(vrp.D.Vertices(), {vrp.o, vrp.d}))
 			spf.AddRoute(vrp.BestDurationRoute({vrp.o, i, vrp.d}));
 
+		// The Branch-Cut-Price algorithm to solve the VRP.
 		BCP bcp(vrp.D, &spf);
 		bcp.time_limit = time_limit;
 		bcp.cut_limit = cut_limit;
 		bcp.node_limit = node_limit;
 
-		BidirectionalLabeling lbl(vrp);
+		// The labeling algorithm which is used in the CG solver of the BCP for the pricing problem.
+		BidirectionalLabeling lbl(
+			vrp,
+			ng_routes,
+			ng_nb_neighbors,
+			ng_max_neighbors,
+			partition_time_horizon(
+				vrp.horizon,
+				vrp.ts,
+				NHPS::TimeStepSpecific
+			)
+		);
 		lbl.solution_limit = 3000;
 		lbl.closing_state = !iterative_merge;
 		lbl.partial = partial;
@@ -132,9 +146,6 @@ int main(int argc, char** argv)
 		lbl.unreachable_strengthened = unreachable_strengthened;
 		lbl.sort_by_cost = sort_by_cost;
 		lbl.symmetric = symmetric;
-		lbl.ng_routes = ng_routes;
-		lbl.ng_nb_neighbors = ng_nb_neighbors;
-		lbl.ng_max_neighbors = ng_max_neighbors;
 
 		int heuristic_level = 0; // 0: relax cost, 1: relax elementarity, 2: exact
 		int max_level = exact_labeling ? 2 : 1; // exact

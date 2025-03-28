@@ -34,7 +34,8 @@
             "symmetric": false,
             "iterative_merge": true,
             "lazy_extension": true,
-            "exact_labeling": true
+            "exact_labeling": true,
+            "ng_routes": true
         }
     ]
 }

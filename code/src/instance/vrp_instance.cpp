@@ -113,10 +113,12 @@ void from_json(const json& j, VRPInstance& instance)
 	instance.o = j["start_depot"];
 	instance.d = j["end_depot"];
 	instance.T = j["horizon"][1];
+	instance.horizon = j["horizon"];
 	instance.tw = vector<Interval>(j["time_windows"].begin(), j["time_windows"].end());
 	instance.Q = value_or_default(j, "vehicle_capacity", 1.0);
 	instance.q = vector<CapacityUnit>(j["demands"].begin(), j["demands"].end());
-	
+	instance.ts = value_or_default(j, "time_steps", {});
+
 	// Add travel time functions.
 	instance.tau = instance.arr = instance.dep = instance.pretau = Matrix<PWLFunction>(n, n);
 	for (Vertex u: instance.D.Vertices())

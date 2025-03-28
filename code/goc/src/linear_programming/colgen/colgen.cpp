@@ -20,24 +20,29 @@ namespace goc
 {
 namespace
 {
-unordered_map<LPStatus, CGStatus> mapper = {{LPStatus::DidNotStart, CGStatus::DidNotStart},
-											{LPStatus::Infeasible, CGStatus::Infeasible},
-											{LPStatus::Unbounded, CGStatus::Unbounded},
-											{LPStatus::TimeLimitReached, CGStatus::TimeLimitReached}, {LPStatus::MemoryLimitReached, CGStatus::MemoryLimitReached},
-											{LPStatus::Optimum, CGStatus::Optimum}};
+// Maps LPStatus to CGStatus.
+unordered_map<LPStatus, CGStatus> mapper = {
+	{LPStatus::DidNotStart, CGStatus::DidNotStart},
+	{LPStatus::Infeasible, CGStatus::Infeasible},
+	{LPStatus::Unbounded, CGStatus::Unbounded},
+	{LPStatus::TimeLimitReached, CGStatus::TimeLimitReached}, 
+	{LPStatus::MemoryLimitReached, CGStatus::MemoryLimitReached},
+	{LPStatus::Optimum, CGStatus::Optimum}
+};
 CGStatus parse_lp_status(LPStatus status)
 {
 	return mapper[status];
 }
 }
 
-CGExecutionLog solve_colgen(Formulation* formulation,
-				   ostream* screen_output,
-				   Duration time_limit,
-				   const PricingFunction& pricing_function,
-				   LPSolver* lp_solver,
-				   const unordered_set<CGOption>& option)
-{
+CGExecutionLog solve_colgen(
+	Formulation* formulation,
+	ostream* screen_output,
+	Duration time_limit,
+	const PricingFunction& pricing_function,
+	LPSolver* lp_solver,
+	const unordered_set<CGOption>& option
+) {
 	Stopwatch rolex(true);
 	
 	// Keep track of the execution.

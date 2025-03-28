@@ -65,8 +65,22 @@ PricingProblem reverse_pricing_problem(const PricingProblem& pp)
 }
 }
 
-BidirectionalLabeling::BidirectionalLabeling(const VRPInstance& vrp)
-	: vrp_(vrp), lbl_{MonodirectionalLabeling(vrp_), MonodirectionalLabeling(reverse_instance(vrp_))}
+BidirectionalLabeling::BidirectionalLabeling(
+	const VRPInstance& vrp,
+	bool ng_routes,
+	int ng_nb_neighbors,
+	int ng_max_neighbors,
+	PartitionedInterval partitioned_horizon
+): 
+	vrp_(vrp), 
+	lbl_{
+		MonodirectionalLabeling(vrp_), // Forward labeling.
+		MonodirectionalLabeling(reverse_instance(vrp_)) // Backward labeling.
+	},
+	ng_routes(ng_routes),
+	ng_nb_neighbors(ng_nb_neighbors),
+	ng_max_neighbors(ng_max_neighbors),
+	partitioned_horizon_(partitioned_horizon)
 {
 	solution_limit = INT_MAX;
 	time_limit = Duration::Max();

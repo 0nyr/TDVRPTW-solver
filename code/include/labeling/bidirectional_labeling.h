@@ -38,7 +38,13 @@ public:
 	bool correcting; // Indicates if the correcting step is executed.
 	bool symmetric; // Indicates if symmetric bidirectional labeling should be applied (or asymmetric if false).
 	
-	BidirectionalLabeling(const VRPInstance& vrp);
+	BidirectionalLabeling(
+		const VRPInstance& vrp,
+		bool ng_routes,
+		int ng_nb_neighbors,
+		int ng_max_neighbors,
+		PartitionedInterval partitioned_horizon
+	);
 	
 	// Runs the bidirectional labeling algorithm and leaves the negative reduced cost routes on the parameter R.
 	// Returns: the execution information log.
@@ -62,6 +68,12 @@ private:
 	MonodirectionalLabeling lbl_[2]; // lbl_[0] = forward, lbl_[1] = backward.
 	MonodirectionalLabeling::DominanceStructure M[2]; // Processed labels are stored in M[v][q] sorted by min_cost(l).
 	
+	// NG-route stuff
+	const bool ng_routes; // Indicates if the NG routes are used.
+	const int ng_nb_neighbors; // (Start) number of neighbors to consider in the NG routes.
+	const int ng_max_neighbors; // Maximum number of neighbors to consider in the NG routes with dynamic neighborhood extension.
+	const goc::PartitionedInterval partitioned_horizon_; // Time horizon, partitioned into successive intervals.
+
 	// Pool of negative reduced cost solutions found (indexed by their visited vertices).
 	// We only keep the best solution for each set of visited vertices.
 	std::unordered_map<VertexSet, goc::Route> S;

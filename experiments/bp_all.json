@@ -10,7 +10,7 @@
     {
       "name": "BP-CUTS",
       "executable": "bp",
-      "time_limit": 7200,
+      "time_limit": 1800,
       "cut_limit": 500,
       "partial": true,
       "limited_extension": true,

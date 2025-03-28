@@ -70,7 +70,7 @@ void MonodirectionalLabeling::SetProblem(const PricingProblem& pricing_problem)
 	
 	vrp_.D.AddArcs(pp_.A); // Add previously forbidden arcs.
 	pp_ = pricing_problem;
-	vrp_.D.RemoveArcs(pp_.A); // Remove pricing problem forbidden arcs.
+	vrp_.D.RemoveArcs(pp_.A); // Remove current pricing problem forbidden arcs.
 	Clean();
 }
 
