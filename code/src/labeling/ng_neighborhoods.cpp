@@ -116,6 +116,53 @@ TDNGNeighborhoods::TDNGNeighborhoods(
     const int n = vrp.D.NbVertices();
 	const auto& V = vrp.D.Vertices();
     const int nb_horizon_partitions = partitioned_horizon.nb_intervals();
+
+    // Compute MTT static neighborhoods
+    clog << "Static MTT Neighbors processing..." << endl;
+    Matrix<double> EAT(n, n);
+    for (int i = 0; i < n; ++i) EAT[i] = compute_earliest_arrival_time(
+        vrp.D, 
+        i, 
+        vrp.tw[i].left, // TW earliest arrival
+        [&] (Vertex u, Vertex v, double t0) {
+            return vrp.TravelTime({u, v}, t0);
+        }
+    );
+
+    // Compute Neighbourhoods for all i in V, based on their Min Travel Time (MTT) of arc {i, j}
+    //vector<VertexSet> MTT_static_neighborhood(n);
+    vector<vector<Vertex>> MTT_static_ordered_neighbors(n);
+    for (Vertex i: V)
+    {
+        vector<pair<double, Vertex>> i_neighbors_by_dist;
+        for (Vertex j: vrp.D.Vertices())
+        {
+            // Filtering: obvious cases, and infeasible cases due to time windows, determined using EATs.
+            if (i == j || j == vrp.o || j == vrp.d) continue;
+            if (epsilon_bigger(EAT[j][i], vrp.tw[i].right)) continue;
+            if (epsilon_bigger(EAT[i][j], vrp.tw[j].right)) continue;
+            i_neighbors_by_dist.push_back({vrp.MinimumTravelTime({i,j}), j});
+        }
+        sort(i_neighbors_by_dist.begin(), i_neighbors_by_dist.end());
+        // for (int k = 0; k < min((int)nb_neighbors_to_keep, (int)i_neighbors_by_dist.size()); ++k)
+        // {
+        //     MTT_static_neighborhood[i].set(i_neighbors_by_dist[k].second);
+        // }
+        // MTT_static_neighborhood[i].set(i); // add i to its own neighbourhood.
+        i_neighbors_by_dist.resize(
+            min((int)nb_neighbors_to_keep, (int)i_neighbors_by_dist.size())
+        );
+        vector<Vertex> neighbors = vector<Vertex>(i_neighbors_by_dist.size());
+        for (int k = 0; k < (int)i_neighbors_by_dist.size(); ++k)
+        {
+            neighbors[k] = i_neighbors_by_dist[k].second;
+        }
+        MTT_static_ordered_neighbors[i] = neighbors;
+        clog << " - Vertex " << i << " MTT neighbors: " << MTT_static_ordered_neighbors[i] << endl;
+    }
+
+    // For comparison: compare with using compute_earliest_arrival_time
+    // for each vertex, for each time period.
     ng_td_neighborhoods_ = vector<TDNeighborhoods>(n, // for each vertex
         vector<VertexSet>(nb_horizon_partitions, // for each time period
             VertexSet() // neighbors, empty (no neighbors) by default
@@ -125,79 +172,16 @@ TDNGNeighborhoods::TDNGNeighborhoods(
     for (Vertex i: V)
     {
         for (int t = 0; t < nb_horizon_partitions; ++t)
-        {   
-            // Step 2: Solve a one-to-all makespan minimization 
-            // time dependent shortest path for each vertex, 
-            // for each time period.
-            vector<double> makespans_i_t = compute_one_to_all_earliest_arrival_time(
-                vrp, 
-                i, 
-                partitioned_horizon.get_interval(t).left
-            );
-            if (makespans_i_t.empty()) continue; // The vertex is not reachable at the given departure time for the given time period.
-
-            // Step 3: Determine the neighborhoods, i.e., the closest 
-            // neighbors for each vertex, for each time period.
-            vector<Vertex> neighbors = V;
-            // Remove all vertices that have INFTY makespan.
-            neighbors.erase(remove_if(neighbors.begin(), neighbors.end(), 
-                [&makespans_i_t](Vertex j) -> bool
-                {
-                    return makespans_i_t[j] == INFTY;
-                }
-            ), neighbors.end());
-            if (neighbors.empty()) continue; // No neighbors for the vertex.
-            
-            // Sort the vertices by makespan.
-            sort(neighbors.begin(), neighbors.end(), 
-                [&makespans_i_t](Vertex u, Vertex v) -> bool
-                {
-                    return makespans_i_t[u] < makespans_i_t[v];
-                }
-            );
-
-            // print each vertex and its makespan
-            clog << " - Vertex " << i << " in period " << t << " at time " << partitioned_horizon.get_interval(t).left << " makespans: ";
-            for (Vertex j: neighbors)
-            {
-                clog << j;
-                if (j == i) clog << " (self)";
-                clog << " -> " << makespans_i_t[j];
-                if (j != neighbors.back()) clog << ", ";
-            }
-            clog << endl;
-            // Remove the vertex itself
-            neighbors.erase(remove(neighbors.begin(), neighbors.end(), i), neighbors.end());
-
-            // Keep only the closest neighbors.
-            if (neighbors.size() > nb_neighbors_to_keep)
-                neighbors.resize(nb_neighbors_to_keep);
-            
-            // Store the neighbors.
-            ng_td_neighborhoods_[i][t] = create_bitset<MAX_N>(neighbors);
-        }
-    }
-
-    // For comparison: compare with using compute_earliest_arrival_time
-    // for each vertex, for each time period.
-    vector<vector<VertexSet>> EATs_neighborhoods(n, vector<VertexSet>(nb_horizon_partitions, VertexSet()));
-    clog << "EATs NG Neighbors processing..." << endl;
-    for (Vertex i: V)
-    {
-        for (int t = 0; t < nb_horizon_partitions; ++t)
         {
             vector<double> makespans_i_t = compute_earliest_arrival_time(
                 vrp.D, 
                 i, 
-                partitioned_horizon.get_interval(t).left, 
+                partitioned_horizon.get_interval(t).left, // start of time period (subinterval of the horizon)
                 [&] (Vertex u, Vertex v, double t0) {
                     return vrp.TravelTime({u, v}, t0);
                 }
             );
 
-            // do same as before
-            if (makespans_i_t.empty()) continue; // The vertex is not reachable at the given departure time for the given time period.
-
             // Step 3: Determine the neighborhoods, i.e., the closest 
             // neighbors for each vertex, for each time period.
             vector<Vertex> neighbors = V;
@@ -232,30 +216,46 @@ TDNGNeighborhoods::TDNGNeighborhoods(
             neighbors.erase(remove(neighbors.begin(), neighbors.end(), i), neighbors.end());
 
             // Keep only the closest neighbors.
+            VertexSet nearest_neighbors;
             if (neighbors.size() > nb_neighbors_to_keep)
+            {
                 neighbors.resize(nb_neighbors_to_keep);
+                nearest_neighbors = create_bitset<MAX_N>(neighbors);
+            }
+            else
+            {
+                // Not enough neighbors, add the closest ones in static neighborhood.
+                nearest_neighbors = create_bitset<MAX_N>(neighbors);
+                for (Vertex j: MTT_static_ordered_neighbors[i])
+                {
+                    if (j == i) continue; // skip itself
+                    if (nearest_neighbors.test(j)) continue; // already in the neighborhood
+                    nearest_neighbors.set(j);
+                    if (nearest_neighbors.count() >= nb_neighbors_to_keep) break;
+                }
+            }
+            nearest_neighbors.set(i); // add i to its own neighbourhood.
             
             // Store the neighbors.
-            EATs_neighborhoods[i][t] = create_bitset<MAX_N>(neighbors);
+            ng_td_neighborhoods_[i][t] = nearest_neighbors;
         }
     }
 
-    // Compare the neighborhoods.
+    // print complete TD neighborhoods
     for (Vertex i: V)
     {
+        clog << " - Vertex " << i << ":" << endl;
         for (int t = 0; t < nb_horizon_partitions; ++t)
         {
-            if (ng_td_neighborhoods_[i][t] != EATs_neighborhoods[i][t])
-            {
-                clog << "🟢 - Vertex " << i << " in period " << t << " at time " << partitioned_horizon.get_interval(t).left << " neighborhoods differ." << endl;
-            }
+            clog << "   - Time period " << t << "[t=" << partitioned_horizon.get_interval(t).left << "]: ";
+            clog << "     " << ng_td_neighborhoods_[i][t] << endl;
         }
     }
 }
 
 const VertexSet& TDNGNeighborhoods::neighbors(goc::Vertex i, TimeUnit t) const
 {
-    size_t time_period_index = partitioned_horizon_.interval_index_or_throw(t);
+    size_t time_period_index = partitioned_horizon_.interval_index_or_throw(t); // throw since we expect a time within the horizon.
     return ng_td_neighborhoods_[i][time_period_index];
 }
 

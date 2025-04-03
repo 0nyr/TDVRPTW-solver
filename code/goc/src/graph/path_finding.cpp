@@ -70,7 +70,7 @@ vector<double> compute_earliest_arrival_time(
 			{
 				double travel_time = tt(v, w, t);
 				if (travel_time == INFTY) continue;
-				q.push({t + travel_time, w});
+				q.push({t + travel_time, w}); // t + travel time == arrival time
 			}
 		}
 	}
