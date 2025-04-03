@@ -53,6 +53,7 @@
 #include "goc/math/number_utils.h"
 #include "goc/math/point_2d.h"
 #include "goc/math/pwl_function.h"
+#include "goc/math/partitioned_interval.h"
 
 #include "goc/print/print_utils.h"
 #include "goc/print/printable.h"

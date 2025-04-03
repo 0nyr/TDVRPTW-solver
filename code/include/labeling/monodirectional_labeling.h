@@ -16,6 +16,7 @@
 #include "label.h"
 #include "lazy_label.h"
 #include "bcp/pricing_problem.h"
+#include "ng_neighborhoods.h"
 
 namespace solver
 {
@@ -50,7 +51,13 @@ public:
 	DominanceStructure U; // Indexed by last vertex, demand and sorted by c_min.
 	int processed_count; // Number of labels in the dominance structure.
 	
-	MonodirectionalLabeling(const VRPInstance& vrp);
+	TDNGNeighborhoods ng; // Neighborhoods to use for the labeling algorithm.
+
+	MonodirectionalLabeling(
+		const VRPInstance& vrp,
+		const goc::PartitionedInterval& partitioned_horizon,
+		uint32_t nb_neighbors_to_keep
+	);
 	
 	~MonodirectionalLabeling();
 	

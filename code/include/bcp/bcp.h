@@ -65,7 +65,7 @@ private:
 	bool SeparateCuts(const goc::Valuation& z);
 	
 	std::priority_queue<Node*, std::vector<Node*>, Node::Comparator> q; // queue of nodes in the BB tree.
-	double z_ub, z_lb; // z_ub = value of the best int solution, z_lb = value of the worst open node.
+	double z_lb, z_ub; // z_lb = value of the worst open node. z_ub = value of the best int solution
 	goc::Valuation ub; // Best int solution found so far.
 	int node_seq; // number of nodes created.
 	goc::Stopwatch rolex; // Stopwatch to measure the time spent in the algorithm.

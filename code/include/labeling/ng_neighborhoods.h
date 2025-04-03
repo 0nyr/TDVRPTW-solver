@@ -7,8 +7,7 @@
 
 namespace solver
 {
-typedef std::vector<goc::Vertex> Neighborhood; // The neighbors of a vertex.
-typedef std::vector<Neighborhood> TDNeighborhoods; // Neighborhoods for each partition of the time horizon.
+typedef std::vector<VertexSet> TDNeighborhoods; // Neighborhoods for each partition of the time horizon.
 
 // Enum of the strategies to use to partition the time
 // horizon into intervals for which the neighborhoods are.
@@ -22,9 +21,9 @@ typedef NeighborhoodHorizonPartitioningStrategy NHPS;
 
 // Partition the time horizon into intervals following the given strategy.
 // If there is no time steps or only one time step, the horizon is the only interval.
-PartitionedInterval partition_time_horizon(
-    const Interval& horizon,
-    const vector<Interval>& time_steps,
+goc::PartitionedInterval partition_time_horizon(
+    const goc::Interval& horizon,
+    const std::vector<goc::Interval>& time_steps,
     NHPS horizon_partitioning_strategy
 );
 
@@ -37,11 +36,15 @@ public:
     // based on the strategy to use.
     TDNGNeighborhoods(
         const VRPInstance& vrp, 
-        NHPS horizon_partitioning_strategy
+        const goc::PartitionedInterval& partitioned_horizon,
+        uint32_t nb_neighbors_to_keep
     );
 
+    // Getter: the neighbors of the vertex i at time t.
+    const VertexSet& neighbors(goc::Vertex i, TimeUnit t) const;
+
 private:
-    const goc::PartitionedInterval partitioned_horizon_; // Time horizon, partitioned into successive intervals.
+    const goc::PartitionedInterval& partitioned_horizon_; // Time horizon, partitioned into successive intervals.
     std::vector<TDNeighborhoods> ng_td_neighborhoods_; // For each vertex, for each partition of the time horizon, the neighbors of the vertex.
 };
 } // namespace

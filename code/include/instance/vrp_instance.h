@@ -24,7 +24,7 @@ public:
 	goc::Digraph D; // digraph representing the network.
 	goc::Vertex o, d; // origin and destination depot.
 	TimeUnit T; // end of planning horizon ([0,T]). TODO: Remove, replace by horizon.right.
-	Interval horizon; // horizon of the instance.
+	//goc::Interval horizon; // horizon of the instance.
 	std::vector<goc::Interval> tw; // time window of customers (tw[i] = time window of customer i).
 	CapacityUnit Q; // vehicle capacity.
 	std::vector<CapacityUnit> q; // demand of customers (q[i] = demand of customer i).
@@ -33,7 +33,7 @@ public:
 	goc::Matrix<goc::PWLFunction> dep; // dep[i][j](t) = departing time of arc (i, j) if arriving to j at t.
 	goc::Matrix<goc::PWLFunction> arr; // arr[i][j](t) = arrival time of arc (i, j) if departing from i at t.
 	goc::Matrix<TimeUnit> LDT; // LDT[i][j] = latest time i can depart from i to reach j before its deadline.
-	std::vector<Interval> ts; // time steps.
+	std::vector<goc::Interval> time_steps; // time steps.
 
 	// Returns: the travel time for arc e if departing at t0.
 	// If departure at t0 is infeasible, returns INFTY.
@@ -65,6 +65,10 @@ public:
 	// Returns: a set of some vertices which are unreachable if departing from v at t0.
 	VertexSet WeakUnreachable(goc::Vertex v, TimeUnit t0) const;
 	
+	// @return the minimum travel time for arc e if departing at or after t0.
+	// @details if departing at or after t0 is infeasible it returns INFTY.
+	TimeUnit MinimumTravelTime(goc::Arc e, TimeUnit t0=0.0, TimeUnit tf=goc::INFTY) const;
+
 	// Prints the JSON representation of the instance.
 	virtual void Print(std::ostream& os) const;
 };

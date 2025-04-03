@@ -13,7 +13,15 @@ using namespace goc;
 
 namespace solver
 {
-BCP::BCP(const Digraph& D, SPF* spf) : D(D), spf(spf), z_lb(-INFTY), z_ub(INFTY), node_seq(0)
+BCP::BCP(
+	const Digraph& D, 
+	SPF* spf
+): 
+	z_lb(-INFTY), 
+	z_ub(INFTY), 
+	node_seq(0),
+	D(D), 
+	spf(spf)
 {
 	time_limit = Duration::Max();
 	node_limit = cut_limit = INT_MAX;

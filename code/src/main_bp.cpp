@@ -133,8 +133,8 @@ int main(int argc, char** argv)
 			ng_nb_neighbors,
 			ng_max_neighbors,
 			partition_time_horizon(
-				vrp.horizon,
-				vrp.ts,
+				{0, vrp.T},
+				vrp.time_steps,
 				NHPS::TimeStepSpecific
 			)
 		);

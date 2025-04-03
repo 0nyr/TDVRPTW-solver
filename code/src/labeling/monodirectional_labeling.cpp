@@ -33,8 +33,13 @@ double beta(Label* l, bool partial)
 }
 
 MonodirectionalLabeling::MonodirectionalLabeling(
-	const VRPInstance& vrp
-) : vrp_(vrp), correcting(false)
+	const VRPInstance& vrp,
+	const goc::PartitionedInterval& partitioned_horizon,
+	uint32_t nb_neighbors_to_keep
+): 
+	vrp_(vrp), 
+	correcting(false),
+	ng(TDNGNeighborhoods(vrp, partitioned_horizon, nb_neighbors_to_keep))
 {
 	cross = true;
 	process_limit = INT_MAX;

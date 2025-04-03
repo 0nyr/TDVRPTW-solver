@@ -73,14 +73,14 @@ BidirectionalLabeling::BidirectionalLabeling(
 	PartitionedInterval partitioned_horizon
 ): 
 	vrp_(vrp), 
-	lbl_{
-		MonodirectionalLabeling(vrp_), // Forward labeling.
-		MonodirectionalLabeling(reverse_instance(vrp_)) // Backward labeling.
-	},
 	ng_routes(ng_routes),
 	ng_nb_neighbors(ng_nb_neighbors),
 	ng_max_neighbors(ng_max_neighbors),
-	partitioned_horizon_(partitioned_horizon)
+	partitioned_horizon_(partitioned_horizon),
+	lbl_{
+		MonodirectionalLabeling(vrp_, partitioned_horizon_, ng_nb_neighbors), // Forward labeling.
+		MonodirectionalLabeling(reverse_instance(vrp_), partitioned_horizon_, ng_nb_neighbors) // Backward labeling.
+	}
 {
 	solution_limit = INT_MAX;
 	time_limit = Duration::Max();
