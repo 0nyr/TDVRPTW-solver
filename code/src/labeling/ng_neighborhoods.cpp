@@ -7,56 +7,6 @@ using namespace goc;
 
 namespace solver
 {
-namespace
-{
-// Solve a one-to-all makespan minimization time dependent 
-// shortest path for a given vertex (source), at a given departure time.
-// Returns: the optimal makespan of every other vertex from the source.
-// NOTE: Due to FIFO property, waiting is not allowed.
-// WARNING: Different from compute_EAT_from_departure_time
-// because this function considers the time windows.
-vector<double> compute_one_to_all_earliest_arrival_time(
-    const VRPInstance& vrp,
-    Vertex source,
-    TimeUnit departure_time
-) {
-    int n = vrp.D.NbVertices();
-
-    if (vrp.tw[source].right < departure_time)
-        // The source is not reachable at the given departure time
-        return {};
-
-    vector<double> arrival_times(n, INFTY); // all arrival times are in [0, INFTY).
-    arrival_times[source] = max(departure_time, vrp.tw[source].left); // arrival time, considering no waiting time and start at departure_time.
-
-    // Priority queue to select the vertex with the smallest arrival time.
-    priority_queue<pair<double, Vertex>, vector<pair<double, Vertex>>, greater<pair<double, Vertex>>> q;
-    q.push({arrival_times[source], source});
-
-    // TD Dijkstra's algorithm, no "visited" vector needed.
-    while (!q.empty())
-    {
-        auto [arrival_time_at_i, i] = q.top();
-        q.pop();
-
-        // Update the makespan of the successors.
-        for (Vertex j: vrp.D.Successors(i))
-        {
-            // Note: TW and service times are already considered in the function.
-            double arrival_time_at_j = vrp.ArrivalTime({i, j}, arrival_time_at_i);
-            // Check for improvement, and TW feasibility.
-            if (arrival_time_at_j < arrival_times[j])
-            {
-                arrival_times[j] = arrival_time_at_j;
-                q.push({arrival_time_at_j, j});
-            }
-        }
-    }
-
-    return arrival_times;
-}
-} // anonymous namespace
-
 PartitionedInterval partition_time_horizon(
     const Interval& horizon,
     const vector<Interval>& time_steps,
@@ -158,7 +108,9 @@ TDNGNeighborhoods::TDNGNeighborhoods(
             neighbors[k] = i_neighbors_by_dist[k].second;
         }
         MTT_static_ordered_neighbors[i] = neighbors;
+        #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
         clog << " - Vertex " << i << " MTT neighbors: " << MTT_static_ordered_neighbors[i] << endl;
+        #endif
     }
 
     // For comparison: compare with using compute_earliest_arrival_time
@@ -202,6 +154,7 @@ TDNGNeighborhoods::TDNGNeighborhoods(
                 }
             );
 
+            #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
             // print each vertex and its makespan
             clog << " - Vertex " << i << " in period " << t << " at time " << partitioned_horizon.get_interval(t).left << " makespans: ";
             for (Vertex j: neighbors)
@@ -212,6 +165,8 @@ TDNGNeighborhoods::TDNGNeighborhoods(
                 if (j != neighbors.back()) clog << ", ";
             }
             clog << endl;
+            #endif
+
             // Remove the vertex itself
             neighbors.erase(remove(neighbors.begin(), neighbors.end(), i), neighbors.end());
 
@@ -241,6 +196,7 @@ TDNGNeighborhoods::TDNGNeighborhoods(
         }
     }
 
+    #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
     // print complete TD neighborhoods
     for (Vertex i: V)
     {
@@ -251,6 +207,7 @@ TDNGNeighborhoods::TDNGNeighborhoods(
             clog << "     " << ng_td_neighborhoods_[i][t] << endl;
         }
     }
+    #endif
 }
 
 const VertexSet& TDNGNeighborhoods::neighbors(goc::Vertex i, TimeUnit t) const
