@@ -45,7 +45,7 @@ MonodirectionalLabeling::MonodirectionalLabeling(
 	process_limit = INT_MAX;
 	time_limit = 2.0_hr;
 	partial = limited_extension = lazy_extension = unreachable_strengthened = sort_by_cost = true;
-	relax_elementary_check = relax_cost_check = false;
+	elementary_check_relaxation = cost_check_relaxation = ng_routes_relaxation = false;
 	processed_count = 0;
 	
 	t_m = vrp.T;
@@ -249,9 +249,9 @@ bool MonodirectionalLabeling::DominationStep(Label* l) const
 		{
 			// We know that q(m) <= q(l), v(m) = v(l).
 			if (sort_by_cost && epsilon_bigger(alpha(m, partial), l_beta)) break;
-			if (!relax_elementary_check && !is_subset(m->U, l->U)) continue;
+			if (!elementary_check_relaxation && !is_subset(m->U, l->U)) continue;
 			
-			if (!relax_cost_check)
+			if (!cost_check_relaxation)
 			{
 				// theta = p(l) + cut_cost(l) - p(m) - cut_cost(m) - \sum {sigma(i) : cut_visited[i](m) == 1 && cut_visited[i](l) != 1 }.
 				double theta = l->p + l->cut_cost - m->p - m->cut_cost;
@@ -279,8 +279,8 @@ int MonodirectionalLabeling::CorrectionStep(Label* m)
 		for (int j = 0; j < demand_entry.second.size(); ++j)
 		{
 			Label* l = demand_entry.second[j];
-			if (!relax_elementary_check && !is_subset(m->U, l->U)) continue;
-			if (!relax_cost_check)
+			if (!elementary_check_relaxation && !is_subset(m->U, l->U)) continue;
+			if (!cost_check_relaxation)
 			{
 				// theta = p(l) + cut_cost(l) - p(m) - cut_cost(m) - \sum {sigma(i) : cut_visited[i](m) == 1 && cut_visited[i](l) != 1 }.
 				double theta = l->p + l->cut_cost - m->p - m->cut_cost;

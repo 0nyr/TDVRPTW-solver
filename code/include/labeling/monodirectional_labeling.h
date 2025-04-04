@@ -36,14 +36,17 @@ public:
 	TimeUnit t_m; // Only extend labels that have min(rw(.)) <= t_m.
 	bool cross; // Indicates if labels are allowed to cross t_m only one step.
 	bool partial; // Indicates if partial domination should be used.
-	bool relax_elementary_check; // Indicates if dominance S(M) \subseteq S(L) should be ignored (heuristically).
-	bool relax_cost_check; // Indicates if dominance c_M(t) <= c_L(t) should be ignored (heuristically).
 	bool limited_extension; // Indicates if limited extension should be applied.
 	bool lazy_extension; // Indicates if lazy extension is used.
 	bool unreachable_strengthened; // Indicates if the strengthened version of unreachable vertices is used.
 	bool sort_by_cost; // Indicate if the last level sorting by cost strategy is used.
 	bool correcting; // Indicates if the correcting step is executed.
 	
+	// Resolution level-specific parameters.
+	bool elementary_check_relaxation; // Indicates if dominance S(M) \subseteq S(L) should be ignored (heuristically).
+	bool cost_check_relaxation; // Indicates if dominance c_M(t) <= c_L(t) should be ignored (heuristically).
+	bool ng_routes_relaxation; // Indicates if NG-routes relaxation is be used.
+
 	// Dominance structure.
 	typedef std::vector<Label*> BoundLevel;
 	typedef goc::VectorMap<CapacityUnit, BoundLevel> DemandLevel;

@@ -20,6 +20,7 @@
 #include "goc/math/math_utils.h"
 #include "preprocess/preprocess_validity.h"
 #include "labeling/ng_neighborhoods.h"
+#include "labeling/labeling_level.h"
 
 using namespace std;
 using namespace goc;
@@ -73,9 +74,14 @@ int main(int argc, char** argv)
 		bool sort_by_cost = value_or_default(experiment, "sort_by_cost", true);
 		bool symmetric = value_or_default(experiment, "symmetric", false);
 		bool iterative_merge = value_or_default(experiment, "iterative_merge", true);
-		bool exact_labeling = value_or_default(experiment, "exact_labeling", true);
-		bool ng_routes = value_or_default(experiment, "ng_routes", true);
-	    int ng_nb_neighbors = double(fast_log2((uint32_t)instance["nb_vertices"])) * 1.7;
+		
+		// Labeling Algorithm levels
+		const bool lal_heuristic_cost = value_or_default(experiment, "lal_heuristic_cost", true);
+		const bool lal_heuristic_elementarity = value_or_default(experiment, "lal_heuristic_elementarity", true);
+		const bool lal_heuristic_ng_routes = value_or_default(experiment, "lal_heuristic_ng_routes", false);
+		const bool lal_exact_labeling = value_or_default(experiment, "lal_exact_labeling", true);
+
+		int ng_nb_neighbors = double(fast_log2((uint32_t)instance["nb_vertices"])) * 1.7;
 		int ng_max_neighbors = max((int)((double)instance["nb_vertices"] / 2.0), ng_nb_neighbors);
 
 		// Show instance details.
@@ -94,9 +100,11 @@ int main(int argc, char** argv)
 		clog << "Sort by cost: " << sort_by_cost << endl;
 		clog << "Symmetric: " << symmetric << endl;
 		clog << "Iterative merge: " << iterative_merge << endl;
-		clog << "Exact labeling: " << exact_labeling << endl;
-		clog << "NG routes: " << ng_routes << endl;
-		if (ng_routes)
+		clog << "LAL: Heuristic cost: " << lal_heuristic_cost << endl;
+		clog << "LAL: Heuristic elementarity: " << lal_heuristic_elementarity << endl;
+		clog << "LAL: Heuristic NG routes: " << lal_heuristic_ng_routes << endl;
+		clog << "LAL: Exact labeling: " << lal_exact_labeling << endl;
+		if (lal_heuristic_ng_routes)
 		{
 			clog << "NG nb neighbors: " << ng_nb_neighbors << endl;
 			clog << "NG max neighbors: " << ng_max_neighbors << endl;
@@ -129,7 +137,6 @@ int main(int argc, char** argv)
 		// The labeling algorithm which is used in the CG solver of the BCP for the pricing problem.
 		BidirectionalLabeling lbl(
 			vrp,
-			ng_routes,
 			ng_nb_neighbors,
 			ng_max_neighbors,
 			partition_time_horizon(
@@ -147,44 +154,56 @@ int main(int argc, char** argv)
 		lbl.sort_by_cost = sort_by_cost;
 		lbl.symmetric = symmetric;
 
-		int heuristic_level = 0; // 0: relax cost, 1: relax elementarity, 2: exact
-		int max_level = exact_labeling ? 2 : 1; // exact
-		vector<string> level_name = {"Heuristic Cost", "Heuristic Elementarity", "Exact"};
+		// Define the levels to try in order
+		std::vector<std::pair<LabelingLevel, std::string>> levels_to_try;
+		if (lal_heuristic_cost) levels_to_try.emplace_back(LabelingLevel::HeuristicCost, "Heuristic Cost");
+		if (lal_heuristic_elementarity) levels_to_try.emplace_back(LabelingLevel::HeuristicElementarity, "Heuristic Elementarity");
+		if (lal_heuristic_ng_routes) levels_to_try.emplace_back(LabelingLevel::HeuristicNG, "Heuristic NG Routes");
+		if (lal_exact_labeling) levels_to_try.emplace_back(LabelingLevel::Exact, "Exact");
+		if (levels_to_try.empty())
+		{
+			clog << "No labeling levels enabled." << endl;
+			return 0;
+		}
+
 		bcp.pricing_solver = [&](
-			const PricingProblem &pricing_problem, 
+			const PricingProblem& pricing_problem, 
 			int node_number, 
-			Duration tlimit,
-			CGExecutionLog *cg_execution_log
+			Duration tlimit, 
+			CGExecutionLog* cg_execution_log
 		) {
 			Stopwatch iteration_rolex(true);
-			vector<Route> R;
-			while (heuristic_level <= max_level)
-			{
-				lbl.time_limit = tlimit - iteration_rolex.Peek();
-				lbl.relax_cost_check = heuristic_level == 0;
-				lbl.relax_elementary_check = heuristic_level == 1;
-				auto lbl_log = lbl.Run(pricing_problem, &R);
+			std::vector<Route> R;
 
+			for (const auto& [level, level_name] : levels_to_try) {
+				lbl.time_limit = tlimit - iteration_rolex.Peek();
+				auto lbl_log = lbl.Run(pricing_problem, &R, level);
+				
 				// Add iteration log.
 				cg_execution_log->iterations->push_back(lbl_log);
-				cg_execution_log->iterations->back()["iteration_name"] = level_name[heuristic_level];
+				cg_execution_log->iterations->back()["iteration_name"] = level_name;
 
 				// Update merge_start and closing_state.
-				lbl.closing_state |= heuristic_level == 2 && lbl_log.status == BLBStatus::Finished;
+				lbl.closing_state |= level == LabelingLevel::Exact && lbl_log.status == BLBStatus::Finished;
 				lbl.merge_start = (lbl.merge_start + lbl_log.forward_log->processed_count) / 2;
 
 				if (!R.empty()) break;
-				++heuristic_level;
 			}
-			// Add negative reduced cost routes.
-			for (auto &route: R) spf.AddRoute(route);
-			if (heuristic_level > max_level)
+
+			if (!R.empty())
 			{
-				heuristic_level = 0;
+				// Add negative reduced cost routes.
+				for (auto& route : R) spf.AddRoute(route);
+			}
+			else
+			{
+				// If no routes were found, reset the labeling algorithm.
 				lbl.closing_state = false;
 				lbl.merge_start = 0;
 			}
 		};
+
+
 		TimedSolutions<VRPSolution> timed_solutions({});
 		auto log = bcp.Run(timed_solutions);
 

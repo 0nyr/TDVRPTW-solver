@@ -17,6 +17,7 @@
 #include "label.h"
 #include "lazy_label.h"
 #include "monodirectional_labeling.h"
+#include "labeling_level.h"
 
 namespace solver
 {
@@ -29,8 +30,6 @@ public:
 	bool closing_state; // true if Closing state (last-edge merge), false if Opening state (iterative merge).
 	int merge_start; // after <merge_start> forward labels have been processed, start iterative-merge.
 	bool partial; // Indicates if partial domination should be used.
-	bool relax_elementary_check; // Indicates if dominance S(M) \subseteq S(L) should be ignored (heuristically).
-	bool relax_cost_check; // Indicates if dominance c_M(t) <= c_L(t) should be ignored (heuristically).
 	bool limited_extension; // Indicates if limited extension should be applied.
 	bool lazy_extension; // Indicates if lazy extension is used.
 	bool unreachable_strengthened; // Indicates if the strengthened version of unreachable vertices is used.
@@ -38,9 +37,13 @@ public:
 	bool correcting; // Indicates if the correcting step is executed.
 	bool symmetric; // Indicates if symmetric bidirectional labeling should be applied (or asymmetric if false).
 	
+	// Resolution level-specific parameters.
+	bool elementary_check_relaxation; // Indicates if dominance S(M) \subseteq S(L) should be ignored (heuristically).
+	bool cost_check_relaxation; // Indicates if dominance c_M(t) <= c_L(t) should be ignored (heuristically).
+	bool ng_routes_relaxation; // Indicates if NG-routes relaxation is be used.
+
 	BidirectionalLabeling(
 		const VRPInstance& vrp,
-		bool ng_routes,
 		int ng_nb_neighbors,
 		int ng_max_neighbors,
 		goc::PartitionedInterval partitioned_horizon
@@ -48,9 +51,18 @@ public:
 	
 	// Runs the bidirectional labeling algorithm and leaves the negative reduced cost routes on the parameter R.
 	// Returns: the execution information log.
-	goc::BLBExecutionLog Run(const PricingProblem& pricing_problem, std::vector<goc::Route>* R);
-
+	goc::BLBExecutionLog Run(
+		const PricingProblem& pricing_problem, 
+		std::vector<goc::Route>* R, 
+		LabelingLevel level
+	);
+	
 private:
+	// Sets the labeling level flags based on the given level.
+	void setup_labeling_level_flag(
+		LabelingLevel level
+	);
+
 	// Attempts to merge label l against all the labels in the opposite direction dominance structure.
 	// 	w: 	l will be merged with all labels m in L such that v(m) == v(l) and v(parent(m)) == w.
 	// 		if w == -1, then the check v(parent(m)) == w is ignored.
@@ -66,7 +78,6 @@ private:
 	VRPInstance vrp_;
 
 	// NG-route stuff
-	const bool ng_routes; // Indicates if the NG routes are used.
 	const int ng_nb_neighbors; // (Start) number of neighbors to consider in the NG routes.
 	const int ng_max_neighbors; // Maximum number of neighbors to consider in the NG routes with dynamic neighborhood extension.
 	const goc::PartitionedInterval partitioned_horizon_; // Time horizon, partitioned into successive intervals.

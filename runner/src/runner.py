@@ -84,7 +84,15 @@ def main():
 				del experiment_runs[idx]
 			print("Removed", len(indexes_to_remove), "runs from the list of runs to execute.")
 
-		print(purple(f"Running {len(experiment_runs)} runs..."), flush=True)
+		# Print the number of runs to be executed.
+		if args["carry_on"] is not None:
+			print("Remaining number of runs:", len(experiment_runs))
+		else:
+			print("Total number of runs:", len(experiment_runs))
+		# Print each run.
+		for experiment, instance, solutions in experiment_runs:
+			print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
+
 		if args["dry_run"]: return
 		for experiment, instance, solutions in tqdm(experiment_runs, desc="Running experiments"):
 			res = run_experiment(args, experiment, instance, solutions)
