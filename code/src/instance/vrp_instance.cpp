@@ -136,7 +136,10 @@ void from_json(const json& j, VRPInstance& instance)
 	instance.tw = vector<Interval>(j["time_windows"].begin(), j["time_windows"].end());
 	instance.Q = value_or_default(j, "vehicle_capacity", 1.0);
 	instance.q = vector<CapacityUnit>(j["demands"].begin(), j["demands"].end());
-	instance.time_steps = vector<Interval>(j["time_steps"].begin(), j["time_steps"].end());
+	if (has_key(j, "time_steps"))
+		instance.time_steps = vector<Interval>(j["time_steps"].begin(), j["time_steps"].end());
+	else
+		instance.time_steps = vector<Interval>(1, Interval(0.0, instance.T));
 
 	// Add travel time functions.
 	instance.tau = instance.arr = instance.dep = instance.pretau = Matrix<PWLFunction>(n, n);
