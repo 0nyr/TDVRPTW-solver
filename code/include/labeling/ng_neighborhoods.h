@@ -45,6 +45,9 @@ public:
 
 private:
     const goc::PartitionedInterval& partitioned_horizon_; // Time horizon, partitioned into successive intervals.
-    std::vector<TDNeighborhoods> ng_td_neighborhoods_; // For each vertex, for each partition of the time horizon, the neighbors of the vertex.
+
+    // For each vertex, a map from interval end-time to its neighborhood.
+    // Neighborhood is valid from previous end-time (or 0 initially) up to the key.
+    std::vector<goc::VectorMap<TimeUnit, VertexSet>> ng_td_neighborhoods_;
 };
 } // namespace

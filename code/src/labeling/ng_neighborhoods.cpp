@@ -113,22 +113,20 @@ TDNGNeighborhoods::TDNGNeighborhoods(
         #endif
     }
 
-    // For comparison: compare with using compute_earliest_arrival_time
     // for each vertex, for each time period.
-    ng_td_neighborhoods_ = vector<TDNeighborhoods>(n, // for each vertex
-        vector<VertexSet>(nb_horizon_partitions, // for each time period
-            VertexSet() // neighbors, empty (no neighbors) by default
-        )
+    ng_td_neighborhoods_ = vector<VectorMap<TimeUnit, VertexSet>>(n, // for each vertex
+        goc::VectorMap<TimeUnit, VertexSet>() // period-end -> neighborhood
     );
     clog << "TD NG Neighbors processing..." << endl;
     for (Vertex i: V)
     {
-        for (int t = 0; t < nb_horizon_partitions; ++t)
+        VertexSet prev_neighbors;
+        for (int interval_index = 0; interval_index < nb_horizon_partitions; ++interval_index)
         {
             vector<double> makespans_i_t = compute_earliest_arrival_time(
                 vrp.D, 
                 i, 
-                partitioned_horizon.get_interval(t).left, // start of time period (subinterval of the horizon)
+                partitioned_horizon.get_interval(interval_index).left, // start of time period (subinterval of the horizon)
                 [&] (Vertex u, Vertex v, double t0) {
                     return vrp.TravelTime({u, v}, t0);
                 }
@@ -156,7 +154,7 @@ TDNGNeighborhoods::TDNGNeighborhoods(
 
             #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
             // print each vertex and its makespan
-            clog << " - Vertex " << i << " in period " << t << " at time " << partitioned_horizon.get_interval(t).left << " makespans: ";
+            clog << " - Vertex " << i << " in period " << interval_index << " at time " << partitioned_horizon.get_interval(interval_index).left << " makespans: ";
             for (Vertex j: neighbors)
             {
                 clog << j;
@@ -171,49 +169,74 @@ TDNGNeighborhoods::TDNGNeighborhoods(
             neighbors.erase(remove(neighbors.begin(), neighbors.end(), i), neighbors.end());
 
             // Keep only the closest neighbors.
-            VertexSet nearest_neighbors;
+            VertexSet current_neighbors;
             if (neighbors.size() > nb_neighbors_to_keep)
             {
                 neighbors.resize(nb_neighbors_to_keep);
-                nearest_neighbors = create_bitset<MAX_N>(neighbors);
+                current_neighbors = create_bitset<MAX_N>(neighbors);
             }
             else
             {
                 // Not enough neighbors, add the closest ones in static neighborhood.
-                nearest_neighbors = create_bitset<MAX_N>(neighbors);
+                current_neighbors = create_bitset<MAX_N>(neighbors);
                 for (Vertex j: MTT_static_ordered_neighbors[i])
                 {
                     if (j == i) continue; // skip itself
-                    if (nearest_neighbors.test(j)) continue; // already in the neighborhood
-                    nearest_neighbors.set(j);
-                    if (nearest_neighbors.count() >= nb_neighbors_to_keep) break;
+                    if (current_neighbors.test(j)) continue; // already in the neighborhood
+                    current_neighbors.set(j);
+                    if (current_neighbors.count() >= nb_neighbors_to_keep) break;
                 }
             }
-            nearest_neighbors.set(i); // add i to its own neighbourhood.
+            current_neighbors.set(i); // add i to its own neighbourhood.
             
-            // Store the neighbors.
-            ng_td_neighborhoods_[i][t] = nearest_neighbors;
+            // Store the neighbors, if not already stored.
+            TimeUnit interval_end = partitioned_horizon.get_interval(interval_index).right;
+            if (interval_index == 0 || current_neighbors != prev_neighbors)
+            {
+                // Neighborhood has changed: store a new interval end and neighbors.
+                ng_td_neighborhoods_[i].Insert(interval_end, current_neighbors);
+                prev_neighbors = current_neighbors;
+            }
+            else
+            {
+                // Neighborhood has not changed: extend the last interval to cover up to interval_end.
+                auto it = ng_td_neighborhoods_[i].end() - 1; // last interval
+                it->first = interval_end;
+            }
         }
     }
 
-    #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
+    // #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
     // print complete TD neighborhoods
     for (Vertex i: V)
     {
         clog << " - Vertex " << i << ":" << endl;
-        for (int t = 0; t < nb_horizon_partitions; ++t)
+        for (auto [t, neighbors]: ng_td_neighborhoods_[i])
         {
-            clog << "   - Time period " << t << "[t=" << partitioned_horizon.get_interval(t).left << "]: ";
-            clog << "     " << ng_td_neighborhoods_[i][t] << endl;
+            clog << "   - Time period [t-end=" << t << "]: ";
+            clog << "     " << neighbors << endl;
         }
     }
-    #endif
+    // #endif
 }
 
-const VertexSet& TDNGNeighborhoods::neighbors(goc::Vertex i, TimeUnit t) const
+const VertexSet& TDNGNeighborhoods::neighbors(
+    goc::Vertex i, 
+    TimeUnit t
+) const
 {
-    size_t time_period_index = partitioned_horizon_.interval_index_or_throw(t); // throw since we expect a time within the horizon.
-    return ng_td_neighborhoods_[i][time_period_index];
+    const auto& time_intervals = ng_td_neighborhoods_[i];
+    // Gets the first interval whose end-time ≥ t.
+    auto it = std::lower_bound(
+        time_intervals.begin(), time_intervals.end(), t,
+        [](const std::pair<TimeUnit, VertexSet>& interval, TimeUnit t)
+        {
+            return interval.first < t;
+        }
+    );
+    if (it == time_intervals.end())
+        return time_intervals.end()->second; // beyond last interval
+    return it->second;
 }
 
 } // namespace

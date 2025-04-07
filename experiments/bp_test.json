@@ -2,30 +2,32 @@
     "datasets": [
         {
             "name": "Dabia2013", 
-            "n": [27],
-            "select": "RC201"
-        },
-        {
-            "name": "Solomon1987", 
-            "n": [27],
-            "select": "RC201"
-        },
-        {
-            "name": "Rifki2020", 
-            "n": [12],
-            "select": "Rifki1-n=12-4c7c834be"
-        },
-        {
-            "name": "Ari2018", 
-            "n": [17],
-            "select": "Ari1-n=17-00bf7cc8"
+            "n": [102],
+            "select": "R109_100"
         }
     ],
     "experiments": [
         {
-            "name": "BP-CUTS",
+            "name": "BPC",
             "executable": "bp",
-            "time_limit": 100,
+            "time_limit": 400,
+            "cut_limit": 500,
+            "partial": true,
+            "limited_extension": true,
+            "unreachable_strengthened": true,
+            "sort_by_cost": true,
+            "symmetric": false,
+            "iterative_merge": true,
+            "lazy_extension": true,
+            "lal_heuristic_cost": true,
+            "lal_heuristic_elementarity": true,
+            "lal_heuristic_ng_routes": false,
+            "lal_exact_labeling": true
+        },
+        {
+            "name": "BPC-NG-routes",
+            "executable": "bp",
+            "time_limit": 400,
             "cut_limit": 500,
             "partial": true,
             "limited_extension": true,
