@@ -15,8 +15,9 @@ namespace goc
 {
 // Returns: A bitset with the numbers given.
 template<unsigned long N>
-std::bitset<N> create_bitset(const std::vector<int>& numbers)
-{
+std::bitset<N> create_bitset(
+	const std::vector<int>& numbers
+) {
 	std::bitset<N> b;
 	for (size_t n: numbers) b.set(n);
 	return b;

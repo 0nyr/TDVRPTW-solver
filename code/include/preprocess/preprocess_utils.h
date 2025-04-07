@@ -31,8 +31,6 @@ inline double travel_time(
     return travel_time(tau, e, t0);
 }
 
-double travel_time(const nlohmann::json& instance, goc::Arc e, double t0);
-
 // Returns: the latest we can arrive to k if departing from i (and traversing arc (i, k)) without waiting.
 double latest_arrival(const nlohmann::json& instance, goc::Vertex i, goc::Vertex k);
 

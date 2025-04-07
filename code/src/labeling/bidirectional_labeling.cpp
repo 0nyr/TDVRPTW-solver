@@ -65,8 +65,20 @@ PricingProblem reverse_pricing_problem(const PricingProblem& pp)
 }
 }
 
-BidirectionalLabeling::BidirectionalLabeling(const VRPInstance& vrp)
-	: vrp_(vrp), lbl_{MonodirectionalLabeling(vrp_), MonodirectionalLabeling(reverse_instance(vrp_))}
+BidirectionalLabeling::BidirectionalLabeling(
+	const VRPInstance& vrp,
+	int ng_nb_neighbors,
+	int ng_max_neighbors,
+	PartitionedInterval partitioned_horizon
+): 
+	vrp_(vrp), 
+	ng_nb_neighbors(ng_nb_neighbors),
+	ng_max_neighbors(ng_max_neighbors),
+	partitioned_horizon_(partitioned_horizon),
+	lbl_{
+		MonodirectionalLabeling(vrp_, partitioned_horizon_, ng_nb_neighbors), // Forward labeling.
+		MonodirectionalLabeling(reverse_instance(vrp_), partitioned_horizon_, ng_nb_neighbors) // Backward labeling.
+	}
 {
 	solution_limit = INT_MAX;
 	time_limit = Duration::Max();
@@ -76,12 +88,15 @@ BidirectionalLabeling::BidirectionalLabeling(const VRPInstance& vrp)
 	lbl_[0].process_limit = lbl_[1].process_limit = 10;
 	lbl_[0].cross = false, lbl_[1].cross = true;
 	partial = limited_extension = lazy_extension = unreachable_strengthened = sort_by_cost = true;
-	relax_elementary_check = relax_cost_check = false;
+	elementary_check_relaxation = cost_check_relaxation = ng_routes_relaxation = false;
 	correcting = false;
 }
 
-BLBExecutionLog BidirectionalLabeling::Run(const PricingProblem& pricing_problem, vector<Route>* R)
-{
+BLBExecutionLog BidirectionalLabeling::Run(
+    const PricingProblem& pricing_problem, 
+    std::vector<Route>* R,
+    LabelingLevel level
+) {
 	// Clean solution pool.
 	S.clear();
 	M[0] = M[1] = vector<MonodirectionalLabeling::DemandLevel>(vrp_.D.NbVertices());
@@ -96,9 +111,13 @@ BLBExecutionLog BidirectionalLabeling::Run(const PricingProblem& pricing_problem
 	lbl_[1].SetProblem(reverse_pricing_problem(pp_));
 	lbl_[0].t_m = lbl_[1].t_m = symmetric ? vrp_.T / 2 : vrp_.T;
 	
+	// Determine level flags.
+	setup_labeling_level_flag(level);
+
+	// Set flags based on the level
 	lbl_[0].partial = lbl_[1].partial = partial;
-	lbl_[0].relax_elementary_check = lbl_[1].relax_elementary_check = relax_elementary_check;
-	lbl_[0].relax_cost_check = lbl_[1].relax_cost_check = relax_cost_check;
+	lbl_[0].elementary_check_relaxation = lbl_[1].elementary_check_relaxation = elementary_check_relaxation;
+	lbl_[0].cost_check_relaxation = lbl_[1].cost_check_relaxation = cost_check_relaxation;
 	lbl_[0].limited_extension = lbl_[1].limited_extension = limited_extension;
 	lbl_[0].lazy_extension = lbl_[1].lazy_extension = lazy_extension;
 	lbl_[0].sort_by_cost = lbl_[1].sort_by_cost = sort_by_cost;
@@ -286,5 +305,29 @@ void BidirectionalLabeling::AddSolution(const goc::GraphPath& p, double min_dura
 	VertexSet V = create_bitset<MAX_N>(p);
 	if (!includes_key(S, V)) S[V] = Route({}, 0.0, INFTY);
 	if (S[V].duration > min_duration) S[V] = Route(p, 0.0, min_duration);
+}
+
+void BidirectionalLabeling::setup_labeling_level_flag(
+    LabelingLevel level
+) {
+    cost_check_relaxation = false;
+    elementary_check_relaxation = false;
+    ng_routes_relaxation = false;
+
+    switch (level)
+    {
+        case LabelingLevel::HeuristicCost:
+            cost_check_relaxation = true;
+            break;
+        case LabelingLevel::HeuristicElementarity:
+            elementary_check_relaxation = true;
+            break;
+        case LabelingLevel::HeuristicNG:
+            ng_routes_relaxation = true;
+            break;
+        case LabelingLevel::Exact:
+            // No relaxation flags are set.
+            break;
+    }
 }
 } // namespace

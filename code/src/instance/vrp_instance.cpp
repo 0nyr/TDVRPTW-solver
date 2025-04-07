@@ -89,6 +89,25 @@ VertexSet VRPInstance::WeakUnreachable(goc::Vertex v, TimeUnit t0) const
 	return U;
 }
 
+TimeUnit VRPInstance::MinimumTravelTime(Arc e, TimeUnit t0, TimeUnit tf) const
+{
+	TimeUnit tmin = INFTY;
+	int j = 0;
+	int v = e.tail, w = e.head;
+	while (j < tau[v][w].PieceCount())
+	{
+		// Check if the piece starts beyond the time interval (end)
+		if (epsilon_bigger(tau[v][w][j].domain.left, tf)) break;
+		if (tau[v][w][j].domain.Intersects({t0, tf}))
+			// the min of the current piece travel time is the min (left bound) of its image.
+			tmin = min(tmin, tau[v][w][j].image.left); 
+		// Check if the piece ends before the time interval (start)
+		if (epsilon_bigger_equal(tau[v][w][j].domain.right, tf)) break;
+		++j;
+	}
+	return tmin;
+}
+
 void VRPInstance::Print(ostream& os) const
 {
 	os << json(*this);
@@ -113,10 +132,15 @@ void from_json(const json& j, VRPInstance& instance)
 	instance.o = j["start_depot"];
 	instance.d = j["end_depot"];
 	instance.T = j["horizon"][1];
+	//instance.horizon = j["horizon"];
 	instance.tw = vector<Interval>(j["time_windows"].begin(), j["time_windows"].end());
 	instance.Q = value_or_default(j, "vehicle_capacity", 1.0);
 	instance.q = vector<CapacityUnit>(j["demands"].begin(), j["demands"].end());
-	
+	if (has_key(j, "time_steps"))
+		instance.time_steps = vector<Interval>(j["time_steps"].begin(), j["time_steps"].end());
+	else
+		instance.time_steps = vector<Interval>(1, Interval(0.0, instance.T));
+
 	// Add travel time functions.
 	instance.tau = instance.arr = instance.dep = instance.pretau = Matrix<PWLFunction>(n, n);
 	for (Vertex u: instance.D.Vertices())

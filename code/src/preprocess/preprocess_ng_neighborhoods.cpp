@@ -13,13 +13,15 @@ using namespace nlohmann;
 
 namespace solver
 {
+namespace
+{
 // Solve a one-to-all makespan minimization time dependent 
 // shortest path for a given vertex (source), at a given departure time.
 // Returns: the optimal makespan of every other vertex from the source.
 // NOTE: Due to FIFO property, waiting is not allowed.
 // WARNING: Different from compute_EAT_from_departure_time
 // because this function considers the time windows.
-vector<double> solve_one_to_all_makespan_minimization(
+vector<double> compute_one_to_all_earliest_arrival_time(
     const VRPInstance& vrp,
     Vertex source,
     TimeUnit departure_time
@@ -30,16 +32,14 @@ vector<double> solve_one_to_all_makespan_minimization(
         // The source is not reachable at the given departure time
         return {};
 
-    //vector<double> makespans(n, INFTY); // all makespans are in [0, INFTY).
     vector<double> arrival_times(n, INFTY); // all arrival times are in [0, INFTY).
-    //makespans[source] = 0.0; // arrival time, considering no waiting time and start at departure_time.
     arrival_times[source] = max(departure_time, vrp.tw[source].left); // arrival time, considering no waiting time and start at departure_time.
 
-    // Initialize the priority queue.
+    // Priority queue to select the vertex with the smallest arrival time.
     priority_queue<pair<double, Vertex>, vector<pair<double, Vertex>>, greater<pair<double, Vertex>>> Q;
     Q.push({arrival_times[source], source});
 
-    // Dijkstra's algorithm.
+    // TD Dijkstra's algorithm, no "visited" vector needed.
     while (!Q.empty())
     {
         auto [arrival_time_at_i, i] = Q.top();
@@ -62,8 +62,6 @@ vector<double> solve_one_to_all_makespan_minimization(
     return arrival_times;
 }
 
-namespace
-{
 // Partition the time horizon into intervals following the given strategy.
 // Precondition: There must be more than one time step.
 PartitionedInterval partition_time_horizon(
@@ -79,7 +77,7 @@ PartitionedInterval partition_time_horizon(
     else if (time_strategy == TDNGNeighborhoodsTimeStrategy::PartitionedHorizon)
     {
         // Aggregate the time steps.
-        int nb_partitions_of_horizon = fast_log2(time_steps.size()) + 1; // better than just dividing by some value.
+        size_t nb_partitions_of_horizon = fast_log2(time_steps.size()) + 1; // better than just dividing by some value.
         
         vector<double> breakpoints;
         // Add first breakpoint.
@@ -87,7 +85,7 @@ PartitionedInterval partition_time_horizon(
         
         // Add the rest of the breakpoints, except the last one.
         double period_duration = (horizon.right - horizon.left) / nb_partitions_of_horizon;
-        for (int i = 1; i < nb_partitions_of_horizon - 1; ++i)
+        for (size_t i = 1; i < nb_partitions_of_horizon - 1; ++i)
         {
             breakpoints.push_back(i*period_duration + horizon.left);
         }
@@ -133,7 +131,6 @@ void preprocess_ng_neighborhoods(
     );
 
     VRPInstance vrp = instance;
-    Vertex start_depot = instance["start_depot"];
 	const int n = vrp.D.NbVertices();
 	const auto& V = vrp.D.Vertices();
     const Matrix<PWLFunction> taus = instance["travel_times"];
@@ -152,7 +149,7 @@ void preprocess_ng_neighborhoods(
             // Step 2: Solve a one-to-all makespan minimization 
             // time dependent shortest path for each vertex, 
             // for each time period.
-            vector<double> makespans_i_t = solve_one_to_all_makespan_minimization(
+            vector<double> makespans_i_t = compute_one_to_all_earliest_arrival_time(
                 vrp, 
                 i, 
                 partitioned_horizon.get_interval(t).left
@@ -206,9 +203,9 @@ void preprocess_ng_neighborhoods(
     instance["td_ng_neighbors"] = td_ng_neighbors;
 
     // debug print
-    #ifndef PRINT_NEIGHBORHOODS_PREPROCESSING
-    #define PRINT_NEIGHBORHOODS_PREPROCESSING
-    #endif
+    // #ifndef PRINT_NEIGHBORHOODS_PREPROCESSING
+    // #define PRINT_NEIGHBORHOODS_PREPROCESSING
+    // #endif
     #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
     clog << "TD NG Neighbors:" << endl;
     for (Vertex i: V)

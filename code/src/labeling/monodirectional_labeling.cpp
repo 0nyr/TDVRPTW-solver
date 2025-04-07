@@ -33,14 +33,19 @@ double beta(Label* l, bool partial)
 }
 
 MonodirectionalLabeling::MonodirectionalLabeling(
-	const VRPInstance& vrp
-) : vrp_(vrp), correcting(false)
+	const VRPInstance& vrp,
+	const goc::PartitionedInterval& partitioned_horizon,
+	uint32_t nb_neighbors_to_keep
+): 
+	vrp_(vrp), 
+	correcting(false),
+	ng(TDNGNeighborhoods(vrp, partitioned_horizon, nb_neighbors_to_keep))
 {
 	cross = true;
 	process_limit = INT_MAX;
 	time_limit = 2.0_hr;
 	partial = limited_extension = lazy_extension = unreachable_strengthened = sort_by_cost = true;
-	relax_elementary_check = relax_cost_check = false;
+	elementary_check_relaxation = cost_check_relaxation = ng_routes_relaxation = false;
 	processed_count = 0;
 	
 	t_m = vrp.T;
@@ -70,7 +75,7 @@ void MonodirectionalLabeling::SetProblem(const PricingProblem& pricing_problem)
 	
 	vrp_.D.AddArcs(pp_.A); // Add previously forbidden arcs.
 	pp_ = pricing_problem;
-	vrp_.D.RemoveArcs(pp_.A); // Remove pricing problem forbidden arcs.
+	vrp_.D.RemoveArcs(pp_.A); // Remove current pricing problem forbidden arcs.
 	Clean();
 }
 
@@ -207,8 +212,14 @@ Label* MonodirectionalLabeling::ExtensionStep(const LazyLabel& ll) const
 	if (limited_extension && !cross) lv->duration.RestrictDomain({0.0, t_m});
 	if (lv->duration.Empty()) { delete lv; return nullptr; } // If no duration pieces exist, then the label is dominated.
 	lv->rw = dom(lv->duration);
-	lv->S = unite(l->S, {v});
+	
+	const VertexSet& ng_v = ng.neighbors(v, lv->rw.left);
+	if (ng_routes_relaxation)
+		lv->S = unite(intersection(l->S, ng_v), {v}); // S := (S(parent) ∩ N(v, t)) ∪ {v}
+	else
+		lv->S = unite(l->S, {v}); // Full elementary route (no NG-relaxation)
 	lv->U = unite(lv->S, unreachable_strengthened ? vrp_.Unreachable(v, lv->rw.left) : vrp_.WeakUnreachable(v, lv->rw.left));
+	
 	// Extend cut resources.
 	lv->cut_cost = l->cut_cost;
 	lv->cut_visited = l->cut_visited;
@@ -244,9 +255,9 @@ bool MonodirectionalLabeling::DominationStep(Label* l) const
 		{
 			// We know that q(m) <= q(l), v(m) = v(l).
 			if (sort_by_cost && epsilon_bigger(alpha(m, partial), l_beta)) break;
-			if (!relax_elementary_check && !is_subset(m->U, l->U)) continue;
+			if (!elementary_check_relaxation && !is_subset(m->U, l->U)) continue;
 			
-			if (!relax_cost_check)
+			if (!cost_check_relaxation)
 			{
 				// theta = p(l) + cut_cost(l) - p(m) - cut_cost(m) - \sum {sigma(i) : cut_visited[i](m) == 1 && cut_visited[i](l) != 1 }.
 				double theta = l->p + l->cut_cost - m->p - m->cut_cost;
@@ -274,8 +285,8 @@ int MonodirectionalLabeling::CorrectionStep(Label* m)
 		for (int j = 0; j < demand_entry.second.size(); ++j)
 		{
 			Label* l = demand_entry.second[j];
-			if (!relax_elementary_check && !is_subset(m->U, l->U)) continue;
-			if (!relax_cost_check)
+			if (!elementary_check_relaxation && !is_subset(m->U, l->U)) continue;
+			if (!cost_check_relaxation)
 			{
 				// theta = p(l) + cut_cost(l) - p(m) - cut_cost(m) - \sum {sigma(i) : cut_visited[i](m) == 1 && cut_visited[i](l) != 1 }.
 				double theta = l->p + l->cut_cost - m->p - m->cut_cost;
@@ -303,8 +314,9 @@ int MonodirectionalLabeling::CorrectionStep(Label* m)
 
 void MonodirectionalLabeling::ProcessStep(Label* l)
 {
+	// (If domination structure) insert label l into the dominance structure U.
 	if (sort_by_cost) insert_sorted(U[l->v].Insert(floor(l->q), {}), l, [&](Label* l1, Label* l2) { return alpha(l1, partial) < alpha(l2, partial); });
-	else U[l->v].Insert(floor(l->q), {}).push_back(l);
+	else U[l->v].Insert(floor(l->q), {}).push_back(l); // else, just push it to the end of the list.
 }
 
 vector<LazyLabel> MonodirectionalLabeling::EnumerationStep(Label* l) const

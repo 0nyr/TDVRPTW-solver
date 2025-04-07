@@ -35,11 +35,13 @@ add_library(
     src/preprocess/preprocess_travel_times.cpp 
     src/preprocess/preprocess_triangle_depot.cpp 
     src/preprocess/preprocess_ng_neighborhoods.cpp 
+    src/preprocess/preprocess_validity.cpp 
     src/labeling/label.cpp 
     src/labeling/monodirectional_labeling.cpp 
     src/labeling/lazy_label.cpp 
     src/labeling/pwl_domination_function.cpp 
     src/labeling/bidirectional_labeling.cpp 
+    src/labeling/ng_neighborhoods.cpp 
     src/bcp/pricing_problem.cpp 
     src/bcp/spf.cpp 
     src/bcp/bcp.cpp
@@ -47,8 +49,8 @@ add_library(
 target_link_libraries(solver goc)
 
 # Create binaries.
-add_executable(pricing src/main_pricing.cpp)
-target_link_libraries(pricing solver)
+# add_executable(pricing src/main_pricing.cpp)
+# target_link_libraries(pricing solver)
 
 add_executable(bp src/main_bp.cpp)
 target_link_libraries(bp solver)

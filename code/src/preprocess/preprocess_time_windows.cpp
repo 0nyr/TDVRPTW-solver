@@ -16,47 +16,6 @@ using namespace nlohmann;
 
 namespace solver
 {
-namespace
-{
-// Earliest arrival time from i to all vertices if departing at a_i.
-vector<double> compute_EAT(
-	const Digraph& D,
-	json& instance, 
-	Vertex i
-) {
-	return compute_earliest_arrival_time(
-		D,
-		i, 
-		instance["time_windows"][i][0], // TW start of i.
-		[&] (Vertex u, Vertex v, double t0) {
-			return travel_time(instance, {u, v}, t0);
-		}
-	);
-}
-
-// Latest departure time from all vertices to j if arriving to j at tf.
-vector<double> compute_LDT(
-	const Digraph& D,
-	json& instance, 
-	Vertex j
-) {
-	return compute_latest_departure_time(
-		D, 
-		j, 
-		instance["time_windows"][j][1], // TW end of j.
-		[&] (Vertex u, Vertex v, double t0) {
-			return departing_time(instance, {u, v}, t0);
-		}
-	);
-}
-
-// Returns: if the instance includes the arc.
-bool includes_arc(json& instance, Arc ij)  
-{
-	return instance["arcs"][ij.tail][ij.head] == 1;
-}
-} // namespace
-
 void preprocess_time_windows(json& instance)
 {
 	clog << " - Time Windows" << endl;
@@ -70,13 +29,6 @@ void preprocess_time_windows(json& instance)
 	Vertex d = instance["end_depot"];
 	auto set_a = [&] (Vertex i, double t) { instance["time_windows"][i][0] = t; };
 	auto set_b = [&] (Vertex i, double t) { instance["time_windows"][i][1] = t; };
-	
-	// Initialize EAT, LDT.
-	// Matrix<double> EAT(n,n), LDT(n,n);
-	// for (int i = 0; i < n; ++i) EAT[i] = compute_EAT(D, instance, i);
-	// for (int j = 0; j < n; ++j) LDT[j] = compute_LDT(D, instance, j);
-	// // Transpose LDT so LDT[i][j] is latest departure time from i to reach j.
-	// for (int i = 0; i < n; ++i) for (int j = i+1; j < n; ++j) swap(LDT[i][j], LDT[j][i]);
 	
 	// Rule 1: (3.12) 	Upper bound adjustment derived from the latest arrival time at node k from its predecessors,
 	//					for k \in N - {o, d}.

@@ -13,10 +13,20 @@ using namespace goc;
 
 namespace solver
 {
-BCP::BCP(const Digraph& D, SPF* spf) : D(D), spf(spf), z_lb(-INFTY), z_ub(INFTY), node_seq(0)
+BCP::BCP(
+	const Digraph& D, 
+	SPF* spf
+): 
+	z_lb(-INFTY), 
+	z_ub(INFTY), 
+	node_seq(0),
+	D(D), 
+	spf(spf)
 {
 	time_limit = Duration::Max();
 	node_limit = cut_limit = INT_MAX;
+	
+	// Init pricing solver.
 	pricing_solver = [] (const PricingProblem&, int, Duration, CGExecutionLog*) { fail("Pricing solver not implemented."); };
 	cg_solver.screen_output = &clog;
 	cg_solver.lp_solver = &lp_solver;
@@ -24,6 +34,8 @@ BCP::BCP(const Digraph& D, SPF* spf) : D(D), spf(spf), z_lb(-INFTY), z_ub(INFTY)
 		int variable_count = this->spf->formulation->VariableCount();
 		Stopwatch iteration_rolex(true);
 		auto pp = this->spf->InterpretDuals(duals);
+
+		// Solve pricing problem.
 		pricing_solver(pp, 0, time_limit, cg_execution_log);
 		*log.pricing_time += iteration_rolex.Peek();
 		
@@ -145,10 +157,11 @@ void BCP::ProcessNode(Node* node, TimedVrpSolution& timed_solutions)
 {
 	node_seq++;
 	spf->SetForbiddenArcs(node->A);
-	cg_solver.screen_output = node->index == 0 ? &clog : nullptr;
+	cg_solver.screen_output = node->index == 0 ? &clog : nullptr; // Display only root node CG resolution.
 	cg_solver.time_limit = time_limit - rolex.Peek();
+
+	// Perform column generation to solve the node.
 	auto cg_log = cg_solver.Solve(spf->formulation, {CGOption::IterationsInformation});
-	
 	*log.lp_time += cg_log.lp_time;
 	
 	// Update node.

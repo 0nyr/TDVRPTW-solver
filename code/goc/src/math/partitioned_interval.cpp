@@ -113,6 +113,39 @@ Interval PartitionedInterval::bound() const
     return Interval(breakpoints_.front(), breakpoints_.back());
 }
 
+// Assumes breakpoints_ is sorted: [b0, b1, ..., bn]
+size_t PartitionedInterval::interval_index_or_throw(double value) const
+{
+    if (empty())
+        throw std::out_of_range("PartitionedInterval is empty.");
+
+    if (value < breakpoints_.front() || value > breakpoints_.back())
+        throw std::out_of_range("Value out of bounds of the partitioned interval.");
+
+    auto it = std::upper_bound(breakpoints_.begin(), breakpoints_.end(), value);
+
+    // Special case: value == breakpoints_.back()
+    if (it == breakpoints_.end())
+        return breakpoints_.size() - 2;
+
+    size_t idx = std::distance(breakpoints_.begin(), it) - 1;
+    return idx;
+}
+
+std::optional<size_t> PartitionedInterval::find_interval_index(double value) const
+{
+    if (empty() || value < breakpoints_.front() || value > breakpoints_.back())
+        return std::nullopt;
+
+    auto it = std::upper_bound(breakpoints_.begin(), breakpoints_.end(), value);
+
+    if (it == breakpoints_.end())
+        return breakpoints_.size() >= 2 ? std::optional<size_t>{breakpoints_.size() - 2} : std::nullopt;
+
+    size_t idx = std::distance(breakpoints_.begin(), it) - 1;
+    return idx;
+}
+
 Interval PartitionedInterval::find_interval(double value) const {
     // If the partitioned interval is empty, return an empty interval.
     if (empty())

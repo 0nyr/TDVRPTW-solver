@@ -164,7 +164,9 @@ def run_experiment(
     elif use_heaptrack: executable = ["heaptrack", executable_path]
 
     # load instance JSON file
-    instance_json_data = read_json_from_file(F"{instance['instance_dirpath']}/{instance['instance_filename']}")
+    instance_filepath = F"{instance['instance_dirpath']}/{instance['instance_filename']}"
+    instance_json_data = read_json_from_file(instance_filepath)
+    instance_json_data["instance_filename"] = instance["instance_filename"]
 
     # Execute experiment.
     result = run_program(

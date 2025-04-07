@@ -46,8 +46,12 @@ GraphPath longest_path(const Digraph& D, Vertex s, Vertex t)
 	return L;
 }
 
-vector<double> compute_earliest_arrival_time(const Digraph& D, Vertex s, double t0, const function<double(Vertex, Vertex, double)>& tt)
-{
+vector<double> compute_earliest_arrival_time(
+	const Digraph& D, 
+	Vertex s, 
+	double t0, 
+	const function<double(Vertex, Vertex, double)>& tt
+) {
 	priority_queue<pair<double, Vertex>, vector<pair<double, Vertex>>, greater<>> q;
 	vector<bool> visited(D.NbVertices(), false);
 	vector<double> EAT(D.NbVertices(), INFTY); // EAT[j] = Earliest arrival time to vertex j
@@ -66,7 +70,7 @@ vector<double> compute_earliest_arrival_time(const Digraph& D, Vertex s, double 
 			{
 				double travel_time = tt(v, w, t);
 				if (travel_time == INFTY) continue;
-				q.push({t + travel_time, w});
+				q.push({t + travel_time, w}); // t + travel time == arrival time
 			}
 		}
 	}

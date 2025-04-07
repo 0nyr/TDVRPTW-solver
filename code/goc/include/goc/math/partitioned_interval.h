@@ -47,6 +47,20 @@ public:
     // Returns the overall interval as an Interval.
     Interval bound() const;
 
+    /**
+     * @brief Returns the index of the interval in which 'value' belongs.
+     * @throws std::out_of_range if 'value' is not inside the domain.
+     */
+    [[nodiscard]]
+    size_t interval_index_or_throw(double value) const;
+
+    /**
+     * @brief Tries to find the index of the interval in which 'value' belongs.
+     * @return std::nullopt if 'value' is not in the domain.
+     */
+    [[nodiscard]]
+    std::optional<size_t> find_interval_index(double value) const;
+
     // Returns the interval segment in which 'value' belongs.
     // If the value is not in the domain, the empty interval is returned.
     // Note: if 'value' equals a partition breakpoint, the next interval is returned,
