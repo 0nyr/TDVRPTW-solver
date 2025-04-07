@@ -23,8 +23,8 @@ public:
 	CapacityUnit q; // Label demand.
 	ProfitUnit p; // Label profit.
 	int length; // Label path length.
-	VertexSet S; // Set S of vertices for domination.
-	VertexSet U; // S \cup "unreachables".
+	VertexSet S; // Set S of vertices for domination. For NG-routes, this set is limited to the neighborhood of recently visited vertices.
+	VertexSet U; // S \cup (union) "unreachables": vertices that are not reachable from the label.
 	goc::PWLFunction duration; // duration(t) = "minimum duration for reaching v at time t".
 	goc::Interval rw; // rw = dom(duration).
 	double min_cost; // Label minimum cost (min{duration(t)-p-cut_cost : t \in dom(duration)}).

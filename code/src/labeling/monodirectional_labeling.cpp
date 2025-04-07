@@ -212,8 +212,14 @@ Label* MonodirectionalLabeling::ExtensionStep(const LazyLabel& ll) const
 	if (limited_extension && !cross) lv->duration.RestrictDomain({0.0, t_m});
 	if (lv->duration.Empty()) { delete lv; return nullptr; } // If no duration pieces exist, then the label is dominated.
 	lv->rw = dom(lv->duration);
-	lv->S = unite(l->S, {v});
+	
+	const VertexSet& ng_v = ng.neighbors(v, lv->rw.left);
+	if (ng_routes_relaxation)
+		lv->S = unite(intersection(l->S, ng_v), {v}); // S := (S(parent) ∩ N(v, t)) ∪ {v}
+	else
+		lv->S = unite(l->S, {v}); // Full elementary route (no NG-relaxation)
 	lv->U = unite(lv->S, unreachable_strengthened ? vrp_.Unreachable(v, lv->rw.left) : vrp_.WeakUnreachable(v, lv->rw.left));
+	
 	// Extend cut resources.
 	lv->cut_cost = l->cut_cost;
 	lv->cut_visited = l->cut_visited;
@@ -308,8 +314,9 @@ int MonodirectionalLabeling::CorrectionStep(Label* m)
 
 void MonodirectionalLabeling::ProcessStep(Label* l)
 {
+	// (If domination structure) insert label l into the dominance structure U.
 	if (sort_by_cost) insert_sorted(U[l->v].Insert(floor(l->q), {}), l, [&](Label* l1, Label* l2) { return alpha(l1, partial) < alpha(l2, partial); });
-	else U[l->v].Insert(floor(l->q), {}).push_back(l);
+	else U[l->v].Insert(floor(l->q), {}).push_back(l); // else, just push it to the end of the list.
 }
 
 vector<LazyLabel> MonodirectionalLabeling::EnumerationStep(Label* l) const

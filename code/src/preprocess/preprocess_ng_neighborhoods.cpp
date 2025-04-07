@@ -203,9 +203,9 @@ void preprocess_ng_neighborhoods(
     instance["td_ng_neighbors"] = td_ng_neighbors;
 
     // debug print
-    #ifndef PRINT_NEIGHBORHOODS_PREPROCESSING
-    #define PRINT_NEIGHBORHOODS_PREPROCESSING
-    #endif
+    // #ifndef PRINT_NEIGHBORHOODS_PREPROCESSING
+    // #define PRINT_NEIGHBORHOODS_PREPROCESSING
+    // #endif
     #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
     clog << "TD NG Neighbors:" << endl;
     for (Vertex i: V)

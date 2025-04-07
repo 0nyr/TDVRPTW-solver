@@ -68,7 +68,7 @@ public:
 	void SetProblem(const PricingProblem& pricing_problem);
 	
 	// Runs the labeling algorithm using the labels in the queue q, and outputs the execution information on log.
-	// Returns: a vector of the labels that were not dominated (processed) during the proccess and time limits.
+	// Returns: a vector of the labels that were not dominated (processed) during the process and time limits.
 	std::vector<Label*> Run(LBQueue* q, goc::MLBExecutionLog* log);
 	
 	// Returns: a lazy label with the initial vertex only (start depot).
