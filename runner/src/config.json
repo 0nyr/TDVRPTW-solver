@@ -1,5 +1,5 @@
 {
 	"cmakelists_dir": "../code/",
-	"output_dir": "../out/",
+	"output_dir": "../../phd_plots/data/tdvrptw-solver/",
 	"instances_dir": "../../VRP-benchmarks/formatted_benchmarks/"
 }

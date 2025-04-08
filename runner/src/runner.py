@@ -1,8 +1,8 @@
 import os, json, datetime, os
 
 from utils.terminal import purple
-from utils.utils import read_json_from_file, save_json_to_file, save_csv_to_file, load_csv_from_file, get_filename_from_path
-from utils.formatting import format_date_for_filepath
+from utils.utils import read_json_from_file, save_json_to_file, save_csv_to_file, load_csv_from_file, get_filename_from_path, join_paths
+from utils.formatting import format_date_for_filepath, format_date_for_console
 from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
 from compiling.compile import compile
 from running.experiment import run_experiment, instances_for_experiment
@@ -22,25 +22,35 @@ def main():
 	# Run experiment files.
 	for experiment_file in experiment_files:
 		experiment_file_json = json.load(open(experiment_file))
+		experiment_filename = os.path.basename(experiment_file).replace(".json", "")
 
 		# Outputs of the experiments will be stored in this object.
 		print("experiment_file", experiment_file)
 		print("type of experiment_file", type(experiment_file))
-		output = {
+		
+		output_keyname = f"{format_date_for_filepath(RUNNER_START_TIME)}-{experiment_filename}"
+		annotated_experiment_output_dirpath =  join_paths(OUTPUT_DIR, output_keyname)
+		annotated_experiment_filepath = join_paths(annotated_experiment_output_dirpath, "annotated_experiment.json")
+		csv_output_filepath =  join_paths(OUTPUT_DIR, f"csv/{output_keyname}.csv")
+
+		annotated_experiment = {
 			"date": str(datetime.date.today()), 
-			"experiment_file": os.path.abspath(experiment_file), 
-			"outputs": []
+			"experiment_file": os.path.abspath(experiment_file),
+			"experiment_params": experiment_file_json,
+			"annotated_experiment_output_dirpath": annotated_experiment_output_dirpath,
+			"csv_output_filepath": csv_output_filepath
 		}
 
-		# Periodically, every TSave seconds the output will be saved to the output folder with the name "<date>-<experiment_file_name>.json".
-		TSave = 30
-		experiment_filename = os.path.basename(experiment_file).replace(".json", "")
-		output_file_name = F"{format_date_for_filepath(RUNNER_START_TIME)}-{experiment_filename}.json"
-		csv_output_filepath = F"{OUTPUT_DIR}/csv/{output_file_name.replace('.json', '.csv')}"
 		if args["carry_on"] is not None:
+			# TODO: change to expect a "annotated_experiment.json" file instead
 			csv_output_filepath = args["carry_on"]
-		TInit = datetime.datetime.now() # TInit = "timestamp when the experimentation started".
-		TLast = datetime.datetime.now() # TLast = "last time the output was saved".
+		else:
+			# Save "annotated_experiment.json" file.
+			if not os.path.isdir(annotated_experiment_output_dirpath):
+				os.mkdir(annotated_experiment_output_dirpath)
+			if not os.path.isfile(annotated_experiment_filepath):
+				save_json_to_file(annotated_experiment_filepath, annotated_experiment)
+			print("Saved annotated experiment file:", annotated_experiment_filepath)
 
 		# For each instances specified in the experiment file.
 		instances = instances_for_experiment(
@@ -96,20 +106,17 @@ def main():
 		if args["dry_run"]: return
 		for experiment, instance, solutions in tqdm(experiment_runs, desc="Running experiments"):
 			res = run_experiment(args, experiment, instance, solutions)
-			output["outputs"].append(res)
 
 			# Save the CSV output.
 			save_csv_to_file(csv_output_filepath, get_csv_res(res))
 
-			# If TSave seconds have passed since TLast then save output.
-			if (datetime.datetime.now() - TLast).total_seconds() >= TSave:
-				output["time"] = (datetime.datetime.now() - TInit).total_seconds()
-				save_json_to_file(F"{OUTPUT_DIR}/{output_file_name}", output)
-				TLast = datetime.datetime.now()
+			# Save result to json file.
+			output_file_name = join_paths(annotated_experiment_output_dirpath, f"{instance["dataset_name"]}_{instance["instance_filename"]}_{experiment["name"]}.json")
+			save_json_to_file(output_file_name, res)
 		
-		# Having finished all experiments from the experimentation_file, save the final output.
-		output["time"] = (datetime.datetime.now() - TInit).total_seconds()
-		save_json_to_file(F"{OUTPUT_DIR}/{output_file_name}", output)
+		# Print total time taken for the experiment.
+		total_time = datetime.datetime.now() - RUNNER_START_TIME
+		print(purple(F"Total time taken: {total_time}"))
 
 if __name__== "__main__":
   main()
