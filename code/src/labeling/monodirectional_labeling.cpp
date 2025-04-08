@@ -34,12 +34,12 @@ double beta(Label* l, bool partial)
 
 MonodirectionalLabeling::MonodirectionalLabeling(
 	const VRPInstance& vrp,
-	const goc::PartitionedInterval& partitioned_horizon,
-	uint32_t nb_neighbors_to_keep
+	const std::optional<TDNGRoutesParams>& ng_params
 ): 
 	vrp_(vrp), 
 	correcting(false),
-	ng(TDNGNeighborhoods(vrp, partitioned_horizon, nb_neighbors_to_keep))
+	// Create neignborhoods if ng_params are given.
+	ng(ng_params ? std::make_optional<TDNGNeighborhoods>(vrp, ng_params->partitioned_horizon, ng_params->nb_neighbors_to_keep) : std::nullopt)
 {
 	cross = true;
 	process_limit = INT_MAX;
@@ -79,8 +79,10 @@ void MonodirectionalLabeling::SetProblem(const PricingProblem& pricing_problem)
 	Clean();
 }
 
-vector<Label*> MonodirectionalLabeling::Run(LBQueue* q, MLBExecutionLog* log)
-{
+vector<Label*> MonodirectionalLabeling::Run(
+	LBQueue* q, 
+	MLBExecutionLog* log
+) {
 	// Use rolex to measure whole run time, and rolex2 to measure steps time.
 	Stopwatch rolex(true), rolex2(false);
 	vector<Label*> P; // Processed labels.
@@ -213,9 +215,11 @@ Label* MonodirectionalLabeling::ExtensionStep(const LazyLabel& ll) const
 	if (lv->duration.Empty()) { delete lv; return nullptr; } // If no duration pieces exist, then the label is dominated.
 	lv->rw = dom(lv->duration);
 	
-	const VertexSet& ng_v = ng.neighbors(v, lv->rw.left);
-	if (ng_routes_relaxation)
+	if (ng_routes_relaxation && ng.has_value())
+	{
+		const VertexSet& ng_v = ng->neighbors(v, lv->rw.left);
 		lv->S = unite(intersection(l->S, ng_v), {v}); // S := (S(parent) ∩ N(v, t)) ∪ {v}
+	}
 	else
 		lv->S = unite(l->S, {v}); // Full elementary route (no NG-relaxation)
 	lv->U = unite(lv->S, unreachable_strengthened ? vrp_.Unreachable(v, lv->rw.left) : vrp_.WeakUnreachable(v, lv->rw.left));

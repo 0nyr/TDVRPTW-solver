@@ -44,9 +44,7 @@ public:
 
 	BidirectionalLabeling(
 		const VRPInstance& vrp,
-		int ng_nb_neighbors,
-		int ng_max_neighbors,
-		goc::PartitionedInterval partitioned_horizon
+		const std::optional<TDNGRoutesParams>& ng_routes_params
 	);
 	
 	// Runs the bidirectional labeling algorithm and leaves the negative reduced cost routes on the parameter R.
@@ -78,9 +76,7 @@ private:
 	VRPInstance vrp_;
 
 	// NG-route stuff
-	const int ng_nb_neighbors; // (Start) number of neighbors to consider in the NG routes.
-	const int ng_max_neighbors; // Maximum number of neighbors to consider in the NG routes with dynamic neighborhood extension.
-	const goc::PartitionedInterval partitioned_horizon_; // Time horizon, partitioned into successive intervals.
+	const std::optional<TDNGRoutesParams>& ng_params_; // Parameters for the NG-routes.
 
 	PricingProblem pp_; // Pricing problem provided in the Run method to be used in the labeling algorithm.
 	MonodirectionalLabeling lbl_[2]; // lbl_[0] = forward, lbl_[1] = backward.

@@ -54,12 +54,11 @@ public:
 	DominanceStructure U; // Indexed by last vertex, demand and sorted by c_min.
 	int processed_count; // Number of labels in the dominance structure.
 	
-	TDNGNeighborhoods ng; // Neighborhoods to use for the labeling algorithm.
+	std::optional<TDNGNeighborhoods> ng; // Neighborhoods to use for the labeling algorithm.
 
 	MonodirectionalLabeling(
 		const VRPInstance& vrp,
-		const goc::PartitionedInterval& partitioned_horizon,
-		uint32_t nb_neighbors_to_keep
+		const std::optional<TDNGRoutesParams>& ng_params // optional, if NG-routes are used, then the neighborhoods are created using the given params.
 	);
 	
 	~MonodirectionalLabeling();

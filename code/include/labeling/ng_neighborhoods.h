@@ -27,6 +27,14 @@ goc::PartitionedInterval partition_time_horizon(
     NHPS horizon_partitioning_strategy
 );
 
+// A struct containing necessary params for TD-NG-Routes.
+struct TDNGRoutesParams
+{
+    uint32_t nb_neighbors_to_keep; // Number of neighbors to keep for each vertex in the preprocessing step.
+    uint32_t max_nb_neighbors; // Maximum number of neighbors to keep (Dynamic Neighborhood Augmentation DNA).
+    goc::PartitionedInterval partitioned_horizon; // Time horizon, partitioned into successive intervals.
+};
+
 // Time-dependent neighborhoods.
 class TDNGNeighborhoods
 {

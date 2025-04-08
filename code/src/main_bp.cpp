@@ -133,17 +133,29 @@ int main(int argc, char** argv)
 		bcp.time_limit = time_limit;
 		bcp.cut_limit = cut_limit;
 		bcp.node_limit = node_limit;
-
+		
 		// The labeling algorithm which is used in the CG solver of the BCP for the pricing problem.
+		std::optional<TDNGRoutesParams> ng_routes_params = [&]() -> std::optional<TDNGRoutesParams> {
+			// NG-Routes will be use, so we need to create the neighborhoods.
+			if (lal_heuristic_ng_routes) {
+				return TDNGRoutesParams(
+					ng_nb_neighbors, 
+					ng_max_neighbors,
+					partition_time_horizon(
+						{0, vrp.T},
+						vrp.time_steps,
+						NHPS::TimeStepSpecific
+					)
+				);
+			} else {
+				// NG-routes not used. Save compute time/memory.
+				return std::nullopt;
+			}
+		}();
+
 		BidirectionalLabeling lbl(
 			vrp,
-			ng_nb_neighbors,
-			ng_max_neighbors,
-			partition_time_horizon(
-				{0, vrp.T},
-				vrp.time_steps,
-				NHPS::TimeStepSpecific
-			)
+			ng_routes_params
 		);
 		lbl.solution_limit = 3000;
 		lbl.closing_state = !iterative_merge;
