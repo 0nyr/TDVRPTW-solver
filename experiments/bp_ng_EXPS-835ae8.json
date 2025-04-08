@@ -1,16 +1,16 @@
 {
     "datasets": [
-        {
-            "name": "Dabia2013", 
-            "n": [102],
-            "select": "R109_100"
-        }
+        {"name": "Dabia2013", "select": "EXPS-835ae8"},
+        {"name": "Ari2018", "select": "EXPS-835ae8"},
+        {"name": "Rifki2020", "select": "EXPS-835ae8"},
+        {"name": "Solomon1987", "select": "EXPS-835ae8"},
+        {"name": "Vu2020", "select": "EXPS-835ae8"}
     ],
     "experiments": [
         {
-            "name": "BPC",
+            "name": "BPC-Lera-EXPS-835ae8",
             "executable": "bp",
-            "time_limit": 400,
+            "time_limit": 1800,
             "cut_limit": 500,
             "partial": true,
             "limited_extension": true,
@@ -25,9 +25,9 @@
             "lal_exact_labeling": true
         },
         {
-            "name": "BPC-NG-routes",
+            "name": "BPC-TDNGRoutes-EXPS-835ae8",
             "executable": "bp",
-            "time_limit": 400,
+            "time_limit": 1800,
             "cut_limit": 500,
             "partial": true,
             "limited_extension": true,
