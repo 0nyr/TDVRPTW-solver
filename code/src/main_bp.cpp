@@ -81,10 +81,13 @@ int main(int argc, char** argv)
 		const bool lal_heuristic_ng_routes = value_or_default(experiment, "lal_heuristic_ng_routes", false);
 		const bool lal_exact_labeling = value_or_default(experiment, "lal_exact_labeling", true);
 
-		int ng_nb_neighbors = double(fast_log2((uint32_t)instance["nb_vertices"])) * 1.7;
-		int ng_max_neighbors = max((int)((double)instance["nb_vertices"] / 2.0), ng_nb_neighbors);
+		//int ng_nb_neighbors = double(fast_log2((uint32_t)instance["nb_vertices"])) * 1.7;
+		const double ratio_nb_neighbors = 0.09;
+		const int ng_nb_neighbors = value_or_default(experiment, "ng_nb_neighbors", std::round(ratio_nb_neighbors * (double)instance["nb_vertices"]));
+		const int ng_max_neighbors = max((int)((double)instance["nb_vertices"] / 2.0), ng_nb_neighbors);
 
 		// Show instance details.
+		clog << "Experiment: " << experiment["name"] << endl;
 		clog << "Instance: " << instance["instance_basename"] << " - " << value_or_default(instance, "instance_filename", "(filename missing)") << endl;
 		clog << "Benchmark: " << instance["benchmark_basename"] << endl;
 		clog << "Nb vertices: " << instance["nb_vertices"] << endl;
