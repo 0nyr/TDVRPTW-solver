@@ -6,8 +6,12 @@
 namespace solver
 {
 
-// Greedy Makespan Heuristic 1
+// Greedy Makespan Heuristic 1 (GHM1).
 goc::VRPSolution greedy_makespan_heuristic_1(
+    const VRPInstance& vrp
+);
+
+goc::VRPSolution ghm1_duration(
     const VRPInstance& vrp
 );
 

@@ -20,7 +20,7 @@ namespace
  * at a given departure time, while considering 
  * only a subset of the vertices (free vertices).
  */
-vector<double> compute_EAT_vertex(
+vector<double> compute_EAT_on_free_vertices(
     const Digraph& D, 
     Vertex s, 
     double t0,
@@ -51,20 +51,6 @@ vector<double> compute_EAT_vertex(
     }
 
     return EAT;
-
-    // Determine the vertex with smallest EAT.
-    // If no vertex is reachable, return an empty optional.
-    optional<std::pair<double, Vertex>> result = nullopt;
-    for (Vertex w: D.Vertices())
-    {
-        if (visited[w] && EAT[w] < INFTY)
-        {
-            if (!result || EAT[w] < result->first)
-            {
-                result = make_optional(make_pair(EAT[w], w));
-            }
-        }
-    }
 }
 
 }
@@ -117,7 +103,7 @@ VRPSolution greedy_makespan_heuristic_1(
                 VertexSet().set(), visited_vertices
             );
             //clog << "GMH1: Free vertices: " << free_vertices << endl;
-            vector<double> makespans_i_t = compute_EAT_vertex(
+            vector<double> makespans_i_t = compute_EAT_on_free_vertices(
                 vrp.D, 
                 current_vertex,
                 route.duration,
@@ -216,8 +202,35 @@ VRPSolution greedy_makespan_heuristic_1(
             << endl;
     }
 
-    clog << "> Solution: " << routes.size() << " routes, makespan: " << total_makespan << " - routes: " << routes << endl;
+    clog << "> Solution: " << routes.size() << " routes, Makespan: " << total_makespan << " - routes: " << routes << endl;
     return VRPSolution(total_makespan, routes);
 }
+
+/**
+ * ### Computing the duration of routes provided by GMH1
+ * 
+ * All routes from GMH1 are valid, but all start at t=0.
+ * Use the route paths to compute their corresponding optimal duration.
+ */
+VRPSolution ghm1_duration(
+    const VRPInstance& vrp
+) {
+    const VRPSolution makespan_solution = greedy_makespan_heuristic_1(vrp);
+    vector<Route> routes = vector<Route>(makespan_solution.routes.size());
+    double total_duration = 0.0;
+    for (size_t i = 0; i < makespan_solution.routes.size(); ++i)
+    {
+        routes[i] = vrp.BestDurationRoute(makespan_solution.routes[i].path);
+        clog << "GMH1: Route: " << routes[i].path 
+            << " -> Duration: " << routes[i].duration
+            << ", nb visited: " << routes[i].path.size()
+            << endl;
+        total_duration += routes[i].duration;
+    }
+
+    clog << "> Solution: " << routes.size() << " routes, Duration: " << total_duration << " - routes: " << routes << endl;
+    return VRPSolution(total_duration, routes);
+}
+    
 
 } // namespace
