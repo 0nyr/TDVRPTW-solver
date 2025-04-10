@@ -32,6 +32,7 @@ def main():
 		annotated_experiment_output_dirpath =  join_paths(OUTPUT_DIR, output_keyname)
 		annotated_experiment_filepath = join_paths(annotated_experiment_output_dirpath, "annotated_experiment.json")
 		csv_output_filepath =  join_paths(OUTPUT_DIR, f"csv/{output_keyname}.csv")
+		json_output_dirpath = join_paths(annotated_experiment_output_dirpath, "outputs")
 
 		annotated_experiment = {
 			"date": str(datetime.date.today()), 
@@ -48,6 +49,8 @@ def main():
 			# Save "annotated_experiment.json" file.
 			if not os.path.isdir(annotated_experiment_output_dirpath):
 				os.mkdir(annotated_experiment_output_dirpath)
+			if not os.path.isdir(json_output_dirpath):
+				os.mkdir(json_output_dirpath)
 			if not os.path.isfile(annotated_experiment_filepath):
 				save_json_to_file(annotated_experiment_filepath, annotated_experiment)
 			print("Saved annotated experiment file:", annotated_experiment_filepath)
@@ -111,7 +114,7 @@ def main():
 			save_csv_to_file(csv_output_filepath, get_csv_res(res))
 
 			# Save result to json file.
-			output_file_name = join_paths(annotated_experiment_output_dirpath, f"{instance["dataset_name"]}_{instance["instance_filename"]}_{experiment["name"]}.json")
+			output_file_name = join_paths(json_output_dirpath, f"{instance["dataset_name"]}_{instance["instance_filename"]}_{experiment["name"]}.json")
 			save_json_to_file(output_file_name, res)
 		
 		# Print total time taken for the experiment.
