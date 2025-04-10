@@ -99,12 +99,14 @@ VRPSolution greedy_makespan_heuristic_1(
 
     clog << "Horizon: [0, " << vrp.T << "]" << endl;
     clog << "Depot (start & end): " << vrp.o << " - " << vrp.d << endl;
-    
+    clog << "Max capacity Q: " << vrp.Q << endl;
+
     // Step 2: Build routes one by one.
     while (nb_bits_set(visited_vertices) + 2 < n)
     {
         // Step 2.1: Start at the depot.
         Route route = Route({vrp.o}, 0.0, 0.0);
+        CapacityUnit route_capacity = 0.0;
 
         // Step 2.2: Add the next vertex with the smallest makespan.
         while (true)
@@ -180,9 +182,19 @@ VRPSolution greedy_makespan_heuristic_1(
                 break;
             }
 
-            // Add the next vertex to the route.
-            clog << " -> " << next_vertex << " ("
-                 << next_arrival_time << ")"; 
+            // Check capacity constraint.
+            if (route_capacity + vrp.q[next_vertex] > vrp.Q)
+            {
+                // Return to the depot and close this route.
+                route.path.push_back(vrp.d);
+                route.duration = vrp.ArrivalTime({current_vertex, vrp.d}, route.duration);
+                break;
+            }
+            route_capacity += vrp.q[next_vertex];
+
+            clog << " -> " << next_vertex << " (arrival: "
+                 << next_arrival_time
+                 << ", route_cap: " << route_capacity << ")"; 
             route.path.push_back(next_vertex);
             route.duration = next_arrival_time;
             // Remove the vertex from the graph.
@@ -197,7 +209,11 @@ VRPSolution greedy_makespan_heuristic_1(
 
         routes.push_back(route);
         total_makespan += route.duration;
-        clog << "GMH1: Route: " << route.path << " -> Duration: " << route.duration << endl;
+        clog << "GMH1: Route: " << route.path 
+            << " -> Makespan: " << route.duration 
+            << ", route capacity: " << route_capacity 
+            << ", nb visited: " << route.path.size()
+            << endl;
     }
 
     clog << "> Solution: " << routes.size() << " routes, makespan: " << total_makespan << " - routes: " << routes << endl;
