@@ -103,7 +103,7 @@ bool Digraph::IncludesArc(const Arc& e) const
 	return adjacency_matrix_[e.tail][e.head];
 }
 
-int Digraph::NbVertices() const
+std::size_t Digraph::NbVertices() const
 {
 	return (int) vertices_.size();
 }

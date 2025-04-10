@@ -45,6 +45,7 @@ add_library(
     src/bcp/pricing_problem.cpp 
     src/bcp/spf.cpp 
     src/bcp/bcp.cpp
+    src/heuristics/greedy_makespan.cpp
 )
 target_link_libraries(solver goc)
 

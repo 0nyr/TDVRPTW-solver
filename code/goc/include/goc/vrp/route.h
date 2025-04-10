@@ -22,6 +22,7 @@ class Route : public Printable
 public:
 	GraphPath path; // Path traversed by the vehicle.
 	double t0; // Departure time.
+	// TODO: rename to "value" or "cost" 
 	double duration; // Route duration departing at t0.
 	
 	// Initializes the empty route with t0=0, duration=0.

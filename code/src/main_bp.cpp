@@ -22,6 +22,8 @@
 #include "labeling/ng_neighborhoods.h"
 #include "labeling/labeling_level.h"
 
+#include "heuristics/greedy_makespan.h"
+
 using namespace std;
 using namespace goc;
 using namespace nlohmann;
@@ -122,6 +124,9 @@ int main(int argc, char** argv)
 
 		// Parse instance.
 		VRPInstance vrp = instance;
+
+		greedy_makespan_heuristic_1(vrp);
+		return 0;
 
 		// Run BCP.
 		clog << "Running BCP algorithm..." << endl;
