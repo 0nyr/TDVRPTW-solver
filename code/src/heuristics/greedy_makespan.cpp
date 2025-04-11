@@ -231,6 +231,6 @@ VRPSolution ghm1_duration(
     clog << "> Solution: " << routes.size() << " routes, Duration: " << total_duration << " - routes: " << routes << endl;
     return VRPSolution(total_duration, routes);
 }
-    
+
 
 } // namespace

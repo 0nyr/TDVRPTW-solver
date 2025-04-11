@@ -18,7 +18,7 @@
 #include "bcp/spf.h"
 #include "bcp/pricing_problem.h"
 #include "labeling/bidirectional_labeling.h"
-#include "goc/log/timed_solutions.h"
+#include "nyr/log/timed_solutions.h"
 #include "goc/math/math_utils.h"
 #include "preprocess/preprocess_validity.h"
 #include "labeling/ng_neighborhoods.h"
@@ -50,7 +50,8 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		auto program_start_time = nyr::Clock::now();
+		const nyr::ProgramClock pclock; // start the program clock.
+		nyr::TimedVrpSolution timed_solutions(pclock); // Create a timed solution object to store the solutions.
 
 		json output; // STDOUT output will go into this JSON.
 
@@ -125,15 +126,13 @@ int main(int argc, char** argv)
 		// 	TDNGNeighborhoodsTimeStrategy::TimeStepSpecific,
 		// 	ng_nb_neighbors
 		// ); 
-		clog << "Preprocessing time: " <<  nyr::seconds_since(program_start_time) << endl;
+		clog << "Preprocessing time: " << pclock.elapsed() << endl;
 
 		// Parse instance.
 		VRPInstance vrp = instance;
 
-		ghm1_duration(vrp);
-		// Log solve time
-		clog << "Full run time: " << nyr::seconds_since(program_start_time) << endl;
-		return 0;
+		// Initialization heuristics.
+		timed_solutions.try_add(ghm1_duration(vrp));
 
 		// Run BCP.
 		clog << "Running BCP algorithm..." << endl;
@@ -230,8 +229,6 @@ int main(int argc, char** argv)
 			}
 		};
 
-
-		TimedSolutions<VRPSolution> timed_solutions({});
 		auto log = bcp.Run(timed_solutions);
 
 		output["Exact"] = log;
@@ -250,6 +247,8 @@ int main(int argc, char** argv)
 			clog << "\tRoutes:" << endl;
 			for (auto& r: best_solution.routes) clog << "\t\t" << r << endl;
 		}
+
+		clog << "Full run time: " << pclock.elapsed() << endl;
 
 		// Send JSON output to cout.
 		cout << output << endl;

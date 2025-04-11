@@ -9,7 +9,7 @@
 
 #include "goc/goc.h"
 #include "instance/vrp_instance.h"
-#include "goc/log/timed_solutions.h"
+#include "nyr/log/timed_solutions.h"
 #include "pricing_problem.h"
 #include "spf.h"
 
@@ -32,7 +32,7 @@ public:
 	BCP(const goc::Digraph& D, SPF* spf);
 	
 	// Executes a Branch-Cut-Price algorithm on
-	goc::BCPExecutionLog Run(goc::TimedVrpSolution& timed_solutions);
+	goc::BCPExecutionLog Run(nyr::TimedVrpSolution& timed_solutions);
 	
 private:
 	struct Node
@@ -51,14 +51,14 @@ private:
 	
 	// Solves the node relaxation using CG and sets its bound and opt attributes.
 	// Adds it to the queue if it is feasible and fractional.
-	void ProcessNode(Node* node, goc::TimedVrpSolution& timed_solutions);
+	void ProcessNode(Node* node, nyr::TimedVrpSolution& timed_solutions);
 	
 	// Branches the node using strong branching.
-	void BranchNode(Node* node, goc::TimedVrpSolution& timed_solutions);
+	void BranchNode(Node* node, nyr::TimedVrpSolution& timed_solutions);
 	
 	// The freeze heuristic consists in solving the SPF with the existing columns using a BC solver.
 	// The best solution there is an UB to the problem.
-	void FreezeHeuristic(goc::TimedVrpSolution& timed_solutions);
+	void FreezeHeuristic(nyr::TimedVrpSolution& timed_solutions);
 	
 	// Separates subset row cuts with n = 3, k = 2.
 	// Returns: if any cut was added.

@@ -16,13 +16,50 @@
 
 namespace goc
 {
+/**
+ * @brief Abstract class representing a solution to 
+ * an optimization problem.
+ * Every solution has a value as a double.
+ */
+class AbstractSolution: public Printable
+{
+public:
+	// The value of the solution.
+	double value;
+	
+	// Constructor.
+	AbstractSolution(double value) : value(value) {}
+	
+	// Destructor.
+	virtual ~AbstractSolution() = default;
+	
+	// Prints the JSON representation of the solution.
+	virtual void Print(std::ostream& os) const = 0;
+};
+
+// // Serializes the solution.
+// void to_json(nlohmann::json& j, const AbstractSolution& solution)
+// {
+// 	j["kd_type"] = "abstract_solution";
+// 	j["value"] = solution.value;
+// }
+// // Parses an solution.
+// void from_json(const nlohmann::json& j, AbstractSolution& solution)
+// {
+// 	solution.value = j["value"];
+// }
+// // Returns: if two solutions are equal.
+// bool operator==(const AbstractSolution& s1, const AbstractSolution& s2)
+// {
+// 	return s1.value == s2.value;
+// }
+
 // Represents a solution to a Vehicle Routing Problem.
 // This solution has a value, and a set of routes.
 // - It knows how to serialize itself in JSON to be compatible with Kaleidoscope kd_type "vrp_solution".
-class VRPSolution : public Printable
+class VRPSolution : public AbstractSolution
 {
 public:
-	double value; // Value associated with the solution.
 	std::vector<Route> routes; // Solution routes.
 	
 	VRPSolution() = default;

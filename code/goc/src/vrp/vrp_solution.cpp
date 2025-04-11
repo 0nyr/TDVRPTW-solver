@@ -12,7 +12,7 @@ using namespace nlohmann;
 namespace goc
 {
 VRPSolution::VRPSolution(double value, const vector<Route>& routes)
-	: value(value), routes(routes)
+	: AbstractSolution(value), routes(routes)
 {
 
 }

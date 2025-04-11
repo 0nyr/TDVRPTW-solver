@@ -10,6 +10,7 @@
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
 
 namespace solver
 {
@@ -63,7 +64,7 @@ BCP::BCP(
 	};
 }
 
-BCPExecutionLog BCP::Run(TimedVrpSolution& timed_solutions)
+BCPExecutionLog BCP::Run(nyr::TimedVrpSolution& timed_solutions)
 {
 	// Init variables.
 	log.variable_count = spf->formulation->VariableCount();
@@ -153,7 +154,7 @@ double BCP::EstimateBound(Node* node)
 	return lp_log.status == LPStatus::Optimum ? *lp_log.incumbent_value : INFTY;
 }
 
-void BCP::ProcessNode(Node* node, TimedVrpSolution& timed_solutions)
+void BCP::ProcessNode(Node* node, nyr::TimedVrpSolution& timed_solutions)
 {
 	node_seq++;
 	spf->SetForbiddenArcs(node->A);
@@ -211,11 +212,11 @@ void BCP::ProcessNode(Node* node, TimedVrpSolution& timed_solutions)
 				ub = node->opt;
 				// print the new UB and associated solution.
 				clog << "New UB: " << z_ub << " at node " << node->index;
-				Duration tsol = rolex.Peek();
-				clog << " - Time since algo start: " << tsol << endl;
+				Durex tsol = timed_solutions.pclock.elapsed();
+				clog << " - time: " << tsol << endl;
 				auto routes = spf->InterpretSolution(ub);
 				clog << routes << endl;
-				VRPSolution sol{z_ub, routes};
+				VRPSolution sol(z_ub, routes);
 				clog << sol << endl;
 				timed_solutions.add(tsol, sol);
 			}
@@ -237,7 +238,7 @@ void BCP::ProcessNode(Node* node, TimedVrpSolution& timed_solutions)
 	}
 }
 
-void BCP::BranchNode(Node* node, TimedVrpSolution& timed_solutions)
+void BCP::BranchNode(Node* node, nyr::TimedVrpSolution& timed_solutions)
 {
 	Stopwatch rolex_branch(true);
 	
@@ -297,7 +298,7 @@ void BCP::BranchNode(Node* node, TimedVrpSolution& timed_solutions)
 		ProcessNode(new Node(candidate), timed_solutions);
 }
 
-void BCP::FreezeHeuristic(TimedVrpSolution& timed_solutions)
+void BCP::FreezeHeuristic(nyr::TimedVrpSolution& timed_solutions)
 {
 	BCSolver bc_solver;
 	bc_solver.time_limit = time_limit;
@@ -309,11 +310,11 @@ void BCP::FreezeHeuristic(TimedVrpSolution& timed_solutions)
 
 		// print the new UB and associated solution.
 		clog << "New UB: " << z_ub << " in freeze heuristic";
-		Duration tsol = rolex.Peek();
-		clog << " - Time since algo start: " << tsol << endl;
+		Durex tsol = timed_solutions.pclock.elapsed();
+		clog << " - time: " << tsol << endl;
 		auto routes = spf->InterpretSolution(ub);
 		clog << routes << endl;
-		VRPSolution sol{z_ub, routes};
+		VRPSolution sol(z_ub, routes);
 		clog << sol << endl;
 		timed_solutions.add(tsol, sol);
 	}
