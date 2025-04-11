@@ -81,6 +81,7 @@ int main(int argc, char** argv)
 		bool sort_by_cost = value_or_default(experiment, "sort_by_cost", true);
 		bool symmetric = value_or_default(experiment, "symmetric", false);
 		bool iterative_merge = value_or_default(experiment, "iterative_merge", true);
+		bool initialization_heuristics = value_or_default(experiment, "initialization_heuristics", true);
 		
 		// Labeling Algorithm levels
 		const bool lal_heuristic_cost = value_or_default(experiment, "lal_heuristic_cost", true);
@@ -119,6 +120,7 @@ int main(int argc, char** argv)
 			clog << "NG nb neighbors: " << ng_nb_neighbors << endl;
 			clog << "NG max neighbors: " << ng_max_neighbors << endl;
 		}
+		clog << "Initialization heuristics: " << initialization_heuristics << endl;
 
 		preprocess_validity(instance);
 		// preprocess_ng_neighborhoods(
@@ -132,8 +134,12 @@ int main(int argc, char** argv)
 		VRPInstance vrp = instance;
 
 		// Initialization heuristics.
-		timed_solutions.try_add(ghm1_duration(vrp));
-
+		if (initialization_heuristics)
+		{
+			clog << "Initialization heuristics..." << endl;
+			timed_solutions.try_add(ghm1_duration(vrp));
+		}
+		
 		// Run BCP.
 		clog << "Running BCP algorithm..." << endl;
 
@@ -141,6 +147,18 @@ int main(int argc, char** argv)
 		SPF spf(vrp.D.NbVertices());
 		for (Vertex i: exclude(vrp.D.Vertices(), {vrp.o, vrp.d}))
 			spf.AddRoute(vrp.BestDurationRoute({vrp.o, i, vrp.d}));
+
+		// If some heuristic solutions were found, add their routes to the SPF.
+		if (initialization_heuristics)
+		{
+			for (const auto& sol: timed_solutions.solutions())
+			{
+				for (const auto& route: sol.routes)
+				{
+					spf.AddRoute(route);
+				}
+			}
+		}
 
 		// The Branch-Cut-Price algorithm to solve the VRP.
 		BCP bcp(vrp.D, &spf);

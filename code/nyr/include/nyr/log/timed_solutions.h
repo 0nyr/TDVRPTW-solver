@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <concepts>
+#include <ranges>
 
 #include <goc/goc.h>
 #include "nyr/time/time.h"
@@ -65,6 +66,14 @@ public:
     const std::vector<std::pair<Durex, Solution>>& get_timed_solutions() const
     {
         return timed_sols_;
+    }
+
+    // Returns a range to iterate over the solutions directly.
+    auto solutions() const
+    {
+        return timed_sols_ | std::views::transform([](const auto& pair) -> const Solution& {
+            return pair.second;
+        });
     }
 
     // Returns the last (best) solution found.
