@@ -7,8 +7,10 @@
 #include <iostream>
 #include <vector>
 #include <climits>
+#include <chrono>
 
 #include <goc/goc.h>
+#include <nyr/nyr.h>
 
 #include "instance/vrp_instance.h"
 #include "instance/load_igp.h"
@@ -48,6 +50,8 @@ int main(int argc, char** argv)
 {
 	try
 	{
+		auto program_start_time = nyr::Clock::now();
+
 		json output; // STDOUT output will go into this JSON.
 
 		if (argc > 1) 
@@ -121,11 +125,14 @@ int main(int argc, char** argv)
 		// 	TDNGNeighborhoodsTimeStrategy::TimeStepSpecific,
 		// 	ng_nb_neighbors
 		// ); 
+		clog << "Preprocessing time: " <<  nyr::seconds_since(program_start_time) << endl;
 
 		// Parse instance.
 		VRPInstance vrp = instance;
 
-		greedy_makespan_heuristic_1(vrp);
+		ghm1_duration(vrp);
+		// Log solve time
+		clog << "Full run time: " << nyr::seconds_since(program_start_time) << endl;
 		return 0;
 
 		// Run BCP.

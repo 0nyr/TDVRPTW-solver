@@ -4,6 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/code/nyr/**",
                 "/home/onyr/gurobi1103/linux64/include/**",
                 "/home/onyr/cplex2210/CPLEX_Studio221/cplex/include/**",
                 "/home/onyr/cplex2210/CPLEX_Studio221/concert/include/**",
@@ -15,7 +16,7 @@
             "cppStandard": "gnu++20",
             "intelliSenseMode": "linux-gcc-x64",
             "compileCommands": [
-                "${workspaceFolder}/runner/obj/debug/compile_commands.json"
+                "${workspaceFolder}/build/compile_commands.json"
             ]
         }
     ],

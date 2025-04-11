@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(solver)
 
 # specify C++ 26 standard
-set(CMAKE_CXX_STANDARD 26)
 message("-- C++ version: ${CMAKE_CXX_STANDARD}")
+set(CMAKE_CXX_STANDARD 26)
 
 # Set compiler flags.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -m64")
@@ -22,6 +22,10 @@ include_directories("include/")
 # Including GOC.
 add_subdirectory(goc)
 include_directories(goc/include)
+
+# Include NYR.
+add_subdirectory(nyr)
+include_directories(nyr/include)
 
 # Create library with source codes.
 add_library(
@@ -47,7 +51,7 @@ add_library(
     src/bcp/bcp.cpp
     src/heuristics/greedy_makespan.cpp
 )
-target_link_libraries(solver goc)
+target_link_libraries(solver goc nyr)
 
 # Create binaries.
 # add_executable(pricing src/main_pricing.cpp)
