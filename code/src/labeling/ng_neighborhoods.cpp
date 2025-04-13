@@ -206,8 +206,8 @@ TDNGNeighborhoods::TDNGNeighborhoods(
         }
     }
 
-    // #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
-    // print complete TD neighborhoods
+    #ifdef PRINT_NEIGHBORHOODS_PREPROCESSING
+    print complete TD neighborhoods
     for (Vertex i: V)
     {
         clog << " - Vertex " << i << ":" << endl;
@@ -217,7 +217,7 @@ TDNGNeighborhoods::TDNGNeighborhoods(
             clog << "     " << neighbors << endl;
         }
     }
-    // #endif
+    #endif
 }
 
 const VertexSet& TDNGNeighborhoods::neighbors(

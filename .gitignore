@@ -1,3 +1,6 @@
+# Config files (examples saved are in .bk)
+runner/src/config.json
+
 # Prerequisites
 *.d
 
