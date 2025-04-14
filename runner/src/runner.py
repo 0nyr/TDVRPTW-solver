@@ -8,6 +8,7 @@ from compiling.compile import compile
 from running.experiment import run_experiment, instances_for_experiment
 from params.args import parse_program_args
 from output.csv_output import get_csv_res
+from output.json_output import complete_res_json
 from tqdm import tqdm
 
 def main():
@@ -115,11 +116,11 @@ def main():
 
 			# Save result to json file.
 			output_file_name = join_paths(json_output_dirpath, f"{instance["dataset_name"]}_{instance["instance_filename"]}_{experiment["name"]}.json")
-			save_json_to_file(output_file_name, res)
+			save_json_to_file(output_file_name, complete_res_json(res))
 		
 		# Print total time taken for the experiment.
 		total_time = datetime.datetime.now() - RUNNER_START_TIME
 		print(purple(F"Total time taken: {total_time}"))
 
 if __name__== "__main__":
-  main()
+	main()

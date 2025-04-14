@@ -6,6 +6,7 @@ Source code to replicate the experiments from the article https://doi.org/10.100
 ## Commands
 `python runner/src/runner.py experiments/bp_test.json`: run tests on small instances.
 `python runner/src/runner.py experiments/bp_all.json --carry-on out/csv/2025-03-22-00-20-24-bp_all.csv --dry-run`: continue experiment series of runs, just see how many runs needs to be computed.
+`python runner/src/runner.py experiments/bp_ng_EXPS-835ae8.json > out/tmp/out23.txt`: run experiment, with loading tqdm bar, clogs into a file.
 
 ## Abstract
 In this paper we implement a branch‐price and cut algorithm for a time dependent vehicle routing problem with time windows in which the goal is to minimize the total route duration. The travel time between two customers is given by a piecewise linear function on the departure time and, thus, it need not remain fixed along the planning horizon. We discuss different alternatives for the implementation of these linear functions within the labeling algorithm applied to solve the pricing problem. We also provide a tailored implementation for one of these alternatives, relying on efficient data structures for storing the labels, and show several strategies to accelerate the algorithm. Computational results show that the proposed techniques are effective and improve the column generation step, solving all instances with 25 customers, 49 of 56 with 50 customers, and many instances with 100 customers. Furthermore, heuristic adaptations are able to find good quality solutions in reasonable computation times.
