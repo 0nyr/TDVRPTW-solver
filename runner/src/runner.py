@@ -109,14 +109,18 @@ def main():
 
 		if args["dry_run"]: return
 		for experiment, instance, solutions in tqdm(experiment_runs, desc="Running experiments"):
+			start_time = datetime.datetime.now()
 			res = run_experiment(args, experiment, instance, solutions)
+			end_time = datetime.datetime.now()
 
 			# Save the CSV output.
 			save_csv_to_file(csv_output_filepath, get_csv_res(res))
 
 			# Save result to json file.
 			output_file_name = join_paths(json_output_dirpath, f"{instance["dataset_name"]}_{instance["instance_filename"]}_{experiment["name"]}.json")
-			save_json_to_file(output_file_name, complete_res_json(res))
+			save_json_to_file(output_file_name, complete_res_json(
+				res, start_time, end_time
+			))
 		
 		# Print total time taken for the experiment.
 		total_time = datetime.datetime.now() - RUNNER_START_TIME

@@ -1,0 +1,25 @@
+{
+    "datasets": [
+        {"name": "Dabia2013"}
+    ],
+    "experiments": [
+        {
+            "name": "BPC-Lera",
+            "executable": "bp",
+            "time_limit": 1800,
+            "cut_limit": 500,
+            "partial": true,
+            "limited_extension": true,
+            "unreachable_strengthened": true,
+            "sort_by_cost": true,
+            "symmetric": false,
+            "iterative_merge": true,
+            "lazy_extension": true,
+            "lal_heuristic_cost": true,
+            "lal_heuristic_elementarity": true,
+            "lal_heuristic_ng_routes": false,
+            "lal_exact_labeling": true,
+            "initialization_heuristics": false
+        }
+    ]
+}
