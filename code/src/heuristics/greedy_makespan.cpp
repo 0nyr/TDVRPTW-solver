@@ -207,6 +207,23 @@ VRPSolution greedy_makespan_heuristic_1(
 }
 
 /**
+ * Converts a VRPSolution from Makespan to Duration.
+ */
+VRPSolution convert_makespan_solution_to_duration(
+    const VRPSolution& makespan_solution,
+    const VRPInstance& vrp
+) {
+    vector<Route> routes = vector<Route>(makespan_solution.routes.size());
+    double total_duration = 0.0;
+    for (size_t i = 0; i < makespan_solution.routes.size(); ++i)
+    {
+        routes[i] = vrp.BestDurationRoute(makespan_solution.routes[i].path);
+        total_duration += routes[i].duration;
+    }
+    return VRPSolution(total_duration, routes);
+}
+ 
+/**
  * ### Computing the duration of routes provided by GMH1
  * 
  * All routes from GMH1 are valid, but all start at t=0.
@@ -216,20 +233,18 @@ VRPSolution ghm1_duration(
     const VRPInstance& vrp
 ) {
     const VRPSolution makespan_solution = greedy_makespan_heuristic_1(vrp);
-    vector<Route> routes = vector<Route>(makespan_solution.routes.size());
-    double total_duration = 0.0;
-    for (size_t i = 0; i < makespan_solution.routes.size(); ++i)
+    VRPSolution duration_solution = convert_makespan_solution_to_duration(makespan_solution, vrp);
+    
+    for (size_t i = 0; i < duration_solution.routes.size(); ++i)
     {
-        routes[i] = vrp.BestDurationRoute(makespan_solution.routes[i].path);
-        clog << "GMH1: Route: " << routes[i].path 
-            << " -> Duration: " << routes[i].duration
-            << ", nb visited: " << routes[i].path.size()
+        const Route& route = duration_solution.routes[i];
+        clog << "GMH1: Route: " << route.path 
+            << " -> Duration: " << route.duration
+            << ", nb visited: " << route.path.size()
             << endl;
-        total_duration += routes[i].duration;
     }
-
-    clog << "> Solution: " << routes.size() << " routes, Duration: " << total_duration << " - routes: " << routes << endl;
-    return VRPSolution(total_duration, routes);
+    clog << "> Solution: " << duration_solution.routes.size() << " routes, Duration: " << duration_solution.value << " - routes: " << duration_solution.routes << endl;
+    return duration_solution;
 }
 
 

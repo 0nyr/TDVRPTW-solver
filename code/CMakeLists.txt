@@ -50,6 +50,7 @@ add_library(
     src/bcp/spf.cpp 
     src/bcp/bcp.cpp
     src/heuristics/greedy_makespan.cpp
+    src/heuristics/aco.cpp
 )
 target_link_libraries(solver goc nyr)
 

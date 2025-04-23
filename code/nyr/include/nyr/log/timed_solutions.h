@@ -86,7 +86,7 @@ public:
     // or INFTY if no solution was found.
     double last_solution_value() const
     {
-        return timed_sols_.empty() ? INFTY : timed_sols_.back().second.value;
+        return timed_sols_.empty() ? goc::INFTY : timed_sols_.back().second.value;
     }
 
     // Serializes the object to JSON.

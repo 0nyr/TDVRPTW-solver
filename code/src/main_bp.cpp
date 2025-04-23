@@ -24,6 +24,7 @@
 #include "labeling/labeling_level.h"
 
 #include "heuristics/greedy_makespan.h"
+#include "heuristics/aco.h"
 
 using namespace std;
 using namespace goc;
@@ -93,6 +94,18 @@ int main(int argc, char** argv)
 		const int ng_nb_neighbors = value_or_default(experiment, "ng_nb_neighbors", std::round(ratio_nb_neighbors * (double)instance["nb_vertices"]));
 		const int ng_max_neighbors = max((int)((double)instance["nb_vertices"] / 2.0), ng_nb_neighbors);
 
+		const AntColonyOptions aco_options(
+			1000, // nb_iterations
+			500, // max_no_improvement
+			2, // nb_ants
+			1, // alpha
+			2, // beta
+			0.05, // rho
+			0.000001, // tau_min
+			1.0, // tau_0
+			10.0 // tau_max
+		);
+
 		// Show instance details.
 		clog << "Experiment: " << experiment["name"] << endl;
 		clog << "Instance: " << instance["instance_basename"] << " - " << value_or_default(instance, "instance_filename", "(filename missing)") << endl;
@@ -120,6 +133,7 @@ int main(int argc, char** argv)
 			clog << "NG max neighbors: " << ng_max_neighbors << endl;
 		}
 		clog << "Initialization heuristics: " << initialization_heuristics << endl;
+		aco_options.Print(clog);
 
 		preprocess_validity(instance);
 		// preprocess_ng_neighborhoods(
@@ -137,7 +151,34 @@ int main(int argc, char** argv)
 		{
 			clog << "Initialization heuristics..." << endl;
 			timed_solutions.try_add(ghm1_duration(vrp));
+
+			aco(timed_solutions, vrp, aco_options);
 		}
+
+		// TODO: remove, for testing heuristics only
+		output["timed_solutions"] = timed_solutions;
+
+		if (timed_solutions.empty())
+			clog << "No solution found." << endl;
+		else
+		{
+			auto& best_solution = timed_solutions.last_solution();
+			clog << "Best solution:" << endl;
+			clog << "\tValue: " << best_solution.value << endl;
+			clog << "\tRoutes:" << endl;
+			for (auto& r: best_solution.routes) clog << "\t\t" << r << endl;
+		}
+
+		clog << "Full run time: " << pclock.elapsed() << endl;
+
+		// Send JSON output to cout.
+		cout << output << endl;
+		return 0;
+
+
+
+
+
 		
 		// Run BCP.
 		clog << "Running BCP algorithm..." << endl;

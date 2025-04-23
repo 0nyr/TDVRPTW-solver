@@ -1,4 +1,5 @@
 #include "heuristics/aco.h"
+#include "heuristics/greedy_makespan.h"
 
 #include <vector>
 
@@ -46,6 +47,8 @@ double heuristic(
     return 1.0 / travel_time;
 }
 
+ 
+
 /**
  * Calculate probabilities for each unvisited vertex
  * using the pheromone and heuristic information, and
@@ -65,7 +68,7 @@ size_t select_next_candidate_index(
     double sum = 0.0;
     size_t nb_candidates = candidates.size();
     double cumulative_numerator[nb_candidates];
-    for (int i = 0; i < nb_candidates; i++) {
+    for (size_t i = 0; i < nb_candidates; i++) {
         Vertex candidate = candidates[i];
         sum = sum +
             (nyr::fast_pow(pheromone[current][candidate], options.alpha) * 
@@ -76,9 +79,22 @@ size_t select_next_candidate_index(
     // Randomly select the next vertex from candidates based on the probabilities
     double random = rand01();
     size_t selected_candidate_index = choose_candidate_index(
-        cumulative_numerator, nb_candidates, r
+        cumulative_numerator, nb_candidates, random
     );
     return selected_candidate_index;
+}
+
+Vertex select_start_vertex(
+    vector<Vertex>& candidates,
+    Vertex end_depot
+) {
+    // Randomly select a starting vertex that is not the end depot
+    Vertex vertex;
+    do {
+        int random_candidate_index = rand_int(0, candidates.size() - 1);
+        vertex = candidates[random_candidate_index];
+    } while(vertex == end_depot); // ensure not depot
+    return vertex;
 }
 
 /**
@@ -87,6 +103,10 @@ size_t select_next_candidate_index(
  * Pure Makespan mode: each route starts at t=0.
  * Waiting is only useful to wait for TW ealiest arrivals
  * due to the FIFO property.
+ * 
+ * WARNING: For now, once the routes are constructed in 
+ * pure Makespan mode, the actual objective value is recomputed
+ * to be Duration.
  */
 void aco(
     nyr::TimedVrpSolution timed_solutions,
@@ -161,37 +181,101 @@ void aco(
                 }
 
                 // If next is end depot, close the current path
+                // And start a new route
                 if (next == vrp.d) {
-                    // Close the route
-                    sol.routes.back().path.push_back(vrp.d);
-                    sol.routes.back().duration = vrp.ArrivalTime(
-                        {current, vrp.d}, 
-                        sol.routes.back().duration
-                    );
-                    sol.value += sol.routes.back().duration;
+                    data.close_path(vrp, current);
 
                     // Some candidate remains, start a new route
-                    // Randomly select a starting vertex
-                    do {
-                        next =
-                    route_capacity = 0.0;
-                } else {
-                    // Add the next vertex to the route
-                    sol.routes.back().path.push_back(next);
-                    sol.routes.back().duration = vrp.ArrivalTime(
-                        {current, next}, 
-                        sol.routes.back().duration
+                    // Randomly select an (unvisited) starting vertex after start depot
+                    next = select_start_vertex(data.candidates, vrp.d);
+                    sol.routes.push_back(
+                        Route(
+                            {start_depot},
+                            0.0,
+                            0.0
+                        )
                     );
-                    route_capacity += vrp.q[next];
-
-                    // Remove selected candidate from the list
-                    data.remove_visited_client(next_candidate_index);
+                    route_capacity = 0.0;
                 }
+                // Add the next (non-depot) vertex to the route
+                sol.routes.back().path.push_back(next);
+                sol.routes.back().duration = vrp.ArrivalTime(
+                    {current, next}, 
+                    sol.routes.back().duration
+                );
+                route_capacity += vrp.q[next];
+
+                // Remove selected candidate from the list
+                data.remove_visited_client(next_candidate_index);
+                current = next;
+            }
+            // Close the last route
+            data.close_path(vrp, current);
+
+            // TODO: To improve
+            // Convert from Makespan to Duration
+            data.solution = convert_makespan_solution_to_duration(
+                data.solution, 
+                vrp
+            );
+        }
+
+        // Evaporate pheromones
+        for (size_t i = 0; i < pheromone.size(); ++i)
+        {
+            for (size_t j = 0; j < pheromone.size(); ++j)
+            {
+                double new_val = pheromone[i][j] * (1.0 - options.rho);
+                pheromone[i][j] = bound_pheromone_val(
+                    new_val, 
+                    options.tau_min, 
+                    options.tau_max
+                );
             }
         }
+
+        // Deposit pheromone based on solution quality
+        // Also find if a new best solution was found
+        size_t best_ant = 0;
+        bool found_new_best = false;
+        double best_value = timed_solutions.last_solution_value();
+        nyr::Durex time_to_best;
+        for (size_t ant = 0; ant < options.nb_ants; ++ant)
+        {
+            AntData& data = ant_datas[ant];
+            VRPSolution& sol = data.solution;
+            double delta_tau = 1.0 / sol.value; // inverse solution quality
+            for (auto& route : sol.routes)
+            {
+                for (size_t i = 0; i < route.path.size() - 1; ++i)
+                {
+                    Vertex u = route.path[i];
+                    Vertex v = route.path[i + 1];
+                    double new_val = pheromone[u][v] + delta_tau;
+                    pheromone[u][v] = bound_pheromone_val(
+                        new_val, 
+                        options.tau_min, 
+                        options.tau_max
+                    );
+                }
+            }
+
+            // Check if this ant has the best solution so far
+            if (sol.value < best_value)
+            {
+                best_value = sol.value;
+                best_ant = ant;
+                found_new_best = true;
+                time_to_best = timed_solutions.pclock.elapsed();
+            }
+        }
+
+        // If a new best solution was found, add it to the timed solutions
+        if (found_new_best)
+        {
+            auto& best_solution = ant_datas[best_ant].solution;
+            timed_solutions.add(time_to_best, best_solution);
+        }
     }
-    
-
-
 }
 }

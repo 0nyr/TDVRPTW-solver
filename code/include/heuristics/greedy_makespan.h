@@ -15,4 +15,9 @@ goc::VRPSolution ghm1_duration(
     const VRPInstance& vrp
 );
 
+goc::VRPSolution convert_makespan_solution_to_duration(
+    const goc::VRPSolution& makespan_solution,
+    const VRPInstance& vrp
+);
+
 } // namespace solver

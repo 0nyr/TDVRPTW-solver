@@ -1,6 +1,6 @@
 #include "preprocess/preprocess_ng_neighborhoods.h"
-#include "goc/math/math_utils.h"
 #include "instance/vrp_instance.h"
+#include <nyr/math/fast_math.h>
 
 #include <vector>
 #include <queue>
@@ -77,7 +77,7 @@ PartitionedInterval partition_time_horizon(
     else if (time_strategy == TDNGNeighborhoodsTimeStrategy::PartitionedHorizon)
     {
         // Aggregate the time steps.
-        size_t nb_partitions_of_horizon = fast_log2(time_steps.size()) + 1; // better than just dividing by some value.
+        size_t nb_partitions_of_horizon = nyr::fast_log2(time_steps.size()) + 1; // better than just dividing by some value.
         
         vector<double> breakpoints;
         // Add first breakpoint.
