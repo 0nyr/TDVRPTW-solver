@@ -19,7 +19,6 @@
 #include "bcp/pricing_problem.h"
 #include "labeling/bidirectional_labeling.h"
 #include "nyr/log/timed_solutions.h"
-#include "goc/math/math_utils.h"
 #include "preprocess/preprocess_validity.h"
 #include "labeling/ng_neighborhoods.h"
 #include "labeling/labeling_level.h"

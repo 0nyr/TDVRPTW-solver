@@ -25,4 +25,28 @@ inline T fast_log2(T n) {
         return 0;
     }
 }
+
+/**
+ * Fast exponentiation function.
+ * Based on exponentiation by squaring.
+ * Complexity: O(log n) multiplications.
+ */
+template <typename Base, typename Exponent>
+requires std::is_floating_point_v<Base> && std::is_integral_v<Exponent>
+constexpr Base fast_pow(Base base, Exponent exp)
+{
+    if (exp == 0) return static_cast<Base>(1.0);
+    if (exp < 0) return static_cast<Base>(1.0) / fast_pow(base, -exp);
+
+    Base result = static_cast<Base>(1.0);
+    while (exp > 0)
+    {
+        if (exp % 2 == 1)
+            result *= base;
+        base *= base;
+        exp /= 2;
+    }
+    return result;
+}
+
 } // namespace
