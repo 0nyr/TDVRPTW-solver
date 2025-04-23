@@ -68,9 +68,11 @@ def main():
 		for instance in instances:
 			# Get instance solutions from the dataset directory.
 			solutions = []
-			if os.path.isfile(f"{instance["instance_dirpath"]}/solutions.json"):
-				solutions = read_json_from_file(F"{INSTANCES_DIR}/{instance["dataset_name"]}/solutions.json")
-				solutions = [s for s in solutions if s["instance_name"] == instance["instance_name"]]
+			solutions_filepath = f"{instance["instance_dirpath"]}/solutions.json"
+			# TODO: the day I need solutions in the solver, edit
+			# if os.path.isfile(f"{instance["instance_dirpath"]}/solutions.json"):
+			# 	solutions = read_json_from_file(F"{INSTANCES_DIR}/{instance["dataset_name"]}/solutions.json")
+			# 	solutions = [s for s in solutions if s["instance_name"] == instance["instance_name"]]
 
 			# For each experiment defined in the experiment file.
 			for experiment in experiment_file_json["experiments"]:

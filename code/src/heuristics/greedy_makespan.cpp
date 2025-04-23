@@ -12,9 +12,6 @@ using namespace nlohmann;
 namespace solver
 {
 
-namespace
-{
-
 /**
  * Compute the earliest arrival time from a given vertex
  * at a given departure time, while considering 
@@ -53,7 +50,8 @@ vector<double> compute_EAT_on_free_vertices(
     return EAT;
 }
 
-}
+
+
 
 /**
  * ### Greedy Makespan Heuristic 1
@@ -150,7 +148,7 @@ VRPSolution greedy_makespan_heuristic_1(
             }
             TimeUnit next_arrival_time = makespans_i_t[next_vertex];
 
-            // If no non-depot vertex is found, add end depot
+            // Check if next vertex is the depot, close the route.
             if (next_vertex == vrp.d)
             {
                 route.path.push_back(vrp.d);

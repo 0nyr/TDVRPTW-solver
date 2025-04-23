@@ -74,7 +74,9 @@
         "text_encoding": "cpp",
         "valarray": "cpp",
         "mutex": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "complex": "cpp",
+        "typeindex": "cpp"
     },
     "cmake.sourceDirectory": "/home/onyr/code/phd/TDVRPTW-solver/code",
     "C_Cpp.default.compilerPath": "/nix/store/ii75mhh7sxl11167m1b86p0qrjsjyjmd-gcc-wrapper-14-20241116/bin/g++",

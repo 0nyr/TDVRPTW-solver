@@ -117,7 +117,7 @@ def instances_for_experiment(
                         continue # not a selected instance
                     if "select" in dataset and entries != None:
                         entry = get_instance_entry(entries, instance_filename)
-                        if not tags_selection_function(entry["tags"], tag_sets): 
+                        if entry == None or not tags_selection_function(entry["tags"], tag_sets): 
                             continue # Filter out instances that do not match selection criteria.
 
                     # selected instance

@@ -106,6 +106,10 @@ int main(int argc, char** argv)
 			10.0 // tau_max
 		);
 
+		#ifndef NDEBUG
+		clog << "DEBUG MODE ACTIVE" << endl;
+		#endif
+
 		// Show instance details.
 		clog << "Experiment: " << experiment["name"] << endl;
 		clog << "Instance: " << instance["instance_basename"] << " - " << value_or_default(instance, "instance_filename", "(filename missing)") << endl;

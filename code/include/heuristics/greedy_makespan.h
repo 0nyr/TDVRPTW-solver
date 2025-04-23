@@ -20,4 +20,12 @@ goc::VRPSolution convert_makespan_solution_to_duration(
     const VRPInstance& vrp
 );
 
+std::vector<double> compute_EAT_on_free_vertices(
+    const goc::Digraph& D, 
+    goc::Vertex s, 
+    double t0,
+    const VertexSet& free_vertices, 
+    const std::function<double(goc::Vertex, goc::Vertex, double)>& tt
+);
+
 } // namespace solver

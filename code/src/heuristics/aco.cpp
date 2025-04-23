@@ -47,7 +47,31 @@ double heuristic(
     return 1.0 / travel_time;
 }
 
- 
+/**
+ * Binary search to find the index of the first element in p
+ * that is greater than or equal to f.
+ * 
+ * For i in 0..nb_candidates-1], p[i] = sum_{j<i} tau1[j]^alpha
+ * Returns k with probability (p[k]-p[k-1])/p[nb_candidates-1]
+ * 
+ * @param p: array of (cumulative) probabilities (not really probas, just sums)
+ * @param nb_candidates: number of candidates
+ * @param f: random number in [0,1]
+ * @return: index of the selected candidate
+ */
+int choose_candidate_index(double* p, int nb_candidates, double f) {
+    int left = 0;
+    int right = nb_candidates - 1;
+    int k;
+    double total = p[nb_candidates - 1]; // sum of all probabilities in last element
+    while (left<right){
+        k = (left + right + 1) / 2; // round up 
+        if (f < p[k-1] / total) right = k - 1;
+        else if (f > p[k] / total) left = k + 1;
+        else return k; 
+    }
+    return left;
+}
 
 /**
  * Calculate probabilities for each unvisited vertex
@@ -77,11 +101,73 @@ size_t select_next_candidate_index(
     }
 
     // Randomly select the next vertex from candidates based on the probabilities
-    double random = rand01();
+    double random = nyr::rand01();
     size_t selected_candidate_index = choose_candidate_index(
         cumulative_numerator, nb_candidates, random
     );
     return selected_candidate_index;
+}
+
+//TODO: complete the change
+/**
+ * ### Select the next valid candidate vertex
+ * 
+ * Precondition: current_vertex is set to not free.
+ */
+Vertex select_next_valid_candidate(
+    const VRPInstance& vrp,
+    Vertex current_vertex,
+    double t,
+    const VertexSet& free_vertices,
+    const vector<vector<double>>& pheromone,
+    const AntColonyOptions& options
+) {
+    // Compute EAT for each candidate vertex
+    // NOTE: makespans_i_t has technically size n, all vertices
+    // Unreached vertices have INFTY makespan.
+    vector<double> makespans_i_t = compute_EAT_on_free_vertices(
+        vrp.D, 
+        current_vertex,
+        t,
+        free_vertices,
+        [&vrp](Vertex u, Vertex v, double t) {
+            return vrp.TravelTime({u, v}, t);
+        }
+    );
+
+    // Remove all candidates that have INFTY makespan.
+    vector<Vertex> neighbors = vrp.D.Vertices(); // copy of all vertices
+    neighbors.erase(remove_if(neighbors.begin(), neighbors.end(), 
+        [&makespans_i_t](Vertex v) -> bool
+        {
+            return makespans_i_t[v] == INFTY;
+        }
+    ), neighbors.end());
+
+    // If no more candidates to visit, return depot
+    if (neighbors.empty()) {
+        return vrp.d;
+    }
+
+    // ACO selection
+    double sum = 0.0;
+    size_t nb_candidates = neighbors.size();
+    double cumulative_numerator[nb_candidates];
+    for (size_t i = 0; i < nb_candidates; i++) {
+        Vertex candidate = neighbors[i];
+        sum = sum +
+            (nyr::fast_pow(pheromone[current_vertex][candidate], options.alpha) *
+            nyr::fast_pow(1.0 / makespans_i_t[candidate], options.beta));
+        cumulative_numerator[i] = sum;
+    }
+
+    // Randomly select the next vertex from candidates based on the probabilities
+    double random = nyr::rand01();
+    size_t selected_candidate_index = choose_candidate_index(
+        cumulative_numerator, nb_candidates, random
+    );
+    Vertex next = neighbors[selected_candidate_index];
+    return next;
 }
 
 Vertex select_start_vertex(
@@ -91,7 +177,7 @@ Vertex select_start_vertex(
     // Randomly select a starting vertex that is not the end depot
     Vertex vertex;
     do {
-        int random_candidate_index = rand_int(0, candidates.size() - 1);
+        int random_candidate_index = nyr::rand_int(0, candidates.size() - 1);
         vertex = candidates[random_candidate_index];
     } while(vertex == end_depot); // ensure not depot
     return vertex;
@@ -148,6 +234,7 @@ void aco(
                     vrp.ArrivalTime({start_depot, current}, 0.0)
                 )
             );
+            data.init_candidates(current, n);
             data.nb_visited_clients = 1;
             CapacityUnit route_capacity = vrp.q[current];
 
@@ -164,12 +251,37 @@ void aco(
                     vrp,
                     options
                 );
-                Vertex next = candidates[next_candidate_index];
+
+                #ifndef NDEBUG
+                if (next_candidate_index >= data.candidates.size()) {
+                    cerr << "next_candidate_index: " << next_candidate_index << endl;
+                    cerr << "data.candidates.size(): " << data.candidates.size() << endl;
+                    cerr << "data.candidates: " << data.candidates << endl;
+                    cerr << "current: " << current << endl;
+                    throw std::out_of_range("next_candidate_index out of range");
+                }
+                #endif
+
+                Vertex next = data.candidates[next_candidate_index];
 
                 if (next != vrp.d) {
                     // Check if end depot is not reachable after the addition of the
                     // next vertex, do not add it to the route, close the route instead.
-                    if (vrp.ArrivalTime({next_vertex, vrp.d}, next_arrival_time) == INFTY)
+                    TimeUnit next_arrival_time = vrp.ArrivalTime(
+                        {current, next}, 
+                        sol.routes.back().duration
+                    );
+                    //assert(next_arrival_time != INFTY && "next arrival time is INFTY");
+                    #ifndef NDEBUG
+                    if (next_arrival_time == INFTY) {
+                        cerr << "next_arrival_time: " << next_arrival_time << endl;
+                        cerr << "current: " << current << endl;
+                        cerr << "next: " << next << endl;
+                        throw std::runtime_error("next arrival time is INFTY");
+                    }
+                    #endif
+                    
+                    if (vrp.ArrivalTime({next, vrp.d}, next_arrival_time) == INFTY)
                     {
                         next = vrp.d; // Return to the depot
                     }
@@ -249,6 +361,17 @@ void aco(
             {
                 for (size_t i = 0; i < route.path.size() - 1; ++i)
                 {
+                    #ifndef NDEBUG
+                    if (route.path[i] == route.path[i + 1]) {
+                        cerr << "Self-loop detected in route: " << route.path << endl;
+                        throw std::runtime_error("Self-loop detected in route");
+                    }
+                    if (route.path[i] >= pheromone.size() || route.path[i + 1] >= pheromone.size()) {
+                        cerr << "Invalid vertex index in route: " << route.path << endl;
+                        throw std::out_of_range("Invalid vertex index in route");
+                    }
+                    #endif
+
                     Vertex u = route.path[i];
                     Vertex v = route.path[i + 1];
                     double new_val = pheromone[u][v] + delta_tau;
