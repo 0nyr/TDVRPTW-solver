@@ -4,7 +4,7 @@
 #include <climits>   // for CHAR_BIT
 #include <type_traits>
 
-namespace goc
+namespace nyr
 {
 // Returns the number of bits required to represent the number n.
 // which approximates the logarithm in base 2 of n when 

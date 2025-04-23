@@ -67,9 +67,39 @@ public:
     VRPSolution solution; // solution built by the ant
     uint32_t nb_visited_clients; // number of visited clients
     vector<Vertex> candidates; // candidate vertices to visit
+    VertexSet free_vertices; // free vertices to visit
 
     AntData();
     void init_candidates(Vertex preselected_client, int n);
+    
+    /**
+     * ### Remove a candidate from the list of candidates
+     * 
+     * Efficiently removes a candidate from the list of candidates.
+     * The last candidate and the removed candidate are swapped.
+     * This is done to avoid shifting all elements in the vector.
+     */
+    inline void AntData::remove_visited_client(size_t candidate_index)
+    {
+        assert(candidate_index < candidates.size() && "Candidate index out of range");
+        Vertex removed_candidate = candidates[candidate_index];
+        candidates[candidate_index] = candidates.back(); // move last element into the removed slot
+        candidates.pop_back(); // logically shrink vector
+
+        nb_visited_clients++;
+        free_vertices.set(removed_candidate, false); // mark the removed candidate as visited
+    }
+
+    /**
+     * ### Randomly select a starting vertex after start depot
+     */
+    inline Vertex AntData::random_starting_vertex()
+    {
+        // Randomly select a starting vertex after start depot
+        // Get random value between 0 and candidates.size() - 1
+        Vertex current = static_cast<Vertex>(1 + rand() % (candidates.size() - 1)); // exclude start and end depot
+        return current;
+    }
 };
 
 } // namespace solver
