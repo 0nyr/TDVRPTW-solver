@@ -67,28 +67,66 @@ public:
     goc::VRPSolution solution; // solution built by the ant
     uint32_t nb_visited_clients; // number of visited clients
     std::vector<goc::Vertex> candidates; // candidate vertices to visit
-    //VertexSet free_vertices; // free vertices to visit
+    VertexSet free_vertices; // free vertices to visit
 
     AntData();
-    void init_candidates(goc::Vertex preselected_client, int n);
-    
-    /**
-     * ### Remove a candidate from the list of candidates
-     * 
-     * Efficiently removes a candidate from the list of candidates.
-     * The last candidate and the removed candidate are swapped.
-     * This is done to avoid shifting all elements in the vector.
-     */
-    inline void remove_visited_client(size_t candidate_index)
-    {
-        assert(candidate_index < candidates.size() && "Candidate index out of range");
-        //goc::Vertex removed_candidate = candidates[candidate_index];
-        candidates[candidate_index] = candidates.back(); // move last element into the removed slot
-        candidates.pop_back(); // logically shrink vector
 
-        nb_visited_clients++;
-        //free_vertices.set(removed_candidate, false); // mark the removed candidate as visited
+    /**
+     * ### Initialize the ant data
+     * 
+     * Ramdomly select a starting vertex from the candidates.
+     * Initialize the candidates vector with all clients except the 
+     * start depot and the preselected client.
+     */
+    inline void init_candidates(const VRPInstance& vrp)
+    {
+        candidates = vrp.D.Vertices(); // copy all vertices
+        // remove-swap the start depot
+        assert(candidates[0] == vrp.o);
+        candidates[0] = candidates.back();
+        candidates.pop_back(); // remove last element (start depot)
+
+        free_vertices = VertexSet().set(); // start with all vertices as free
+        free_vertices.set(vrp.o, false); // start depot is not free
+    
+        nb_visited_clients = 0; // no clients visited yet
     }
+
+    /**
+     * ### Open a new path
+     * 
+     * Start from start depot, choose a random preselected client
+     * and add it to the path.
+     */
+    inline goc::Vertex open_path(const VRPInstance& vrp)
+    {
+        // Select a random client candidate (exclude end depot)
+        goc::Vertex preselected_client_index = nyr::rand_int(0, candidates.size() - 1);
+        goc::Vertex preselected_client = candidates[preselected_client_index];
+        if (preselected_client == vrp.d) {
+            // select last candidate instead
+            preselected_client = candidates.back();
+        } else {
+            // swap the preselected client with the last candidate
+            candidates[preselected_client_index] = candidates.back();
+        }
+        candidates.pop_back(); // remove the last candidate
+
+        // Create a new route and add preselected client to it
+        solution.routes.push_back(
+            goc::Route(
+                {vrp.o, preselected_client}, 
+                0.0, 
+                vrp.ArrivalTime({vrp.o, preselected_client}, 0.0)
+            )
+        );
+        nb_visited_clients++;
+        free_vertices.set(preselected_client, false); // mark the preselected client as visited
+    
+        return preselected_client;
+    }
+    
+    void remove_visited_client(goc::Vertex removed_candidate);
 
     /**
      * ### Close last path to make it a route

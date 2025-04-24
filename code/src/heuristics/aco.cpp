@@ -16,18 +16,29 @@ AntData::AntData():
 {}
 
 /**
- * Initialize the candidates vector with all clients except the 
- * start depot and the preselected client.
+ * ### Remove a candidate from the list of candidates
+ * 
+ * Efficiently removes a candidate from the list of candidates.
+ * The last candidate and the removed candidate are swapped.
+ * This is done to avoid shifting all elements in the vector.
  */
-void AntData::init_candidates(Vertex preselected_client, int n)
+inline void AntData::remove_visited_client(goc::Vertex removed_candidate)
 {
-    candidates = vector<Vertex>(n - 2); // exclude start depot and preselected client
-    int index = 0;
-    for (int i = 1; i < n; i++) { // skip start depot
-        if (i == preselected_client) continue; // skip current
-        candidates[index] = i;
-        index++;
+    // Find the index of the removed candidate
+    auto it = std::find(candidates.begin(), candidates.end(), removed_candidate);
+    if (it != candidates.end()) {
+        // Swap the removed candidate with the last candidate
+        std::iter_swap(it, candidates.end() - 1);
+        candidates.pop_back(); // remove the last candidate
+    } else {
+        std::cerr << "Error: Removed candidate not found in candidates." <<  std::endl;
+        std::cerr << "Removed candidate: " << removed_candidate <<  std::endl;
+        std::cerr << "Candidates: " << candidates <<  std::endl;
+        throw std::runtime_error("Removed candidate not found in candidates");
     }
+
+    nb_visited_clients++;
+    free_vertices.set(removed_candidate, false); // mark the removed candidate as visited
 }
 
 /**
@@ -114,14 +125,18 @@ size_t select_next_candidate_index(
  * 
  * Precondition: current_vertex is set to not free.
  */
-Vertex select_next_valid_candidate(
+Vertex select_next_valid_candidate_from_EAT(
     const VRPInstance& vrp,
     Vertex current_vertex,
+    CapacityUnit route_capacity,
     double t,
     const VertexSet& free_vertices,
     const vector<vector<double>>& pheromone,
     const AntColonyOptions& options
 ) {
+    // TODO: Make an alternative version using only arrival times
+    // TODO: Make a more optimized version returning an array of EAT
+    // only for the free vertices.
     // Compute EAT for each candidate vertex
     // NOTE: makespans_i_t has technically size n, all vertices
     // Unreached vertices have INFTY makespan.
@@ -144,12 +159,12 @@ Vertex select_next_valid_candidate(
         }
     ), neighbors.end());
 
-    // If no more candidates to visit, return depot
+    // If no more candidates to visit, return end depot
     if (neighbors.empty()) {
         return vrp.d;
     }
 
-    // ACO selection
+    // ACO: Creating proba distributions based on pheromone and heuristic
     double sum = 0.0;
     size_t nb_candidates = neighbors.size();
     double cumulative_numerator[nb_candidates];
@@ -161,12 +176,30 @@ Vertex select_next_valid_candidate(
         cumulative_numerator[i] = sum;
     }
 
-    // Randomly select the next vertex from candidates based on the probabilities
+    // ACO: Randomly select the next vertex from candidates based on the probabilities
     double random = nyr::rand01();
     size_t selected_candidate_index = choose_candidate_index(
         cumulative_numerator, nb_candidates, random
     );
     Vertex next = neighbors[selected_candidate_index];
+
+    // Post selection checks to ensure validity
+    if (next != vrp.d) {
+        // Check if end depot is not reachable after the addition of the
+        // next vertex, do not add it to the route, close the route instead.
+        TimeUnit next_arrival_time = makespans_i_t[next];
+        assert(next_arrival_time != INFTY && "next arrival time is INFTY");
+        if (vrp.ArrivalTime({next, vrp.d}, next_arrival_time) == INFTY)
+        {
+            return vrp.d; // Return to the depot
+        }
+        // Check capacity constraint.
+        else if (route_capacity + vrp.q[next] > vrp.Q)
+        {
+            return vrp.d;
+        }
+    }
+
     return next;
 }
 
@@ -225,100 +258,50 @@ void aco(
 
             // Randomly select a starting vertex after start depot
             // (random init arc from start depot)
-            Vertex start_depot = vrp.o;
-            Vertex current = static_cast<Vertex>(1 + rand() % (n - 1)); // exclude start and end depot
-            sol.routes.push_back(
-                Route(
-                    {start_depot, current}, 
-                    0.0, 
-                    vrp.ArrivalTime({start_depot, current}, 0.0)
-                )
-            );
-            data.init_candidates(current, n);
-            data.nb_visited_clients = 1;
+            data.init_candidates(vrp);
+            Vertex current = data.open_path(vrp);
             CapacityUnit route_capacity = vrp.q[current];
 
             // While there are unvisited client vertices
             while (data.nb_visited_clients < n - 2)
             {
+                // Check if a new route is needed
+                if (current == vrp.d) {
+                    assert(data.solution.routes.back().path.back() == vrp.d 
+                        && "Last vertex in the route should be the end depot");
+                    // Start a new route
+                    current = data.open_path(vrp);
+                    route_capacity = 0.0;
+                }
+
                 // no self-loop possible since current  
                 // is removed from candidates
-                size_t next_candidate_index = select_next_candidate_index(
-                    current,
-                    sol.routes.back().duration, // ready time
-                    data.candidates,
-                    pheromone,
+                Vertex next = select_next_valid_candidate_from_EAT(
                     vrp,
+                    current,
+                    route_capacity,
+                    sol.routes.back().duration,
+                    data.free_vertices,
+                    pheromone,
                     options
                 );
 
-                #ifndef NDEBUG
-                if (next_candidate_index >= data.candidates.size()) {
-                    cerr << "next_candidate_index: " << next_candidate_index << endl;
-                    cerr << "data.candidates.size(): " << data.candidates.size() << endl;
-                    cerr << "data.candidates: " << data.candidates << endl;
-                    cerr << "current: " << current << endl;
-                    throw std::out_of_range("next_candidate_index out of range");
-                }
-                #endif
-
-                Vertex next = data.candidates[next_candidate_index];
-
-                if (next != vrp.d) {
-                    // Check if end depot is not reachable after the addition of the
-                    // next vertex, do not add it to the route, close the route instead.
-                    TimeUnit next_arrival_time = vrp.ArrivalTime(
+                // If next is end depot, close the current path
+                if (next == vrp.d) {
+                    data.close_path(vrp, current);
+                } else {
+                    // Add the next (non-depot) vertex to the route
+                    sol.routes.back().path.push_back(next);
+                    sol.routes.back().duration = vrp.ArrivalTime(
                         {current, next}, 
                         sol.routes.back().duration
                     );
-                    //assert(next_arrival_time != INFTY && "next arrival time is INFTY");
-                    #ifndef NDEBUG
-                    if (next_arrival_time == INFTY) {
-                        cerr << "next_arrival_time: " << next_arrival_time << endl;
-                        cerr << "current: " << current << endl;
-                        cerr << "next: " << next << endl;
-                        throw std::runtime_error("next arrival time is INFTY");
-                    }
-                    #endif
-                    
-                    if (vrp.ArrivalTime({next, vrp.d}, next_arrival_time) == INFTY)
-                    {
-                        next = vrp.d; // Return to the depot
-                    }
-                    // Check capacity constraint.
-                    else if (route_capacity + vrp.q[next] > vrp.Q)
-                    {
-                        next = vrp.d;
-                    }
-                }
-
-                // If next is end depot, close the current path
-                // And start a new route
-                if (next == vrp.d) {
-                    data.close_path(vrp, current);
-
-                    // Some candidate remains, start a new route
-                    // Randomly select an (unvisited) starting vertex after start depot
-                    next = select_start_vertex(data.candidates, vrp.d);
-                    sol.routes.push_back(
-                        Route(
-                            {start_depot},
-                            0.0,
-                            0.0
-                        )
+                    route_capacity += vrp.q[next];
+                    data.remove_visited_client(
+                        next
                     );
-                    route_capacity = 0.0;
                 }
-                // Add the next (non-depot) vertex to the route
-                sol.routes.back().path.push_back(next);
-                sol.routes.back().duration = vrp.ArrivalTime(
-                    {current, next}, 
-                    sol.routes.back().duration
-                );
-                route_capacity += vrp.q[next];
 
-                // Remove selected candidate from the list
-                data.remove_visited_client(next_candidate_index);
                 current = next;
             }
             // Close the last route
@@ -364,6 +347,7 @@ void aco(
                     #ifndef NDEBUG
                     if (route.path[i] == route.path[i + 1]) {
                         cerr << "Self-loop detected in route: " << route.path << endl;
+                        cerr << "complete solution: " << sol << endl;
                         throw std::runtime_error("Self-loop detected in route");
                     }
                     if (route.path[i] >= pheromone.size() || route.path[i + 1] >= pheromone.size()) {
