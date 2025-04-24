@@ -2,15 +2,14 @@
   "datasets": [
     {
       "name": "Dabia2013", 
-      "n": [27],
-      "select": "R109"
+      "n": [27]
     }
   ],
   "experiments": [
     {
       "name": "Pure-initH",
       "executable": "bp",
-      "time_limit": 60,
+      "time_limit": 900,
       "cut_limit": 500,
       "partial": true,
       "limited_extension": true,
@@ -23,7 +22,17 @@
       "lal_heuristic_elementarity": true,
       "lal_heuristic_ng_routes": true,
       "lal_exact_labeling": true,
-      "initialization_heuristics": true
+      "initialization_heuristics": true,
+      "aco_max_nb_iterations": 4000,
+      "aco_max_no_improvement": 500,
+      "aco_nb_ants": 8,
+      "aco_alpha": 6,
+      "aco_beta": 3,
+      "aco_rho": 0.05,
+      "aco_tau_min": 0.000001,
+      "aco_tau_0": 2.0,
+      "aco_tau_max": 10.0,
+      "aco_delta_pheromone_threshold": 0.000001
     }
   ]
 }

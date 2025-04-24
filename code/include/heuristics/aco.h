@@ -21,19 +21,21 @@ public:
     const double tau_min; // minimum pheromone level
     const double tau_0; // initial pheromone level
     const double tau_max; // maximum pheromone level
+    const double delta_pheromone_threshold; // pheromone threshold for determining convergence
 
     // Constructor to initialize all const members
     AntColonyOptions(
         uint64_t max_nb_iterations,
         uint64_t max_no_improvement,
         uint32_t nb_ants,
-        uint32_t alpha = 1,
-        uint32_t beta = 2,
-        double rho = 0.05,
-        double tau_min = 0.000001,
-        double tau_0 = 1.0,
-        double tau_max = 10.0
-    ): 
+        uint32_t alpha,
+        uint32_t beta,
+        double rho,
+        double tau_min,
+        double tau_0,
+        double tau_max,
+        double delta_pheromone_threshold
+    ):
         max_nb_iterations(max_nb_iterations),
         max_no_improvement(max_no_improvement),
         nb_ants(nb_ants),
@@ -42,7 +44,8 @@ public:
         rho(rho),
         tau_min(tau_min),
         tau_0(tau_0),
-        tau_max(tau_max)
+        tau_max(tau_max),
+        delta_pheromone_threshold(delta_pheromone_threshold)
     {}
 
     // Print ACO options
@@ -58,6 +61,7 @@ public:
         os << "  tau_min: " << tau_min << std::endl;
         os << "  tau_0: " << tau_0 << std::endl;
         os << "  tau_max: " << tau_max << std::endl;
+        os << "  delta_pheromone_threshold: " << delta_pheromone_threshold << std::endl;
     }
 };
 
@@ -94,11 +98,19 @@ public:
      * Initialize the candidates vector with all clients except the 
      * start depot and the preselected client.
      */
-    inline void init_candidates(const VRPInstance& vrp)
+    inline void init_candidates(const VRPInstance& vrp, bool remove_end_depot = true)
     {
         candidates = vrp.D.Vertices(); // copy all vertices
-        // remove-swap the start depot
+
         assert(candidates[0] == vrp.o);
+        assert(candidates.back() == vrp.d);
+
+        // Remove the end depot from the candidates
+        if (remove_end_depot) {
+            candidates.pop_back(); // remove end depot
+        }
+
+        // remove-swap the start depot
         candidates[0] = candidates.back();
         candidates.pop_back(); // remove last element (start depot)
 

@@ -52,7 +52,7 @@ inline void AntData::remove_visited_client(goc::Vertex removed_candidate)
 goc::Vertex AntData::open_path(const VRPInstance& vrp)
 {
     #ifndef NDEBUG
-    if (candidates.size() < 2) {
+    if (candidates.size() == 0 || (candidates[0] == vrp.d && candidates.size() == 1)) {
         std::cerr << "Error: No client left in candidates to open a path." << std::endl;
         std::cerr << "Candidates: " << candidates << std::endl;
         throw std::runtime_error("No candidates left to open a path");
@@ -60,11 +60,10 @@ goc::Vertex AntData::open_path(const VRPInstance& vrp)
     #endif
 
     // Select a random client candidate (exclude end depot)
-    goc::Vertex preselected_client_index = nyr::rand_int(1, candidates.size() - 1);
+    goc::Vertex preselected_client_index = nyr::rand_int(0, candidates.size() - 1);
     goc::Vertex preselected_client = candidates[preselected_client_index];
     if (preselected_client == vrp.d) {
         // select last candidate instead
-        // NOTE: Should not happen, vrp.d is at index 0 which is excluded
         preselected_client_index = candidates.size() - 1;
         preselected_client = candidates[preselected_client_index];
     }
@@ -319,6 +318,8 @@ void aco(
         options.nb_ants,
         AntData()
     );
+    double sum_pheromones_last_iter; // Sum to compute the the variation of pheromones since last iteration
+    size_t no_improvement_iter = 0;
 
     for(size_t iter = 0; iter < options.max_nb_iterations; ++iter)
     {
@@ -420,11 +421,13 @@ void aco(
             );
 
             // Print current solution
+            #ifdef PRINT_ACO
             clog << "Ant " << ant << ": " 
                 << "Solution: " << sol.routes.size() 
                 << " routes, Value: " << sol.value 
                 << " - routes: " << sol.routes 
                 << endl;
+            #endif
         }
 
         // Evaporate pheromones
@@ -491,6 +494,21 @@ void aco(
             }
         }
 
+        // Compute pheromone delta since last iteration
+        double current_pheromone_sum = 0.0;
+        for (size_t i = 0; i < pheromone.size(); ++i)
+        {
+            for (size_t j = 0; j < pheromone.size(); ++j)
+            {
+                current_pheromone_sum += pheromone[i][j];
+            }
+        }
+        double delta_pheromone = abs(current_pheromone_sum - sum_pheromones_last_iter);
+        #ifdef PRINT_ACO
+        clog << "Delta pheromone: " << delta_pheromone << endl;
+        #endif
+        sum_pheromones_last_iter = current_pheromone_sum;
+
         // If a new best solution was found, add it to the timed solutions
         if (found_new_best)
         {
@@ -498,6 +516,19 @@ void aco(
             timed_solutions.add(time_to_best, best_solution);
             clog << "✨[ACO]> Solution: " << best_solution.routes.size() << " routes, Value: " << best_solution.value << " - routes: " << best_solution.routes << endl;
         }
+
+        if (delta_pheromone < options.delta_pheromone_threshold)
+        {
+            // Start incrementing no-improvement iterations
+            no_improvement_iter++;
+        }
+        if (no_improvement_iter >= options.max_no_improvement)
+        {
+            // Stop the algorithm if no improvement for too long
+            clog << "No improvement for " << no_improvement_iter << " iterations, stopping ACO." << endl;
+            break;
+        }
+        
     }
 }
 }

@@ -94,16 +94,17 @@ int main(int argc, char** argv)
 		const int ng_nb_neighbors = value_or_default(experiment, "ng_nb_neighbors", std::round(ratio_nb_neighbors * (double)instance["nb_vertices"]));
 		const int ng_max_neighbors = max((int)((double)instance["nb_vertices"] / 2.0), ng_nb_neighbors);
 
-		const AntColonyOptions aco_options(
-			1000, // nb_iterations
-			500, // max_no_improvement
-			2, // nb_ants
-			1, // alpha
-			3, // beta
-			0.05, // rho
-			0.0000001, // tau_min
-			1.0, // tau_0
-			10.0 // tau_max
+		const AntColonyOptions aco_options = AntColonyOptions(
+			value_or_default(experiment, "aco_max_nb_iterations", 1000), 
+			value_or_default(experiment, "aco_max_no_improvement", 500),
+			value_or_default(experiment, "aco_nb_ants", 2),
+			value_or_default(experiment, "aco_alpha", 1),
+			value_or_default(experiment, "aco_beta", 2),
+			value_or_default(experiment, "aco_rho", 0.05),
+			value_or_default(experiment, "aco_tau_min", 0.000001),
+			value_or_default(experiment, "aco_tau_0", 1.0),
+			value_or_default(experiment, "aco_tau_max", 10.0),
+			value_or_default(experiment, "aco_delta_pheromone_threshold", 0.000001)
 		);
 
 		#ifndef NDEBUG
@@ -160,6 +161,7 @@ int main(int argc, char** argv)
 		}
 
 		// TODO: remove, for testing heuristics only
+		#ifdef ACO_TEST
 		output["timed_solutions"] = timed_solutions;
 
 		if (timed_solutions.empty())
@@ -178,10 +180,7 @@ int main(int argc, char** argv)
 		// Send JSON output to cout.
 		cout << output << endl;
 		return 0;
-
-
-
-
+		#endif
 
 		
 		// Run BCP.
