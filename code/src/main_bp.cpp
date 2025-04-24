@@ -99,9 +99,9 @@ int main(int argc, char** argv)
 			500, // max_no_improvement
 			2, // nb_ants
 			1, // alpha
-			2, // beta
+			3, // beta
 			0.05, // rho
-			0.000001, // tau_min
+			0.0000001, // tau_min
 			1.0, // tau_0
 			10.0 // tau_max
 		);

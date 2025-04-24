@@ -72,6 +72,22 @@ public:
     AntData();
 
     /**
+     * ### Remove candidate client vertex
+     */
+    inline void remove_candidate(
+        size_t candidate_index,
+        goc::Vertex removed_candidate
+    ) {
+        // Swap the removed candidate with the last candidate
+        assert(candidate_index < candidates.size());
+        assert(candidates[candidate_index] == removed_candidate);
+        candidates[candidate_index] = candidates.back();
+        candidates.pop_back(); // remove last element (start depot)
+        nb_visited_clients++;
+        free_vertices.set(removed_candidate, false); // mark the removed candidate as visited
+    }
+
+    /**
      * ### Initialize the ant data
      * 
      * Ramdomly select a starting vertex from the candidates.
@@ -92,39 +108,7 @@ public:
         nb_visited_clients = 0; // no clients visited yet
     }
 
-    /**
-     * ### Open a new path
-     * 
-     * Start from start depot, choose a random preselected client
-     * and add it to the path.
-     */
-    inline goc::Vertex open_path(const VRPInstance& vrp)
-    {
-        // Select a random client candidate (exclude end depot)
-        goc::Vertex preselected_client_index = nyr::rand_int(0, candidates.size() - 1);
-        goc::Vertex preselected_client = candidates[preselected_client_index];
-        if (preselected_client == vrp.d) {
-            // select last candidate instead
-            preselected_client = candidates.back();
-        } else {
-            // swap the preselected client with the last candidate
-            candidates[preselected_client_index] = candidates.back();
-        }
-        candidates.pop_back(); // remove the last candidate
-
-        // Create a new route and add preselected client to it
-        solution.routes.push_back(
-            goc::Route(
-                {vrp.o, preselected_client}, 
-                0.0, 
-                vrp.ArrivalTime({vrp.o, preselected_client}, 0.0)
-            )
-        );
-        nb_visited_clients++;
-        free_vertices.set(preselected_client, false); // mark the preselected client as visited
-    
-        return preselected_client;
-    }
+    goc::Vertex open_path(const VRPInstance& vrp);
     
     void remove_visited_client(goc::Vertex removed_candidate);
 

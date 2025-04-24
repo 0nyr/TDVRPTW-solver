@@ -46,6 +46,11 @@ vector<double> compute_EAT_on_free_vertices(
             }
         }
     }
+    // Force EAT to be INFTY for the start vertex if it is not free.
+    if (!contains(free_vertices, s))
+    {
+        EAT[s] = INFTY;
+    }
 
     return EAT;
 }
@@ -200,7 +205,7 @@ VRPSolution greedy_makespan_heuristic_1(
             << endl;
     }
 
-    clog << "> Solution: " << routes.size() << " routes, Makespan: " << total_makespan << " - routes: " << routes << endl;
+    clog << "✨[GMH1]> Solution: " << routes.size() << " routes, Makespan: " << total_makespan << " - routes: " << routes << endl;
     return VRPSolution(total_makespan, routes);
 }
 
