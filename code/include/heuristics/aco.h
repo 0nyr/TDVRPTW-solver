@@ -114,26 +114,36 @@ public:
     inline void init_candidates(const VRPInstance& vrp, bool remove_end_depot = true)
     {
         candidates = vrp.D.Vertices(); // copy all vertices
-
+        free_vertices = VertexSet().set(); // start with all vertices as free
+        
         assert(candidates[0] == vrp.o);
         assert(candidates.back() == vrp.d);
 
         // Remove the end depot from the candidates
         if (remove_end_depot) {
-            candidates.pop_back(); // remove end depot
+            candidates.pop_back(); 
+            free_vertices.set(vrp.d, false);
         }
 
         // remove-swap the start depot
         candidates[0] = candidates.back();
         candidates.pop_back(); // remove last element (start depot)
-
-        free_vertices = VertexSet().set(); // start with all vertices as free
         free_vertices.set(vrp.o, false); // start depot is not free
     
         nb_visited_clients = 0; // no clients visited yet
     }
 
-    goc::Vertex open_path(const VRPInstance& vrp);
+    inline void open_path(const VRPInstance& vrp)
+    {
+        // Create new empty route starting from the start depot
+        solution.routes.push_back(
+            goc::Route(
+                {vrp.o}, 
+                0.0, 
+                0.0
+            )
+        );
+    }
     
     void remove_visited_client(goc::Vertex removed_candidate);
 
@@ -165,7 +175,7 @@ inline double bound_pheromone_val(
 }
 
 ACOStatus aco(
-    nyr::VrpSolutionRecord timed_solutions,
+    nyr::VrpSolutionRecord& timed_solutions,
     const VRPInstance& vrp,
     const AntColonyOptions& options
 );

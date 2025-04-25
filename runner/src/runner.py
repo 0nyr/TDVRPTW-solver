@@ -34,6 +34,7 @@ def main():
 		annotated_experiment_filepath = join_paths(annotated_experiment_output_dirpath, "annotated_experiment.json")
 		csv_output_filepath =  join_paths(OUTPUT_DIR, f"csv/{output_keyname}.csv")
 		json_output_dirpath = join_paths(annotated_experiment_output_dirpath, "outputs")
+		log_output_dirpath = join_paths(OUTPUT_DIR, f"logs/{output_keyname}")
 
 		annotated_experiment = {
 			"date": str(datetime.date.today()), 
@@ -52,6 +53,8 @@ def main():
 				os.mkdir(annotated_experiment_output_dirpath)
 			if not os.path.isdir(json_output_dirpath):
 				os.mkdir(json_output_dirpath)
+			if not os.path.isdir(log_output_dirpath):
+				os.mkdir(log_output_dirpath)
 			if not os.path.isfile(annotated_experiment_filepath):
 				save_json_to_file(annotated_experiment_filepath, annotated_experiment)
 			print("Saved annotated experiment file:", annotated_experiment_filepath)
@@ -117,6 +120,15 @@ def main():
 
 			# Save the CSV output.
 			save_csv_to_file(csv_output_filepath, get_csv_res(res))
+
+			# From res, get the logs from stderr and save them to log file.
+			if "stderr" in res:
+				log_file_name = join_paths(log_output_dirpath, f"{instance["dataset_name"]}_{instance["instance_filename"]}_{experiment["name"]}.log")
+				with open(log_file_name, "w") as log_file:
+					log_file.write(res["stderr"])
+				# Once saved, add file path to the res object and clear it.
+				res["log_file"] = log_file_name
+				del res["stderr"]
 
 			# Save result to json file.
 			output_file_name = join_paths(json_output_dirpath, f"{instance["dataset_name"]}_{instance["instance_filename"]}_{experiment["name"]}.json")

@@ -7,6 +7,8 @@ using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
+#define PRINT_ACO
+
 namespace solver
 {
 
@@ -18,9 +20,6 @@ AntData::AntData():
 /**
  * ### Remove a candidate client from the list of candidates
  * 
- * Efficiently removes a candidate from the list of candidates.
- * The last candidate and the removed candidate are swapped.
- * This is done to avoid shifting all elements in the vector.
  */
 inline void AntData::remove_visited_client(goc::Vertex removed_candidate)
 {
@@ -38,50 +37,6 @@ inline void AntData::remove_visited_client(goc::Vertex removed_candidate)
         std::cerr << "Free vertices: " << free_vertices <<  std::endl;
         throw std::runtime_error("Removed candidate not found in candidates");
     }
-}
-
-/**
- * ### Open a new path
- * 
- * Start from start depot, choose a random preselected client
- * and add it to the path.
- * 
- * Precondition: There is at least one client in the candidates vector.
- * Precondition: All clients are reachable from the start depot.
- */
-goc::Vertex AntData::open_path(const VRPInstance& vrp)
-{
-    #ifndef NDEBUG
-    if (candidates.size() == 0 || (candidates[0] == vrp.d && candidates.size() == 1)) {
-        std::cerr << "Error: No client left in candidates to open a path." << std::endl;
-        std::cerr << "Candidates: " << candidates << std::endl;
-        throw std::runtime_error("No candidates left to open a path");
-    }
-    #endif
-
-    // Select a random client candidate (exclude end depot)
-    goc::Vertex preselected_client_index = nyr::rand_int(0, candidates.size() - 1);
-    goc::Vertex preselected_client = candidates[preselected_client_index];
-    if (preselected_client == vrp.d) {
-        // select last candidate instead
-        preselected_client_index = candidates.size() - 1;
-        preselected_client = candidates[preselected_client_index];
-    }
-    
-    // Create a new route and add preselected client to it
-    TimeUnit arrival_time = vrp.ArrivalTime({vrp.o, preselected_client}, 0.0);
-    solution.routes.push_back(
-        goc::Route(
-            {vrp.o, preselected_client}, 
-            0.0, 
-            arrival_time
-        )
-    );
-
-    // Remove the preselected client from candidates
-    remove_candidate(preselected_client_index, preselected_client);
-
-    return preselected_client;
 }
 
 /**
@@ -182,11 +137,14 @@ vector<double> compute_AT_on_free_vertices(
 }
 
 double heuristic_wrapper(
+    double min_makespan,
     double value
 ) {
     if (value <= 0.0 || value >= INFTY)
         return 0.0;
-    return 1.0 / value;
+    if (min_makespan <= 0.0 || min_makespan >= INFTY)
+        return 1.0 / value;
+    return (min_makespan / value);
 }
 
 /**
@@ -240,6 +198,7 @@ Vertex select_next_valid_candidate_from_EAT(
     }
 
     // ACO: Creating proba distributions based on pheromone and heuristic
+    double min_makespan = *std::min_element(makespans_i_t.begin(), makespans_i_t.end());
     double sum = 0.0;
     size_t nb_candidates = neighbors.size();
     double cumulative_numerator[nb_candidates];
@@ -247,9 +206,27 @@ Vertex select_next_valid_candidate_from_EAT(
         Vertex candidate = neighbors[i];
         sum = sum +
             (nyr::fast_pow(pheromone[current_vertex][candidate], options.alpha) *
-            nyr::fast_pow(heuristic_wrapper(makespans_i_t[candidate]), options.beta));
+            nyr::fast_pow(heuristic_wrapper(min_makespan, makespans_i_t[candidate]), options.beta));
         cumulative_numerator[i] = sum;
     }
+
+    #ifdef PRINT_ACO_DETAILED
+    // print probas
+    vector<double> cands = vector<double>(neighbors.size());
+    vector<double> probs = vector<double>(neighbors.size());
+    double preced = 0.0;
+    for (size_t i = 0; i < nb_candidates; i++) {
+        cands[i] = neighbors[i];
+        probs[i] = (cumulative_numerator[i] - preced) / cumulative_numerator[nb_candidates - 1];
+        preced = cumulative_numerator[i];
+    }
+
+    print_padded_vectors(
+        std::clog, 
+        cands, 
+        probs
+    );
+    #endif
 
     // ACO: Randomly select the next vertex from candidates based on the probabilities
     double random = nyr::rand01();
@@ -262,6 +239,7 @@ Vertex select_next_valid_candidate_from_EAT(
     if (next != vrp.d) {
         // Check if end depot is not reachable after the addition of the
         // next vertex, do not add it to the route, close the route instead.
+        // TODO: variant: check if it is better to come back to the depot than next, use EAT for that.
         TimeUnit next_arrival_time = arrival_time_i_t[next];
         assert(next_arrival_time != INFTY && "next arrival time is INFTY");
         #ifndef NDEBUG
@@ -305,7 +283,7 @@ Vertex select_next_valid_candidate_from_EAT(
  * to be Duration.
  */
 ACOStatus aco(
-    nyr::VrpSolutionRecord solution_record,
+    nyr::VrpSolutionRecord& solution_record,
     const VRPInstance& vrp,
     const AntColonyOptions& options
 ) {
@@ -318,7 +296,7 @@ ACOStatus aco(
         options.nb_ants,
         AntData()
     );
-    double sum_pheromones_last_iter; // Sum to compute the the variation of pheromones since last iteration
+    double sum_pheromones_last_iter = 0.0; // Sum to compute the the variation of pheromones since last iteration
     size_t no_improvement_iter = 0;
 
     for(size_t iter = 0; iter < options.max_nb_iterations; ++iter)
@@ -335,29 +313,25 @@ ACOStatus aco(
             sol.routes.clear();
             sol.value = 0.0;
 
-            // Randomly select a starting vertex after start depot
-            // (random init arc from start depot)
+            // Initialization
             data.init_candidates(vrp);
-            Vertex current = data.open_path(vrp);
-            CapacityUnit route_capacity = vrp.q[current];
-            double t = sol.routes.back().duration;
+            Vertex current = vrp.d; // Needed to start a first route
+            CapacityUnit route_capacity = 0.0;
+            double t = 0.0;
 
             // While there are unvisited client vertices
             while (data.nb_visited_clients < n - 2)
             {
                 // Check if a new route is needed
                 if (current == vrp.d) {
-                    assert(data.solution.routes.back().path.back() == vrp.d 
-                        && "Last vertex in the route should be the end depot");
                     // Start a new route
-                    current = data.open_path(vrp);
-                    route_capacity = vrp.q[current];
-                    t = sol.routes.back().duration;
-                    continue; // skip to the next iteration
+                    data.open_path(vrp);
+                    current = vrp.o;
+                    route_capacity = 0.0;
+                    t = 0.0;
                 }
 
-                // no self-loop possible since current  
-                // is removed from candidates
+                // no self-loop possible since current removed from candidates
                 Vertex next = select_next_valid_candidate_from_EAT(
                     vrp,
                     data.candidates,
@@ -368,6 +342,12 @@ ACOStatus aco(
                     pheromone,
                     options
                 );
+                #ifdef PRINT_ACO_DETAILED
+                // print selected candidate
+                std::clog << current << " -> " << next << " - remaining candidates: " 
+                    << data.free_vertices.count() 
+                    << endl;
+                #endif
 
                 // If next is end depot, close the current path
                 if (next == vrp.d) {
@@ -431,7 +411,6 @@ ACOStatus aco(
         }
 
         // Evaporate pheromones
-        // TODO: What about the pheromone on the depot?
         for (size_t i = 0; i < pheromone.size(); ++i)
         {
             for (size_t j = 0; j < pheromone.size(); ++j)
@@ -458,8 +437,7 @@ ACOStatus aco(
             double delta_tau = 1.0 / sol.value; // inverse solution quality
             for (auto& route : sol.routes)
             {
-                // Skip the depot (start and end depot)
-                for (size_t i = 1; i < route.path.size() - 2; ++i)
+                for (size_t i = 0; i < route.path.size() - 1; ++i)
                 {
                     #ifndef NDEBUG
                     if (route.path[i] == route.path[i + 1]) {
@@ -514,7 +492,6 @@ ACOStatus aco(
         {
             auto& best_solution = ant_datas[best_ant].solution;
             solution_record.add(time_to_best, best_solution, "ACO");
-            clog << "✨[ACO]> Solution: " << best_solution.routes.size() << " routes, Value: " << best_solution.value << " - routes: " << best_solution.routes << endl;
         }
 
         if (delta_pheromone < options.delta_pheromone_threshold)

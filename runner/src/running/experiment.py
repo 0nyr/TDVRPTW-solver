@@ -189,7 +189,7 @@ def run_experiment(
     except:
         stdout_json = result["stdout"]
 
-    # If experiment finished successfuly, return the observation and the metadata.
+    # If experiment finished successfully, return the observation and the metadata.
     return {
         "dataset_name": instance["dataset_name"], 
         "instance_dirpath": instance["instance_dirpath"],

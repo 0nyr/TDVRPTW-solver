@@ -1,7 +1,8 @@
 {
   "datasets": [
     {
-      "name": "Dabia2013"
+      "name": "Dabia2013",
+      "n": [102]
     }
   ],
   "experiments": [
@@ -40,12 +41,12 @@
       "lal_heuristic_ng_routes": true,
       "lal_exact_labeling": true,
       "initialization_heuristics": true,
-      "aco_max_nb_iterations": 4000,
+      "aco_max_nb_iterations": 1000,
       "aco_max_no_improvement": 500,
-      "aco_nb_ants": 8,
-      "aco_alpha": 6,
-      "aco_beta": 3,
-      "aco_rho": 0.05,
+      "aco_nb_ants": 1,
+      "aco_alpha": 15,
+      "aco_beta": 10,
+      "aco_rho": 0.02,
       "aco_tau_min": 0.000001,
       "aco_tau_0": 2.0,
       "aco_tau_max": 10.0,
