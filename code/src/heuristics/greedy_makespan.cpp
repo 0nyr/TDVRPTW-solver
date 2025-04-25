@@ -205,7 +205,7 @@ VRPSolution greedy_makespan_heuristic_1(
             << endl;
     }
 
-    clog << "✨[GMH1]> Solution: " << routes.size() << " routes, Makespan: " << total_makespan << " - routes: " << routes << endl;
+    clog << "Found GMH1 Solution: nb routes: " << routes.size() << ", Makespan: " << total_makespan << " - routes: " << routes << endl;
     return VRPSolution(total_makespan, routes);
 }
 
@@ -233,22 +233,12 @@ VRPSolution convert_makespan_solution_to_duration(
  * Use the route paths to compute their corresponding optimal duration.
  */
 void ghm1_duration(
-    nyr::VrpSolutionRecord solution_record,
+    nyr::VrpSolutionRecord& solution_record,
     const VRPInstance& vrp
 ) {
     const VRPSolution makespan_solution = greedy_makespan_heuristic_1(vrp);
     VRPSolution duration_solution = convert_makespan_solution_to_duration(makespan_solution, vrp);
     solution_record.try_add(duration_solution, "GMH1");
-
-    for (size_t i = 0; i < duration_solution.routes.size(); ++i)
-    {
-        const Route& route = duration_solution.routes[i];
-        clog << "GMH1: Route: " << route.path 
-            << " -> Duration: " << route.duration
-            << ", nb visited: " << route.path.size()
-            << endl;
-    }
-    clog << "> Solution: " << duration_solution.routes.size() << " routes, Duration: " << duration_solution.value << " - routes: " << duration_solution.routes << endl;
 }
 
 } // namespace

@@ -44,6 +44,12 @@ public:
     inline void add(Durex time, Solution solution, std::string origin)
     {
         sol_records_.push_back({time, solution, origin});
+
+        std::clog << "✨[" << origin << "]> Solution: "
+            << "nb routes: " << solution.routes.size()
+            << ", value: " << solution.value
+            << " - routes: " << solution.routes 
+            << std::endl;
     }
 
     /**

@@ -304,7 +304,7 @@ Vertex select_next_valid_candidate_from_EAT(
  * pure Makespan mode, the actual objective value is recomputed
  * to be Duration.
  */
-void aco(
+ACOStatus aco(
     nyr::VrpSolutionRecord solution_record,
     const VRPInstance& vrp,
     const AntColonyOptions& options
@@ -526,9 +526,17 @@ void aco(
         {
             // Stop the algorithm if no improvement for too long
             clog << "No improvement for " << no_improvement_iter << " iterations, stopping ACO." << endl;
-            break;
+            return ACOStatus::NoImprovement;
         }
-        
+
+        // Stop the algorithm if time limit is reached
+        if (solution_record.pclock.elapsed() >= options.gparams.time_limit)
+        {
+            clog << "Time limit reached, stopping ACO." << endl;
+            return ACOStatus::TimeLimitReached;
+        }
     }
+
+    return ACOStatus::Finished;
 }
 }

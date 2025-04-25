@@ -19,6 +19,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # used to generate compile_commands.json f
 # Add include directory.
 include_directories("include/")
 
+# Include magic_enum.
+include_directories(magic_enum/include)
+
 # Including GOC.
 add_subdirectory(goc)
 include_directories(goc/include)
@@ -52,7 +55,7 @@ add_library(
     src/heuristics/greedy_makespan.cpp
     src/heuristics/aco.cpp
 )
-target_link_libraries(solver goc nyr)
+target_link_libraries(solver goc nyr) # add compiled libs
 
 # Create binaries.
 # add_executable(pricing src/main_pricing.cpp)

@@ -33,8 +33,39 @@ public:
     // Conversion to std::chrono::duration<double>
     operator std::chrono::duration<double>() const { return duration_; }
 
+    // Comparison operators for Durex
+    bool operator==(const Durex& rhs) const
+    {
+        return duration_ == rhs.duration_;
+    }
+
+    bool operator!=(const Durex& rhs) const
+    {
+        return !(*this == rhs);
+    }
+
+    bool operator<(const Durex& rhs) const
+    {
+        return duration_ < rhs.duration_;
+    }
+
+    bool operator<=(const Durex& rhs) const
+    {
+        return duration_ <= rhs.duration_;
+    }
+
+    bool operator>(const Durex& rhs) const
+    {
+        return duration_ > rhs.duration_;
+    }
+
+    bool operator>=(const Durex& rhs) const
+    {
+        return duration_ >= rhs.duration_;
+    }
+
 private:
-    std::chrono::duration<double> duration_;
+    std::chrono::duration<double> duration_; // duration in seconds
 };
 
 using TimePoint = Clock::time_point;

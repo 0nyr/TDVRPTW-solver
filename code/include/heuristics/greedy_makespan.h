@@ -13,7 +13,7 @@ goc::VRPSolution greedy_makespan_heuristic_1(
 );
 
 void ghm1_duration(
-    nyr::VrpSolutionRecord solution_record,
+    nyr::VrpSolutionRecord& solution_record,
     const VRPInstance& vrp
 );
 

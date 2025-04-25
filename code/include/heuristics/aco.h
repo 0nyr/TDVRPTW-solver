@@ -8,10 +8,21 @@
 
 namespace solver
 {
+// All the status of the ACO algorithm.
+enum class ACOStatus
+{
+    Finished, // The algorithm has finished.
+    Converged, // The algorithm has converged.
+    NoImprovement, // The algorithm has stopped due to no improvement.
+    TimeLimitReached // The algorithm has stopped due to global time limit.
+};
 
 class AntColonyOptions: public goc::Printable
 {
 public:
+    const nyr::GlobalParams& gparams; // global parameters
+
+    // ACO parameters
     const uint64_t max_nb_iterations; // maximum number of iterations
     const uint64_t max_no_improvement; // maximum number of iterations without improvement
     const uint32_t nb_ants; // number of ants
@@ -25,6 +36,7 @@ public:
 
     // Constructor to initialize all const members
     AntColonyOptions(
+        const nyr::GlobalParams& gparams,
         uint64_t max_nb_iterations,
         uint64_t max_no_improvement,
         uint32_t nb_ants,
@@ -36,6 +48,7 @@ public:
         double tau_max,
         double delta_pheromone_threshold
     ):
+        gparams(gparams),
         max_nb_iterations(max_nb_iterations),
         max_no_improvement(max_no_improvement),
         nb_ants(nb_ants),
@@ -151,7 +164,7 @@ inline double bound_pheromone_val(
         return new_val;
 }
 
-void aco(
+ACOStatus aco(
     nyr::VrpSolutionRecord timed_solutions,
     const VRPInstance& vrp,
     const AntColonyOptions& options
