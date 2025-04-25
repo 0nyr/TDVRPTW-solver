@@ -232,12 +232,14 @@ VRPSolution convert_makespan_solution_to_duration(
  * All routes from GMH1 are valid, but all start at t=0.
  * Use the route paths to compute their corresponding optimal duration.
  */
-VRPSolution ghm1_duration(
+void ghm1_duration(
+    nyr::VrpSolutionRecord solution_record,
     const VRPInstance& vrp
 ) {
     const VRPSolution makespan_solution = greedy_makespan_heuristic_1(vrp);
     VRPSolution duration_solution = convert_makespan_solution_to_duration(makespan_solution, vrp);
-    
+    solution_record.try_add(duration_solution, "GMH1");
+
     for (size_t i = 0; i < duration_solution.routes.size(); ++i)
     {
         const Route& route = duration_solution.routes[i];
@@ -247,8 +249,6 @@ VRPSolution ghm1_duration(
             << endl;
     }
     clog << "> Solution: " << duration_solution.routes.size() << " routes, Duration: " << duration_solution.value << " - routes: " << duration_solution.routes << endl;
-    return duration_solution;
 }
-
 
 } // namespace

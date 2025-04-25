@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 	try
 	{
 		const nyr::ProgramClock pclock; // start the program clock.
-		nyr::TimedVrpSolution timed_solutions(pclock); // Create a timed solution object to store the solutions.
+		nyr::VrpSolutionRecord solution_record(pclock); // Create a timed solution object to store the solutions.
 
 		json output; // STDOUT output will go into this JSON.
 
@@ -155,20 +155,19 @@ int main(int argc, char** argv)
 		if (initialization_heuristics)
 		{
 			clog << "Initialization heuristics..." << endl;
-			timed_solutions.try_add(ghm1_duration(vrp));
-
-			aco(timed_solutions, vrp, aco_options);
+			ghm1_duration(solution_record, vrp);
+			aco(solution_record, vrp, aco_options);
 		}
 
 		// TODO: remove, for testing heuristics only
 		#ifdef ACO_TEST
-		output["timed_solutions"] = timed_solutions;
+		output["timed_solutions"] = solution_record;
 
-		if (timed_solutions.empty())
+		if (solution_record.empty())
 			clog << "No solution found." << endl;
 		else
 		{
-			auto& best_solution = timed_solutions.last_solution();
+			auto& best_solution = solution_record.last_solution();
 			clog << "Best solution:" << endl;
 			clog << "\tValue: " << best_solution.value << endl;
 			clog << "\tRoutes:" << endl;
@@ -194,7 +193,7 @@ int main(int argc, char** argv)
 		// If some heuristic solutions were found, add their routes to the SPF.
 		if (initialization_heuristics)
 		{
-			for (const auto& sol: timed_solutions.solutions())
+			for (const auto& sol: solution_record.solutions())
 			{
 				for (const auto& route: sol.routes)
 				{
@@ -290,19 +289,19 @@ int main(int argc, char** argv)
 			}
 		};
 
-		auto log = bcp.Run(timed_solutions);
+		auto log = bcp.Run(solution_record);
 
 		output["Exact"] = log;
-		output["timed_solutions"] = timed_solutions;
+		output["timed_solutions"] = solution_record;
 
 		clog << "Time: " << log.time << endl;
 		clog << "#Nodes: " << log.nodes_closed << endl;
 		clog << "Status: " << log.status << endl;
-		if (timed_solutions.empty())
+		if (solution_record.empty())
 			clog << "No solution found." << endl;
 		else
 		{
-			auto& best_solution = timed_solutions.last_solution();
+			auto& best_solution = solution_record.last_solution();
 			clog << "Best solution:" << endl;
 			clog << "\tValue: " << best_solution.value << endl;
 			clog << "\tRoutes:" << endl;

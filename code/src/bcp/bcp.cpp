@@ -64,7 +64,7 @@ BCP::BCP(
 	};
 }
 
-BCPExecutionLog BCP::Run(nyr::TimedVrpSolution& timed_solutions)
+BCPExecutionLog BCP::Run(nyr::VrpSolutionRecord& timed_solutions)
 {
 	// Init variables.
 	log.variable_count = spf->formulation->VariableCount();
@@ -154,7 +154,7 @@ double BCP::EstimateBound(Node* node)
 	return lp_log.status == LPStatus::Optimum ? *lp_log.incumbent_value : INFTY;
 }
 
-void BCP::ProcessNode(Node* node, nyr::TimedVrpSolution& timed_solutions)
+void BCP::ProcessNode(Node* node, nyr::VrpSolutionRecord& timed_solutions)
 {
 	node_seq++;
 	spf->SetForbiddenArcs(node->A);
@@ -218,7 +218,7 @@ void BCP::ProcessNode(Node* node, nyr::TimedVrpSolution& timed_solutions)
 				clog << routes << endl;
 				VRPSolution sol(z_ub, routes);
 				clog << sol << endl;
-				timed_solutions.add(tsol, sol);
+				timed_solutions.add(tsol, sol, "BCP");
 			}
 			log.nodes_closed++;
 			delete node;
@@ -238,7 +238,7 @@ void BCP::ProcessNode(Node* node, nyr::TimedVrpSolution& timed_solutions)
 	}
 }
 
-void BCP::BranchNode(Node* node, nyr::TimedVrpSolution& timed_solutions)
+void BCP::BranchNode(Node* node, nyr::VrpSolutionRecord& timed_solutions)
 {
 	Stopwatch rolex_branch(true);
 	
@@ -298,7 +298,7 @@ void BCP::BranchNode(Node* node, nyr::TimedVrpSolution& timed_solutions)
 		ProcessNode(new Node(candidate), timed_solutions);
 }
 
-void BCP::FreezeHeuristic(nyr::TimedVrpSolution& timed_solutions)
+void BCP::FreezeHeuristic(nyr::VrpSolutionRecord& timed_solutions)
 {
 	BCSolver bc_solver;
 	bc_solver.time_limit = time_limit;
@@ -316,7 +316,7 @@ void BCP::FreezeHeuristic(nyr::TimedVrpSolution& timed_solutions)
 		clog << routes << endl;
 		VRPSolution sol(z_ub, routes);
 		clog << sol << endl;
-		timed_solutions.add(tsol, sol);
+		timed_solutions.add(tsol, sol, "BCP-freezeH");
 	}
 }
 

@@ -56,6 +56,12 @@ def get_instance_entry(
             return entry
     return None
 
+# List of filenames that are not instances but are in the instance directories.
+NON_INSTANCE_FILENAMES = [
+    "index.json",
+    "solutions.json",
+]
+
 def instances_for_experiment(
         experiment_file_json: dict[str, Any],
         selected_instances: Optional[list[str]]
@@ -111,7 +117,7 @@ def instances_for_experiment(
             for instance_filename in os.listdir(instance_dir):
                 if instance_filename.endswith(".json"):
                     # determine if the instance should be selected
-                    if instance_filename == "index.json":
+                    if instance_filename in NON_INSTANCE_FILENAMES:
                         continue
                     if selected_instances != None and instance_filename not in selected_instances: 
                         continue # not a selected instance

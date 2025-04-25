@@ -305,7 +305,7 @@ Vertex select_next_valid_candidate_from_EAT(
  * to be Duration.
  */
 void aco(
-    nyr::TimedVrpSolution timed_solutions,
+    nyr::VrpSolutionRecord solution_record,
     const VRPInstance& vrp,
     const AntColonyOptions& options
 ) {
@@ -449,7 +449,7 @@ void aco(
         // Also find if a new best solution was found
         size_t best_ant = 0;
         bool found_new_best = false;
-        double best_value = timed_solutions.last_solution_value();
+        double best_value = solution_record.last_solution_value();
         nyr::Durex time_to_best;
         for (size_t ant = 0; ant < options.nb_ants; ++ant)
         {
@@ -490,7 +490,7 @@ void aco(
                 best_value = sol.value;
                 best_ant = ant;
                 found_new_best = true;
-                time_to_best = timed_solutions.pclock.elapsed();
+                time_to_best = solution_record.pclock.elapsed();
             }
         }
 
@@ -513,7 +513,7 @@ void aco(
         if (found_new_best)
         {
             auto& best_solution = ant_datas[best_ant].solution;
-            timed_solutions.add(time_to_best, best_solution);
+            solution_record.add(time_to_best, best_solution, "ACO");
             clog << "✨[ACO]> Solution: " << best_solution.routes.size() << " routes, Value: " << best_solution.value << " - routes: " << best_solution.routes << endl;
         }
 

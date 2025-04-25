@@ -152,7 +152,7 @@ inline double bound_pheromone_val(
 }
 
 void aco(
-    nyr::TimedVrpSolution timed_solutions,
+    nyr::VrpSolutionRecord timed_solutions,
     const VRPInstance& vrp,
     const AntColonyOptions& options
 );

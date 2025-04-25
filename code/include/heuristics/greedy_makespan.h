@@ -1,6 +1,7 @@
 #pragma once
 
 #include <goc/goc.h>
+#include <nyr/nyr.h>
 #include "instance/vrp_instance.h"
 
 namespace solver
@@ -11,7 +12,8 @@ goc::VRPSolution greedy_makespan_heuristic_1(
     const VRPInstance& vrp
 );
 
-goc::VRPSolution ghm1_duration(
+void ghm1_duration(
+    nyr::VrpSolutionRecord solution_record,
     const VRPInstance& vrp
 );
 
