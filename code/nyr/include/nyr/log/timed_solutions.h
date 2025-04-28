@@ -4,19 +4,45 @@
 #include <iostream>
 #include <concepts>
 #include <ranges>
+#include <string>
+#include <memory>
 
 #include <goc/goc.h>
 #include "nyr/time/time.h"
+#include "nyr/solutions/vrp_solution.h"
+#include "nyr/solutions/route.h"
+#include "nyr/solutions/objectives.h"
 
 namespace nyr
 {
+
+class AbstractSolutionRecord: public goc::Log
+{
+public:
+    virtual ~AbstractSolutionRecord() = default;
+
+    // Add a solution
+    virtual void add(nyr::Durex time, std::unique_ptr<AbstractSolution> sol, const std::string& origin) = 0;
+
+    // Try to add (only if better)
+    virtual void try_add(std::unique_ptr<AbstractSolution> sol, const std::string& origin) = 0;
+
+    // Last solution value
+    virtual double last_solution_value() const = 0;
+
+    // Empty?
+    virtual bool empty() const = 0;
+
+    // Export all solutions to JSON
+    virtual nlohmann::json ToJSON() const = 0;
+};
 
 // A record entry for a solution found by the solver.
 // Contains useful information about the solution:
 // - The time at which the solution was found.
 // - The solution itself.
 // - The origin or source of the solution (e.g. "GMH1", "BPCA", ...).
-template<std::derived_from<goc::AbstractSolution> Solution>
+template<std::derived_from<AbstractSolution> Solution>
 struct AnnotatedSolution
 {
     Durex time;         // Time since the algorithm started.
@@ -28,8 +54,8 @@ struct AnnotatedSolution
 // found by a solver at increasing times and quality.
 // It is used to log the solutions found by the solver.
 // The solution type must be serializable to JSON.
-template<std::derived_from<goc::AbstractSolution> Solution>
-class SolutionRecord : public goc::Log
+template<std::derived_from<AbstractSolution> Solution>
+class SolutionRecord: public AbstractSolutionRecord
 {
 public:
     const ProgramClock& pclock; // Program clock to measure time.
@@ -130,6 +156,22 @@ private:
     std::vector<AnnotatedSolution<Solution>> sol_records_;
 };
 
-// Type alias for timed VRP solutions.
-using VrpSolutionRecord = nyr::SolutionRecord<goc::VRPSolution>;
+std::unique_ptr<AbstractSolutionRecord> create_solution_record(
+    const nyr::ProgramClock& pclock, 
+    nyr::ObjectiveFunction obj_func
+)
+{
+    switch (obj_func)
+    {
+    case nyr::ObjectiveFunction::Makespan:
+        return std::make_unique<nyr::SolutionRecord<VRPSolutionMakespan>>(pclock);
+    case nyr::ObjectiveFunction::Duration:
+        return std::make_unique<nyr::SolutionRecord<VRPSolutionDuration>>(pclock);
+    case nyr::ObjectiveFunction::TravelTime:
+        return std::make_unique<nyr::SolutionRecord<VRPSolutionTravelTime>>(pclock);
+    default:
+        throw std::runtime_error("Unsupported objective function.");
+    }
+}
+
 } // namespace

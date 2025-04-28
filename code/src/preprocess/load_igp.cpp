@@ -1,4 +1,4 @@
-#include "instance/load_igp.h"
+#include "preprocess/load_igp.h"
 
 #include "preprocess/preprocess_travel_times.h"
 #include "preprocess/preprocess_capacity.h"

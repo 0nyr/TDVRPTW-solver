@@ -73,8 +73,6 @@ add_library(
     src/log/log.cpp src/log/bc_execution_log.cpp 
     src/math/point_2d.cpp 
     src/graph/edge.cpp src/graph/graph.cpp 
-    src/vrp/route.cpp 
-    src/vrp/vrp_solution.cpp
 )
 
 include_directories($ENV{CPLEX_INCLUDE})

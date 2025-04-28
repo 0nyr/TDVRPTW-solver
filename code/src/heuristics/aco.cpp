@@ -1,10 +1,12 @@
 #include "heuristics/aco.h"
 #include "heuristics/greedy_makespan.h"
+#include "nyr/solutions/conversions.h"
 
 #include <vector>
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
 using namespace nlohmann;
 
 //#define PRINT_ACO
@@ -12,8 +14,11 @@ using namespace nlohmann;
 namespace solver
 {
 
-AntData::AntData():
-    solution(VRPSolution(0.0, vector<Route>())),
+AntCandidates::AntCandidates():
+    solution(VRPSolutionMakespan(
+        0.0, 
+        vector<RouteMakespan>()
+    )),
     nb_visited_clients(0)
 {}
 
@@ -21,7 +26,7 @@ AntData::AntData():
  * ### Remove a candidate client from the list of candidates
  * 
  */
-inline void AntData::remove_visited_client(goc::Vertex removed_candidate)
+inline void AntCandidates::remove_visited_client(goc::Vertex removed_candidate)
 {
     // Find the index of the removed candidate
     auto it = std::find(candidates.begin(), candidates.end(), removed_candidate);
@@ -283,7 +288,7 @@ Vertex select_next_valid_candidate_from_EAT(
  * to be Duration.
  */
 ACOStatus aco(
-    nyr::VrpSolutionRecord& solution_record,
+    nyr::AbstractSolutionRecord& solution_record, 
     const VRPInstance& vrp,
     const AntColonyOptions& options
 ) {
@@ -292,10 +297,13 @@ ACOStatus aco(
         vrp.D.NbVertices(), 
         vector<double>(n, options.tau_0)
     );
-    vector<AntData> ant_datas(
+    vector<AntCandidates> ant_datas(
         options.nb_ants,
-        AntData()
+        AntCandidates()
     );
+    
+    
+        
     double sum_pheromones_last_iter = 0.0; // Sum to compute the the variation of pheromones since last iteration
     size_t no_improvement_iter = 0;
 
@@ -303,7 +311,7 @@ ACOStatus aco(
     {
         for (size_t ant = 0; ant < options.nb_ants; ++ant)
         {
-            AntData& data = ant_datas[ant];
+            AntCandidates& data = ant_datas[ant];
             VRPSolution& sol = data.solution;
             
             // Reset the solution. But keep the allocated memory space used so far, to avoid reallocations.
@@ -432,7 +440,7 @@ ACOStatus aco(
         nyr::Durex time_to_best;
         for (size_t ant = 0; ant < options.nb_ants; ++ant)
         {
-            AntData& data = ant_datas[ant];
+            AntCandidates& data = ant_datas[ant];
             VRPSolution& sol = data.solution;
             double delta_tau = 1.0 / sol.value; // inverse solution quality
             for (auto& route : sol.routes)
@@ -471,6 +479,12 @@ ACOStatus aco(
                 time_to_best = solution_record.pclock.elapsed();
             }
         }
+        // If a new best solution was found, add it to the timed solutions
+        if (found_new_best)
+        {
+            auto& best_solution = ant_datas[best_ant].solution;
+            solution_record.add(time_to_best, best_solution, "ACO");
+        }
 
         // Compute pheromone delta since last iteration
         double current_pheromone_sum = 0.0;
@@ -486,13 +500,6 @@ ACOStatus aco(
         clog << "Delta pheromone: " << delta_pheromone << endl;
         #endif
         sum_pheromones_last_iter = current_pheromone_sum;
-
-        // If a new best solution was found, add it to the timed solutions
-        if (found_new_best)
-        {
-            auto& best_solution = ant_datas[best_ant].solution;
-            solution_record.add(time_to_best, best_solution, "ACO");
-        }
 
         if (delta_pheromone < options.delta_pheromone_threshold)
         {

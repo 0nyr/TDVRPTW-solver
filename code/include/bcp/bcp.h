@@ -8,7 +8,6 @@
 #define NETWORKS2019_BP_H
 
 #include "goc/goc.h"
-#include "instance/vrp_instance.h"
 #include "nyr/log/timed_solutions.h"
 #include "pricing_problem.h"
 #include "spf.h"

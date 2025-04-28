@@ -37,11 +37,22 @@ def compile(
     create_dir(OBJ_DIR)
     create_dir(F"{OBJ_DIR}/{build_type}")
 
+    # Get number of processors.
+    num_processors = os.cpu_count()
+    if num_processors is None:
+        raise ValueError("Could not get number of processors.")
+
     # Compile project using cmake.
     print(purple("Compiling code"), flush=True)
     t0 = datetime.datetime.now()
     os.chdir(F"{OBJ_DIR}/{build_type}")
-    exit_code = subprocess.call(["cmake", F"{CMAKELISTS_DIR}", F"-DCMAKE_BUILD_TYPE={build_type}", F"-DRUNNER=ON"])
+    exit_code = subprocess.call([
+        "cmake", 
+        F"{CMAKELISTS_DIR}", 
+        F"-DCMAKE_BUILD_TYPE={build_type}", 
+        F"-DRUNNER=ON",
+        f"-j {num_processors}",
+    ])
     if exit_code == 0: exit_code = subprocess.call(["make"])
     os.chdir(PROJECT_ROOT_DIR)
     if exit_code == 0:

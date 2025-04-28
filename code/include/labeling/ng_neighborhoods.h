@@ -1,13 +1,15 @@
 #pragma once
 
-#include "instance/vrp_instance.h"
+#include "nyr/vrp/types.h"
+#include "nyr/vrp/instance.h"
 
 #include <vector>
 #include <goc/goc.h>
 
 namespace solver
 {
-typedef std::vector<VertexSet> TDNeighborhoods; // Neighborhoods for each partition of the time horizon.
+
+typedef std::vector<nyr::VertexSet> TDNeighborhoods; // Neighborhoods for each partition of the time horizon.
 
 // Enum of the strategies to use to partition the time
 // horizon into intervals for which the neighborhoods are.
@@ -43,19 +45,19 @@ public:
     // The time horizon is partitioned into successive intervals
     // based on the strategy to use.
     TDNGNeighborhoods(
-        const VRPInstance& vrp, 
+        const nyr::VRPInstance& vrp, 
         const goc::PartitionedInterval& partitioned_horizon,
         uint32_t nb_neighbors_to_keep
     );
 
     // Getter: the neighbors of the vertex i at time t.
-    const VertexSet& neighbors(goc::Vertex i, TimeUnit t) const;
+    const nyr::VertexSet& neighbors(goc::Vertex i, nyr::TimeUnit t) const;
 
 private:
     const goc::PartitionedInterval& partitioned_horizon_; // Time horizon, partitioned into successive intervals.
 
     // For each vertex, a map from interval end-time to its neighborhood.
     // Neighborhood is valid from previous end-time (or 0 initially) up to the key.
-    std::vector<goc::VectorMap<TimeUnit, VertexSet>> ng_td_neighborhoods_;
+    std::vector<goc::VectorMap<nyr::TimeUnit, nyr::VertexSet>> ng_td_neighborhoods_;
 };
 } // namespace

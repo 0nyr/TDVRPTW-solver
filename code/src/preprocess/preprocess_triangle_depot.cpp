@@ -7,10 +7,11 @@
 #include "preprocess/preprocess_triangle_depot.h"
 #include "preprocess/preprocess_utils.h"
 
-#include "instance/vrp_instance.h"
+#include "nyr/vrp/instance.h"
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
 using namespace nlohmann;
 
 namespace solver

@@ -10,9 +10,9 @@
 #include <vector>
 #include <tuple>
 
-#include "goc/goc.h"
+#include <goc/goc.h>
+#include <nyr/nyr.h>
 
-#include "instance/vrp_instance.h"
 #include "label.h"
 #include "lazy_label.h"
 #include "bcp/pricing_problem.h"
@@ -33,7 +33,7 @@ class MonodirectionalLabeling
 public:
 	int process_limit; // Maximum number of labels to process for each run.
 	goc::Duration time_limit; // Maximum execution time.
-	TimeUnit t_m; // Only extend labels that have min(rw(.)) <= t_m.
+	nyr::TimeUnit t_m; // Only extend labels that have min(rw(.)) <= t_m.
 	bool cross; // Indicates if labels are allowed to cross t_m only one step.
 	bool partial; // Indicates if partial domination should be used.
 	bool limited_extension; // Indicates if limited extension should be applied.
@@ -49,7 +49,7 @@ public:
 
 	// Dominance structure.
 	typedef std::vector<Label*> BoundLevel;
-	typedef goc::VectorMap<CapacityUnit, BoundLevel> DemandLevel;
+	typedef goc::VectorMap<nyr::CapacityUnit, BoundLevel> DemandLevel;
 	typedef std::vector<DemandLevel> DominanceStructure;
 	DominanceStructure U; // Indexed by last vertex, demand and sorted by c_min.
 	int processed_count; // Number of labels in the dominance structure.
@@ -57,7 +57,7 @@ public:
 	std::optional<TDNGNeighborhoods> ng; // Neighborhoods to use for the labeling algorithm.
 
 	MonodirectionalLabeling(
-		const VRPInstance& vrp,
+		const nyr::VRPInstance& vrp,
 		const std::optional<TDNGRoutesParams>& ng_params // optional, if NG-routes are used, then the neighborhoods are created using the given params.
 	);
 	
@@ -98,7 +98,7 @@ private:
 	// Resets the dominance structures and counters.
 	void Clean();
 	
-	VRPInstance vrp_;
+	nyr::VRPInstance vrp_;
 	PricingProblem pp_;
 	Label no_label; // null object pattern of the label to avoid using ifs.
 };

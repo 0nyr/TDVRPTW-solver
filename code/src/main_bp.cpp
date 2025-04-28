@@ -12,12 +12,12 @@
 #include <goc/goc.h>
 #include <nyr/nyr.h>
 
-#include "instance/vrp_instance.h"
-#include "instance/load_igp.h"
-#include "bcp/bcp.h"
-#include "bcp/spf.h"
-#include "bcp/pricing_problem.h"
-#include "labeling/bidirectional_labeling.h"
+#include "nyr/vrp/instance.h"
+#include "preprocess/load_igp.h"
+// #include "bcp/bcp.h"
+// #include "bcp/spf.h"
+// #include "bcp/pricing_problem.h"
+// #include "labeling/bidirectional_labeling.h"
 #include "nyr/log/timed_solutions.h"
 #include "preprocess/preprocess_validity.h"
 #include "labeling/ng_neighborhoods.h"
@@ -28,26 +28,34 @@
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
 using namespace nlohmann;
 using namespace solver;
 
-// Returns: the cost of a path.
-// NOTE: Calculated as the duration of the path minus the sum of 
-// the profits of the vertices minus the sum of the duals of the cuts.
-double path_cost(
-	const VRPInstance& vrp, 
-	PricingProblem pp, 
-	GraphPath path
-) {
-	VertexSet column;
-	for (Vertex i: path) column.set(i);
-	return vrp.BestDurationRoute(path).duration 
-		- sum<Vertex>(path, [&] (Vertex v) { return pp.P[v]; })
-		- sum<int>(range(0, pp.S.size()), [&] (int i) { return intersection(pp.S[i], column).count() >= 2 ? pp.sigma[i] : 0.0; });
-}
+// // Returns: the cost of a path.
+// // NOTE: Calculated as the duration of the path minus the sum of 
+// // the profits of the vertices minus the sum of the duals of the cuts.
+// double path_cost(
+// 	const VRPInstance& vrp, 
+// 	PricingProblem pp, 
+// 	GraphPath path
+// ) {
+// 	VertexSet column;
+// 	for (Vertex i: path) column.set(i);
+// 	return vrp.BestDurationRoute(path).value 
+// 		- sum<Vertex>(path, [&] (Vertex v) { return pp.P[v]; })
+// 		- sum<int>(range(0, pp.S.size()), [&] (int i) { return intersection(pp.S[i], column).count() >= 2 ? pp.sigma[i] : 0.0; });
+// }
 
-void solve(int argc, char** argv, nyr::VrpSolutionRecord& solution_record, json& output)
-{
+void solve(
+	int argc, 
+	char** argv
+) {
+	// Initialization
+	const nyr::ProgramClock pclock; // start the program clock.
+	std::unique_ptr<nyr::AbstractSolutionRecord> solution_record;
+	json output; // STDOUT output will go into this JSON.
+
 	if (argc > 1) 
 		simulate_runner_input(
 			"instances/for_testing", 
@@ -66,6 +74,7 @@ void solve(int argc, char** argv, nyr::VrpSolutionRecord& solution_record, json&
 	// Parse experiment.
 	Duration time_limit = value_or_default(experiment, "time_limit", 2.0_hr);
 	const nyr::GlobalParams gparams = nyr::GlobalParams({
+		pclock,
 		enum_value_or_default<nyr::ObjectiveFunction>(experiment, "objective", nyr::ObjectiveFunction::Duration),
 		nyr::Durex(time_limit.Amount(goc::DurationUnit::Seconds))
 	});
@@ -139,13 +148,15 @@ void solve(int argc, char** argv, nyr::VrpSolutionRecord& solution_record, json&
 	clog << "Initialization heuristics: " << initialization_heuristics << endl;
 	aco_options.Print(clog);
 
+	solution_record = nyr::create_solution_record(pclock, gparams.objective); // Create a timed solution object to store the solutions.
+
 	preprocess_validity(instance);
 	// preprocess_ng_neighborhoods(
 	// 	instance,
 	// 	TDNGNeighborhoodsTimeStrategy::TimeStepSpecific,
 	// 	ng_nb_neighbors
 	// ); 
-	clog << "Preprocessing time: " << solution_record.pclock.elapsed() << endl;
+	clog << "Preprocessing time: " << gparams.pclock.elapsed() << endl;
 
 	// Parse instance.
 	VRPInstance vrp = instance;
@@ -154,10 +165,10 @@ void solve(int argc, char** argv, nyr::VrpSolutionRecord& solution_record, json&
 	if (initialization_heuristics)
 	{
 		clog << "Initialization heuristics..." << endl;
-		ghm1_duration(solution_record, vrp);
+		ghm1(*solution_record, vrp, gparams);
 
-		auto end_status = aco(solution_record, vrp, aco_options);
-		if (end_status == ACOStatus::TimeLimitReached) return;
+		// auto end_status = aco(*solution_record, vrp, aco_options);
+		// if (end_status == ACOStatus::TimeLimitReached) return;
 	}
 
 	// TODO: remove, for testing heuristics only
@@ -183,153 +194,160 @@ void solve(int argc, char** argv, nyr::VrpSolutionRecord& solution_record, json&
 	#endif
 
 	
-	// Run BCP.
-	clog << "Running BCP algorithm..." << endl;
+	// // Run BCP.
+	// clog << "Running BCP algorithm..." << endl;
 
-	// Create SPF and add initial routes (o, i, d).
-	SPF spf(vrp.D.NbVertices());
-	for (Vertex i: exclude(vrp.D.Vertices(), {vrp.o, vrp.d}))
-		spf.AddRoute(vrp.BestDurationRoute({vrp.o, i, vrp.d}));
+	// // Create SPF and add initial routes (o, i, d).
+	// SPF spf(vrp.D.NbVertices());
+	// for (Vertex i: exclude(vrp.D.Vertices(), {vrp.o, vrp.d}))
+	// 	spf.AddRoute(vrp.BestDurationRoute({vrp.o, i, vrp.d}));
 
-	// If some heuristic solutions were found, add their routes to the SPF.
-	if (initialization_heuristics)
-	{
-		for (const auto& sol: solution_record.solutions())
-		{
-			for (const auto& route: sol.routes)
-			{
-				spf.AddRoute(route);
-			}
-		}
-	}
+	// // If some heuristic solutions were found, add their routes to the SPF.
+	// if (initialization_heuristics)
+	// {
+	// 	for (const auto& sol: (*solution_record).solutions())
+	// 	{
+	// 		for (const auto& route: sol.routes)
+	// 		{
+	// 			spf.AddRoute(route);
+	// 		}
+	// 	}
+	// }
 
-	// The Branch-Cut-Price algorithm to solve the VRP.
-	BCP bcp(vrp.D, &spf);
-	bcp.time_limit = time_limit;
-	bcp.cut_limit = cut_limit;
-	bcp.node_limit = node_limit;
+	// // The Branch-Cut-Price algorithm to solve the VRP.
+	// BCP bcp(vrp.D, &spf);
+	// bcp.time_limit = time_limit;
+	// bcp.cut_limit = cut_limit;
+	// bcp.node_limit = node_limit;
 	
-	// The labeling algorithm which is used in the CG solver of the BCP for the pricing problem.
-	std::optional<TDNGRoutesParams> ng_routes_params = [&]() -> std::optional<TDNGRoutesParams> {
-		// NG-Routes will be use, so we need to create the neighborhoods.
-		if (lal_heuristic_ng_routes) {
-			return TDNGRoutesParams(
-				ng_nb_neighbors, 
-				ng_max_neighbors,
-				partition_time_horizon(
-					{0, vrp.T},
-					vrp.time_steps,
-					NHPS::TimeStepSpecific
-				)
-			);
-		} else {
-			// NG-routes not used. Save compute time/memory.
-			return std::nullopt;
-		}
-	}();
+	// // The labeling algorithm which is used in the CG solver of the BCP for the pricing problem.
+	// std::optional<TDNGRoutesParams> ng_routes_params = [&]() -> std::optional<TDNGRoutesParams> {
+	// 	// NG-Routes will be use, so we need to create the neighborhoods.
+	// 	if (lal_heuristic_ng_routes) {
+	// 		return TDNGRoutesParams(
+	// 			ng_nb_neighbors, 
+	// 			ng_max_neighbors,
+	// 			partition_time_horizon(
+	// 				{0, vrp.T},
+	// 				vrp.time_steps,
+	// 				NHPS::TimeStepSpecific
+	// 			)
+	// 		);
+	// 	} else {
+	// 		// NG-routes not used. Save compute time/memory.
+	// 		return std::nullopt;
+	// 	}
+	// }();
 
-	BidirectionalLabeling lbl(
-		vrp,
-		ng_routes_params
-	);
-	lbl.solution_limit = 3000;
-	lbl.closing_state = !iterative_merge;
-	lbl.partial = partial;
-	lbl.limited_extension = limited_extension;
-	lbl.lazy_extension = lazy_extension;
-	lbl.unreachable_strengthened = unreachable_strengthened;
-	lbl.sort_by_cost = sort_by_cost;
-	lbl.symmetric = symmetric;
+	// BidirectionalLabeling lbl(
+	// 	vrp,
+	// 	ng_routes_params
+	// );
+	// lbl.solution_limit = 3000;
+	// lbl.closing_state = !iterative_merge;
+	// lbl.partial = partial;
+	// lbl.limited_extension = limited_extension;
+	// lbl.lazy_extension = lazy_extension;
+	// lbl.unreachable_strengthened = unreachable_strengthened;
+	// lbl.sort_by_cost = sort_by_cost;
+	// lbl.symmetric = symmetric;
 
-	// Define the levels to try in order
-	std::vector<std::pair<LabelingLevel, std::string>> levels_to_try;
-	if (lal_heuristic_cost) levels_to_try.emplace_back(LabelingLevel::HeuristicCost, "Heuristic Cost");
-	if (lal_heuristic_elementarity) levels_to_try.emplace_back(LabelingLevel::HeuristicElementarity, "Heuristic Elementarity");
-	if (lal_heuristic_ng_routes) levels_to_try.emplace_back(LabelingLevel::HeuristicNG, "Heuristic NG Routes");
-	if (lal_exact_labeling) levels_to_try.emplace_back(LabelingLevel::Exact, "Exact");
-	if (levels_to_try.empty())
+	// // Define the levels to try in order
+	// std::vector<std::pair<LabelingLevel, std::string>> levels_to_try;
+	// if (lal_heuristic_cost) levels_to_try.emplace_back(LabelingLevel::HeuristicCost, "Heuristic Cost");
+	// if (lal_heuristic_elementarity) levels_to_try.emplace_back(LabelingLevel::HeuristicElementarity, "Heuristic Elementarity");
+	// if (lal_heuristic_ng_routes) levels_to_try.emplace_back(LabelingLevel::HeuristicNG, "Heuristic NG Routes");
+	// if (lal_exact_labeling) levels_to_try.emplace_back(LabelingLevel::Exact, "Exact");
+	// if (levels_to_try.empty())
+	// {
+	// 	clog << "No labeling levels enabled." << endl;
+	// 	return;
+	// }
+
+	// bcp.pricing_solver = [&](
+	// 	const PricingProblem& pricing_problem, 
+	// 	int node_number, 
+	// 	Duration tlimit, 
+	// 	CGExecutionLog* cg_execution_log
+	// ) {
+	// 	Stopwatch iteration_rolex(true);
+	// 	std::vector<Route> R;
+
+	// 	for (const auto& [level, level_name] : levels_to_try) {
+	// 		lbl.time_limit = tlimit - iteration_rolex.Peek();
+	// 		auto lbl_log = lbl.Run(pricing_problem, &R, level);
+			
+	// 		// Add iteration log.
+	// 		cg_execution_log->iterations->push_back(lbl_log);
+	// 		cg_execution_log->iterations->back()["iteration_name"] = level_name;
+
+	// 		// Update merge_start and closing_state.
+	// 		lbl.closing_state |= level == LabelingLevel::Exact && lbl_log.status == BLBStatus::Finished;
+	// 		lbl.merge_start = (lbl.merge_start + lbl_log.forward_log->processed_count) / 2;
+
+	// 		if (!R.empty()) break;
+	// 	}
+
+	// 	if (!R.empty())
+	// 	{
+	// 		// Add negative reduced cost routes.
+	// 		for (auto& route : R) spf.AddRoute(route);
+	// 	}
+	// 	else
+	// 	{
+	// 		// If no routes were found, reset the labeling algorithm.
+	// 		lbl.closing_state = false;
+	// 		lbl.merge_start = 0;
+	// 	}
+	// };
+
+	// auto log = bcp.Run(solution_record);
+
+	// output["Exact"] = log;
+
+	// clog << "Time: " << log.time << endl;
+	// clog << "#Nodes: " << log.nodes_closed << endl;
+	// clog << "Status: " << log.status << endl;
+
+	// Add the solutions found to the output.
+	output["timed_solutions"] = solution_record;
+
+	// Show best solution found (if any).
+	const auto rec = *solution_record;
+	const auto best_solution = rec.last_solution();
+	if (rec.empty())
+		clog << "No solution found." << endl;
+	else
 	{
-		clog << "No labeling levels enabled." << endl;
-		return;
+		clog << "Best solution:" << endl;
+		clog << "\tValue: " << rec.last_solution_value() << endl;
+		switch (gparams.objective)
+		{
+			case nyr::ObjectiveFunction::Makespan:
+				try_print_routes<nyr::VRPSolutionMakespan>(best_solution);
+				break;
+			case nyr::ObjectiveFunction::Duration:
+				try_print_routes<nyr::VRPSolutionDuration>(best_solution);
+				break;
+			case nyr::ObjectiveFunction::TravelTime:
+				try_print_routes<nyr::VRPSolutionTravelTime>(best_solution);
+				break;
+			default:
+				clog << "Unknown objective function." << endl;
+		}
 	}
 
-	bcp.pricing_solver = [&](
-		const PricingProblem& pricing_problem, 
-		int node_number, 
-		Duration tlimit, 
-		CGExecutionLog* cg_execution_log
-	) {
-		Stopwatch iteration_rolex(true);
-		std::vector<Route> R;
+	// Send JSON output to cout.
+	cout << output << endl;
 
-		for (const auto& [level, level_name] : levels_to_try) {
-			lbl.time_limit = tlimit - iteration_rolex.Peek();
-			auto lbl_log = lbl.Run(pricing_problem, &R, level);
-			
-			// Add iteration log.
-			cg_execution_log->iterations->push_back(lbl_log);
-			cg_execution_log->iterations->back()["iteration_name"] = level_name;
-
-			// Update merge_start and closing_state.
-			lbl.closing_state |= level == LabelingLevel::Exact && lbl_log.status == BLBStatus::Finished;
-			lbl.merge_start = (lbl.merge_start + lbl_log.forward_log->processed_count) / 2;
-
-			if (!R.empty()) break;
-		}
-
-		if (!R.empty())
-		{
-			// Add negative reduced cost routes.
-			for (auto& route : R) spf.AddRoute(route);
-		}
-		else
-		{
-			// If no routes were found, reset the labeling algorithm.
-			lbl.closing_state = false;
-			lbl.merge_start = 0;
-		}
-	};
-
-	auto log = bcp.Run(solution_record);
-
-	output["Exact"] = log;
-
-	clog << "Time: " << log.time << endl;
-	clog << "#Nodes: " << log.nodes_closed << endl;
-	clog << "Status: " << log.status << endl;
+	clog << "Full run time: " << pclock.elapsed() << endl;
 }
 
 int main(int argc, char** argv)
 {
 	try
 	{
-		// Initialization
-		const nyr::ProgramClock pclock; // start the program clock.
-		nyr::VrpSolutionRecord solution_record(pclock); // Create a timed solution object to store the solutions.
-		json output; // STDOUT output will go into this JSON.
-
-		// Run the solver.
-		solve(argc, argv, solution_record, output);
-
-		// Add the solutions found to the output.
-		output["timed_solutions"] = solution_record;
-
-		// Show best solution found (if any).
-		if (solution_record.empty())
-			clog << "No solution found." << endl;
-		else
-		{
-			auto& best_solution = solution_record.last_solution();
-			clog << "Best solution:" << endl;
-			clog << "\tValue: " << best_solution.value << endl;
-			clog << "\tRoutes:" << endl;
-			for (auto& r: best_solution.routes) clog << "\t\t" << r << endl;
-		}
-
-		// Send JSON output to cout.
-		cout << output << endl;
-
-		clog << "Full run time: " << pclock.elapsed() << endl;		
+		solve(argc, argv);		
 	}
 	catch (std::bad_alloc& e)
 	{

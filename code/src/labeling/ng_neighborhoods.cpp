@@ -1,9 +1,14 @@
 #include "labeling/ng_neighborhoods.h"
 #include "goc/collection/bitset_utils.h"
+
 #include <nyr/math/fast_math.h>
+#include <nyr/vrp/instance.h>
+#include <nyr/vrp/types.h>
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
+using namespace nlohmann;
 
 namespace solver
 {

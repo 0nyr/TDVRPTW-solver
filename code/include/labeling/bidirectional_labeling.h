@@ -10,9 +10,9 @@
 #include <vector>
 #include <tuple>
 
-#include "goc/goc.h"
+#include <goc/goc.h>
+#include <nyr/nyr.h>
 
-#include "instance/vrp_instance.h"
 #include "bcp/pricing_problem.h"
 #include "label.h"
 #include "lazy_label.h"
@@ -21,6 +21,7 @@
 
 namespace solver
 {
+
 class BidirectionalLabeling
 {
 public:
@@ -43,7 +44,7 @@ public:
 	bool ng_routes_relaxation; // Indicates if NG-routes relaxation is be used.
 
 	BidirectionalLabeling(
-		const VRPInstance& vrp,
+		const nyr::VRPInstance& vrp,
 		const std::optional<TDNGRoutesParams>& ng_routes_params
 	);
 	
@@ -73,7 +74,7 @@ private:
 	// Adds a solution to the pool S if it is the best yet found with those visited vertices.
 	void AddSolution(const goc::GraphPath& p, double min_duration);
 	
-	VRPInstance vrp_;
+	nyr::VRPInstance vrp_;
 
 	// NG-route stuff
 	const std::optional<TDNGRoutesParams>& ng_params_; // Parameters for the NG-routes.
@@ -84,7 +85,7 @@ private:
 	
 	// Pool of negative reduced cost solutions found (indexed by their visited vertices).
 	// We only keep the best solution for each set of visited vertices.
-	std::unordered_map<VertexSet, goc::Route> S;
+	std::unordered_map<nyr::VertexSet, goc::Route> S;
 };
 } // namespace
 

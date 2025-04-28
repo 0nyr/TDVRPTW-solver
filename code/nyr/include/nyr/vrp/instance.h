@@ -3,17 +3,12 @@
 #include <vector>
 #include <goc/goc.h>
 
-// MAX_N is the maximum number of vertices an instance may have, we need this at compilation time for bitset purposes.
-#ifndef MAX_N
-#define MAX_N 102
-#endif
+#include "nyr/vrp/types.h"
+#include "nyr/solutions/route.h"
 
-namespace solver
+
+namespace nyr
 {
-typedef double TimeUnit; // Represents time.
-typedef double CapacityUnit; // Represents the capacity.
-typedef double ProfitUnit; // Represents the profit of vertices.
-typedef std::bitset<MAX_N> VertexSet; // Set of vertices.
 
 // This class represents an instance of a vehicle routing problem.
 // Considerations:
@@ -57,7 +52,7 @@ public:
 
 	// Returns: the route with minimum duration using path p.
 	// If the route is infeasible it returns INFTY.
-	goc::Route BestDurationRoute(const goc::GraphPath& p) const;
+	RouteDuration BestDurationRoute(const goc::GraphPath& p) const;
 	
 	// Returns: a set of all vertices which are unreachable if departing from v at t0.
 	VertexSet Unreachable(goc::Vertex v, TimeUnit t0) const;

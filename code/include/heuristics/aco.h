@@ -4,7 +4,7 @@
 #include <nyr/nyr.h>
 
 #include <goc/goc.h>
-#include "instance/vrp_instance.h"
+#include "nyr/vrp/instance.h"
 
 namespace solver
 {
@@ -78,15 +78,15 @@ public:
     }
 };
 
-class AntData
+class AntCandidates
 {
 public:
-    goc::VRPSolution solution; // solution built by the ant
+    nyr::VRPSolutionMakespan solution; // solution built by the ant
     uint32_t nb_visited_clients; // number of visited clients
     std::vector<goc::Vertex> candidates; // candidate vertices to visit
-    VertexSet free_vertices; // free vertices to visit
+    nyr::VertexSet free_vertices; // free vertices to visit
 
-    AntData();
+    AntCandidates();
 
     /**
      * ### Remove candidate client vertex
@@ -111,10 +111,10 @@ public:
      * Initialize the candidates vector with all clients except the 
      * start depot and the preselected client.
      */
-    inline void init_candidates(const VRPInstance& vrp, bool remove_end_depot = true)
+    inline void init_candidates(const nyr::VRPInstance& vrp, bool remove_end_depot = true)
     {
         candidates = vrp.D.Vertices(); // copy all vertices
-        free_vertices = VertexSet().set(); // start with all vertices as free
+        free_vertices = nyr::VertexSet().set(); // start with all vertices as free
         
         assert(candidates[0] == vrp.o);
         assert(candidates.back() == vrp.d);
@@ -133,13 +133,12 @@ public:
         nb_visited_clients = 0; // no clients visited yet
     }
 
-    inline void open_path(const VRPInstance& vrp)
+    inline void open_path(const nyr::VRPInstance& vrp)
     {
         // Create new empty route starting from the start depot
         solution.routes.push_back(
-            goc::Route(
+            nyr::RouteMakespan(
                 {vrp.o}, 
-                0.0, 
                 0.0
             )
         );
@@ -150,14 +149,14 @@ public:
     /**
      * ### Close last path to make it a route
      */
-    inline void close_path(const VRPInstance& vrp, goc::Vertex current)
+    inline void close_path(const nyr::VRPInstance& vrp, goc::Vertex current)
     {
         solution.routes.back().path.push_back(vrp.d);
-        solution.routes.back().duration = vrp.ArrivalTime(
+        solution.routes.back().value = vrp.ArrivalTime(
             {current, vrp.d}, 
-            solution.routes.back().duration
+            solution.routes.back().value
         );
-        solution.value += solution.routes.back().duration;
+        solution.value += solution.routes.back().value;
     }
 };
 
@@ -175,8 +174,8 @@ inline double bound_pheromone_val(
 }
 
 ACOStatus aco(
-    nyr::VrpSolutionRecord& timed_solutions,
-    const VRPInstance& vrp,
+    nyr::AbstractSolutionRecord& solution_record, 
+    const nyr::VRPInstance& vrp,
     const AntColonyOptions& options
 );
 

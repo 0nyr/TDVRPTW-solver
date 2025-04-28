@@ -33,8 +33,7 @@ include_directories(nyr/include)
 # Create library with source codes.
 add_library(
     solver 
-    src/instance/vrp_instance.cpp 
-    src/instance/load_igp.cpp 
+    src/preprocess/load_igp.cpp 
     src/preprocess/preprocess_utils.cpp
     src/preprocess/preprocess_capacity.cpp 
     src/preprocess/preprocess_time_windows.cpp 
@@ -43,17 +42,17 @@ add_library(
     src/preprocess/preprocess_triangle_depot.cpp 
     src/preprocess/preprocess_ng_neighborhoods.cpp 
     src/preprocess/preprocess_validity.cpp 
-    src/labeling/label.cpp 
-    src/labeling/monodirectional_labeling.cpp 
-    src/labeling/lazy_label.cpp 
-    src/labeling/pwl_domination_function.cpp 
-    src/labeling/bidirectional_labeling.cpp 
-    src/labeling/ng_neighborhoods.cpp 
-    src/bcp/pricing_problem.cpp 
-    src/bcp/spf.cpp 
-    src/bcp/bcp.cpp
+    # src/labeling/label.cpp 
+    # src/labeling/monodirectional_labeling.cpp 
+    # src/labeling/lazy_label.cpp 
+    # src/labeling/pwl_domination_function.cpp 
+    # src/labeling/bidirectional_labeling.cpp 
+    # src/labeling/ng_neighborhoods.cpp 
+    # src/bcp/pricing_problem.cpp 
+    # src/bcp/spf.cpp 
+    # src/bcp/bcp.cpp
     src/heuristics/greedy_makespan.cpp
-    src/heuristics/aco.cpp
+    # src/heuristics/aco.cpp
 )
 target_link_libraries(solver goc nyr) # add compiled libs
 

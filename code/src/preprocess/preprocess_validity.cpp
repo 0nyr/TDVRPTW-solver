@@ -1,8 +1,9 @@
 #include "preprocess/preprocess_validity.h"
-#include "instance/vrp_instance.h"
+#include "nyr/vrp/instance.h"
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
 using namespace nlohmann;
 
 namespace solver

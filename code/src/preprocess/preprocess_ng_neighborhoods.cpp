@@ -1,5 +1,5 @@
 #include "preprocess/preprocess_ng_neighborhoods.h"
-#include "instance/vrp_instance.h"
+#include "nyr/vrp/instance.h"
 #include <nyr/math/fast_math.h>
 
 #include <vector>
@@ -9,6 +9,7 @@
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
 using namespace nlohmann;
 
 namespace solver

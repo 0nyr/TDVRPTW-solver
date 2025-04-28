@@ -1,12 +1,16 @@
 #include "heuristics/greedy_makespan.h"
-#include "instance/vrp_instance.h"
+#include "nyr/vrp/instance.h"
+#include "nyr/solutions/conversions.h"
 
 #include <vector>
 #include <tuple>
 #include <optional>
+#include <memory>
+#include <magic_enum/magic_enum.hpp>
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
 using namespace nlohmann;
 
 namespace solver
@@ -55,9 +59,6 @@ vector<double> compute_EAT_on_free_vertices(
     return EAT;
 }
 
-
-
-
 /**
  * ### Greedy Makespan Heuristic 1
  * 
@@ -76,11 +77,11 @@ vector<double> compute_EAT_on_free_vertices(
  *    all vertices are visited.
  * 3. Return the routes, and the sum of the makespan of each route.
  */
-VRPSolution greedy_makespan_heuristic_1(
+VRPSolutionMakespan greedy_makespan_heuristic_1(
     const VRPInstance& vrp
 ) {
     // Step 1: Initialize the solution.
-    vector<Route> routes;
+    vector<RouteMakespan> routes;
     double total_makespan = 0.0;
     VertexSet visited_vertices;
     const size_t n = vrp.D.NbVertices();
@@ -94,7 +95,7 @@ VRPSolution greedy_makespan_heuristic_1(
     while (nb_bits_set(visited_vertices) + 2 < n)
     {
         // Step 2.1: Start at the depot.
-        Route route = Route({vrp.o}, 0.0, 0.0);
+        RouteMakespan route = RouteMakespan({vrp.o}, 0.0);
         CapacityUnit route_capacity = 0.0;
 
         // Step 2.2: Add the next vertex with the smallest makespan.
@@ -109,7 +110,7 @@ VRPSolution greedy_makespan_heuristic_1(
             vector<double> makespans_i_t = compute_EAT_on_free_vertices(
                 vrp.D, 
                 current_vertex,
-                route.duration,
+                route.value, // makespan
                 free_vertices,
                 [&vrp](Vertex u, Vertex v, double t) {
                     return vrp.TravelTime({u, v}, t);
@@ -157,7 +158,7 @@ VRPSolution greedy_makespan_heuristic_1(
             if (next_vertex == vrp.d)
             {
                 route.path.push_back(vrp.d);
-                route.duration = next_arrival_time;
+                route.value = next_arrival_time;
                 break;
             }
 
@@ -167,7 +168,7 @@ VRPSolution greedy_makespan_heuristic_1(
             {
                 // Return to the depot and close this route.
                 route.path.push_back(vrp.d);
-                route.duration = vrp.ArrivalTime({current_vertex, vrp.d}, route.duration);
+                route.value = vrp.ArrivalTime({current_vertex, vrp.d}, route.value);
                 break;
             }
 
@@ -176,7 +177,7 @@ VRPSolution greedy_makespan_heuristic_1(
             {
                 // Return to the depot and close this route.
                 route.path.push_back(vrp.d);
-                route.duration = vrp.ArrivalTime({current_vertex, vrp.d}, route.duration);
+                route.value = vrp.ArrivalTime({current_vertex, vrp.d}, route.value);
                 break;
             }
             route_capacity += vrp.q[next_vertex];
@@ -185,7 +186,7 @@ VRPSolution greedy_makespan_heuristic_1(
                  << next_arrival_time
                  << ", route_cap: " << route_capacity << ")"; 
             route.path.push_back(next_vertex);
-            route.duration = next_arrival_time;
+            route.value = next_arrival_time;
             // Remove the vertex from the graph.
             visited_vertices.set(next_vertex);
         }
@@ -197,9 +198,9 @@ VRPSolution greedy_makespan_heuristic_1(
         visited_vertices.set(vrp.d, false);
 
         routes.push_back(route);
-        total_makespan += route.duration;
+        total_makespan += route.value;
         clog << "GMH1: Route: " << route.path 
-            << " -> Makespan: " << route.duration 
+            << " -> Makespan: " << route.value 
             << ", route capacity: " << route_capacity 
             << ", nb visited: " << route.path.size()
             << endl;
@@ -208,37 +209,48 @@ VRPSolution greedy_makespan_heuristic_1(
     clog << "Found GMH1 Solution: nb routes: " << routes.size() << ", Makespan: " << total_makespan << " - routes: " << routes << endl;
     return VRPSolution(total_makespan, routes);
 }
-
-/**
- * Converts a VRPSolution from Makespan to Duration.
- */
-VRPSolution convert_makespan_solution_to_duration(
-    const VRPSolution& makespan_solution,
-    const VRPInstance& vrp
-) {
-    vector<Route> routes = vector<Route>(makespan_solution.routes.size());
-    double total_duration = 0.0;
-    for (size_t i = 0; i < makespan_solution.routes.size(); ++i)
-    {
-        routes[i] = vrp.BestDurationRoute(makespan_solution.routes[i].path);
-        total_duration += routes[i].duration;
-    }
-    return VRPSolution(total_duration, routes);
-}
  
 /**
  * ### Computing the duration of routes provided by GMH1
  * 
  * All routes from GMH1 are valid, but all start at t=0.
- * Use the route paths to compute their corresponding optimal duration.
+ * Use the obtained route paths to compute their corresponding value
+ * in other objective functions.
  */
-void ghm1_duration(
-    nyr::VrpSolutionRecord& solution_record,
-    const VRPInstance& vrp
+void ghm1(
+    nyr::AbstractSolutionRecord& solution_record,
+    const nyr::VRPInstance& vrp,
+    const nyr::GlobalParams& gparams
 ) {
-    const VRPSolution makespan_solution = greedy_makespan_heuristic_1(vrp);
-    VRPSolution duration_solution = convert_makespan_solution_to_duration(makespan_solution, vrp);
-    solution_record.try_add(duration_solution, "GMH1");
+    const auto makespan_solution = greedy_makespan_heuristic_1(vrp);
+
+    auto build_solution = [&]() -> std::unique_ptr<nyr::AbstractSolution> {
+        switch (gparams.objective)
+        {
+            case nyr::ObjectiveFunction::Makespan:
+                return std::make_unique<nyr::VRPSolutionMakespan>(
+                    makespan_solution
+                );
+            case nyr::ObjectiveFunction::Duration:
+                return std::make_unique<nyr::VRPSolutionDuration>(
+                    convert_makespan_solution_to_duration(
+                        makespan_solution, vrp
+                    )
+                );
+            case nyr::ObjectiveFunction::TravelTime:
+                return std::make_unique<nyr::VRPSolutionTravelTime>(
+                    convert_makespan_solution_to_travel_time(
+                        makespan_solution, vrp
+                    )
+                );
+        }
+        throw std::runtime_error(
+            std::string("Unknown ObjectiveFunction: ") + std::string(magic_enum::enum_name(gparams.objective))
+        );
+    };
+
+    solution_record.try_add(build_solution(), "GMH1");
 }
+
 
 } // namespace

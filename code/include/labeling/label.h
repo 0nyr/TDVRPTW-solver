@@ -10,8 +10,7 @@
 #include <iostream>
 
 #include "goc/goc.h"
-
-#include "instance/vrp_instance.h"
+#include "nyr/vrp/types.h"
 
 namespace solver
 {
@@ -20,11 +19,11 @@ class Label : public goc::Printable
 public:
 	Label* parent;
 	goc::Vertex v; // Last vertex.
-	CapacityUnit q; // Label demand.
-	ProfitUnit p; // Label profit.
+	nyr::CapacityUnit q; // Label demand.
+	nyr::ProfitUnit p; // Label profit.
 	int length; // Label path length.
-	VertexSet S; // Set S of vertices for domination. For NG-routes, this set is limited to the neighborhood of recently visited vertices.
-	VertexSet U; // S \cup (union) "unreachables": vertices that are not reachable from the label.
+	nyr::VertexSet S; // Set S of vertices for domination. For NG-routes, this set is limited to the neighborhood of recently visited vertices.
+	nyr::VertexSet U; // S \cup (union) "unreachables": vertices that are not reachable from the label.
 	goc::PWLFunction duration; // duration(t) = "minimum duration for reaching v at time t".
 	goc::Interval rw; // rw = dom(duration).
 	double min_cost; // Label minimum cost (min{duration(t)-p-cut_cost : t \in dom(duration)}).

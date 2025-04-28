@@ -9,13 +9,12 @@
 
 #include <vector>
 
-#include "goc/goc.h"
-
-#include "instance/vrp_instance.h"
+#include <goc/goc.h>
+#include <nyr/nyr.h>
 
 namespace solver
 {
-typedef VertexSet SubsetRowCut; // We only consider cuts with n = 3, k = 2. So the set of vertices define the cut.
+typedef nyr::VertexSet SubsetRowCut; // We only consider cuts with n = 3, k = 2. So the set of vertices define the cut.
 class PricingProblem;
 
 // Represents a set-partitioning formulation for the VRP.

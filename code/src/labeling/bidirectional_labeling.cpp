@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace goc;
+using namespace nyr;
 
 namespace solver
 {

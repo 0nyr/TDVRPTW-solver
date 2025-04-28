@@ -1,17 +1,12 @@
-//
-// Created by Gonzalo Lera Romero.
-// Grupo de Optimizacion Combinatoria (GOC).
-// Departamento de Computacion - Universidad de Buenos Aires.
-//
-
-#include "instance/vrp_instance.h"
+#include "nyr/vrp/instance.h"
 
 using namespace std;
 using namespace goc;
 using namespace nlohmann;
 
-namespace solver
+namespace nyr
 {
+
 TimeUnit VRPInstance::TravelTime(goc::Arc e, TimeUnit t0) const
 {
 	auto& tau_e = tau[e.tail][e.head];
@@ -59,7 +54,7 @@ TimeUnit VRPInstance::ReadyTime(const GraphPath& p, TimeUnit t0) const
 	return t;
 }
 
-Route VRPInstance::BestDurationRoute(const GraphPath& p) const
+RouteDuration VRPInstance::BestDurationRoute(const GraphPath& p) const
 {
 	PWLFunction Delta = arr[p[0]][p[0]];
 	if (Delta.Empty()) return {{}, 0.0, INFTY};
@@ -70,7 +65,7 @@ Route VRPInstance::BestDurationRoute(const GraphPath& p) const
 		if (Delta.Empty()) return {{}, 0.0, INFTY};
 	}
 	Delta = Delta - PWLFunction::IdentityFunction(dom(Delta));
-	return Route(p, Delta.PreValue(min(img(Delta))), min(img(Delta)));
+	return RouteDuration(p, Delta.PreValue(min(img(Delta))), min(img(Delta)));
 }
 
 VertexSet VRPInstance::Unreachable(Vertex v, TimeUnit t0) const
@@ -169,4 +164,5 @@ void from_json(const json& j, VRPInstance& instance)
 		for (Vertex k: instance.D.Vertices()) instance.LDT[k][i] = LDT_i[k];
 	}
 }
+
 } // namespace
