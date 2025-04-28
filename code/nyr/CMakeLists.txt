@@ -8,6 +8,9 @@ set(CMAKE_CXX_STANDARD 26)
 # Include magic_enum
 include_directories(${CMAKE_SOURCE_DIR}/magic_enum/include)
 
+# Include magic_enum
+include_directories(${CMAKE_SOURCE_DIR}/magic_enum/include)
+
 # Include GOC (assumes the parent scope provides it)
 include_directories(${CMAKE_SOURCE_DIR}/goc/include)
 

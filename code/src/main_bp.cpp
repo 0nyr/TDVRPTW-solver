@@ -66,7 +66,7 @@ void solve(int argc, char** argv, nyr::VrpSolutionRecord& solution_record, json&
 	// Parse experiment.
 	Duration time_limit = value_or_default(experiment, "time_limit", 2.0_hr);
 	const nyr::GlobalParams gparams = nyr::GlobalParams({
-		(nyr::ObjectiveFunction) value_or_default(experiment, "objective", nyr::ObjectiveFunction::Duration),
+		enum_value_or_default<nyr::ObjectiveFunction>(experiment, "objective", nyr::ObjectiveFunction::Duration),
 		nyr::Durex(time_limit.Amount(goc::DurationUnit::Seconds))
 	});
 	
@@ -155,7 +155,7 @@ void solve(int argc, char** argv, nyr::VrpSolutionRecord& solution_record, json&
 	{
 		clog << "Initialization heuristics..." << endl;
 		ghm1_duration(solution_record, vrp);
-		
+
 		auto end_status = aco(solution_record, vrp, aco_options);
 		if (end_status == ACOStatus::TimeLimitReached) return;
 	}
