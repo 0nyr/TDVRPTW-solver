@@ -310,32 +310,10 @@ void solve(
 	// clog << "Status: " << log.status << endl;
 
 	// Add the solutions found to the output.
-	output["timed_solutions"] = solution_record;
+	output["timed_solutions"] = *solution_record;
 
 	// Show best solution found (if any).
-	const auto rec = *solution_record;
-	const auto best_solution = rec.last_solution();
-	if (rec.empty())
-		clog << "No solution found." << endl;
-	else
-	{
-		clog << "Best solution:" << endl;
-		clog << "\tValue: " << rec.last_solution_value() << endl;
-		switch (gparams.objective)
-		{
-			case nyr::ObjectiveFunction::Makespan:
-				try_print_routes<nyr::VRPSolutionMakespan>(best_solution);
-				break;
-			case nyr::ObjectiveFunction::Duration:
-				try_print_routes<nyr::VRPSolutionDuration>(best_solution);
-				break;
-			case nyr::ObjectiveFunction::TravelTime:
-				try_print_routes<nyr::VRPSolutionTravelTime>(best_solution);
-				break;
-			default:
-				clog << "Unknown objective function." << endl;
-		}
-	}
+	print_last_solution(*solution_record, gparams.objective);
 
 	// Send JSON output to cout.
 	cout << output << endl;
