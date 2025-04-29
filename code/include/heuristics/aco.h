@@ -17,67 +17,6 @@ enum class ACOStatus
     TimeLimitReached // The algorithm has stopped due to global time limit.
 };
 
-class AntColonyOptions: public goc::Printable
-{
-public:
-    const nyr::GlobalParams& gparams; // global parameters
-
-    // ACO parameters
-    const uint64_t max_nb_iterations; // maximum number of iterations
-    const uint64_t max_no_improvement; // maximum number of iterations without improvement
-    const uint32_t nb_ants; // number of ants
-    const uint32_t alpha; // pheromone importance
-    const uint32_t beta; // heuristic importance
-    const double rho; // pheromone evaporation rate
-    const double tau_min; // minimum pheromone level
-    const double tau_0; // initial pheromone level
-    const double tau_max; // maximum pheromone level
-    const double delta_pheromone_threshold; // pheromone threshold for determining convergence
-
-    // Constructor to initialize all const members
-    AntColonyOptions(
-        const nyr::GlobalParams& gparams,
-        uint64_t max_nb_iterations,
-        uint64_t max_no_improvement,
-        uint32_t nb_ants,
-        uint32_t alpha,
-        uint32_t beta,
-        double rho,
-        double tau_min,
-        double tau_0,
-        double tau_max,
-        double delta_pheromone_threshold
-    ):
-        gparams(gparams),
-        max_nb_iterations(max_nb_iterations),
-        max_no_improvement(max_no_improvement),
-        nb_ants(nb_ants),
-        alpha(alpha),
-        beta(beta),
-        rho(rho),
-        tau_min(tau_min),
-        tau_0(tau_0),
-        tau_max(tau_max),
-        delta_pheromone_threshold(delta_pheromone_threshold)
-    {}
-
-    // Print ACO options
-    void Print(std::ostream& os) const override
-    {
-        os << "Ant Colony Options:" << std::endl;
-        os << "  max_nb_iterations: " << max_nb_iterations << std::endl;
-        os << "  max_no_improvement: " << max_no_improvement << std::endl;
-        os << "  nb_ants: " << nb_ants << std::endl;
-        os << "  alpha: " << alpha << std::endl;
-        os << "  beta: " << beta << std::endl;
-        os << "  rho: " << rho << std::endl;
-        os << "  tau_min: " << tau_min << std::endl;
-        os << "  tau_0: " << tau_0 << std::endl;
-        os << "  tau_max: " << tau_max << std::endl;
-        os << "  delta_pheromone_threshold: " << delta_pheromone_threshold << std::endl;
-    }
-};
-
 class AntCandidates
 {
 public:
@@ -176,7 +115,7 @@ inline double bound_pheromone_val(
 ACOStatus aco(
     nyr::AbstractSolutionRecord& solution_record, 
     const nyr::VRPInstance& vrp,
-    const AntColonyOptions& options
+    const AntColonyParams& options
 );
 
 } // namespace solver

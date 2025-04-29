@@ -1,22 +1,12 @@
 #pragma once
 
+#include <concepts>
+
 #include <goc/goc.h>
 #include <nyr/nyr.h>
-#include "nyr/vrp/instance.h"
 
 namespace solver
 {
-
-// Greedy Makespan Heuristic 1 (GHM1).
-nyr::VRPSolutionMakespan greedy_makespan_heuristic_1(
-    const nyr::VRPInstance& vrp
-);
-
-void ghm1(
-    nyr::AbstractSolutionRecord& solution_record, 
-    const nyr::VRPInstance& vrp, 
-    const nyr::GlobalParams& gparams
-);
 
 std::vector<double> compute_EAT_on_free_vertices(
     const goc::Digraph& D, 
@@ -25,5 +15,30 @@ std::vector<double> compute_EAT_on_free_vertices(
     const nyr::VertexSet& free_vertices, 
     const std::function<double(goc::Vertex, goc::Vertex, double)>& tt
 );
+
+nyr::VRPSolutionMakespan greedy_makespan_heuristic_1(
+    const nyr::VRPInstance& vrp
+);
+
+/**
+ * ### Use GMH1 heuristic.
+ * 
+ * All routes from GMH1 are valid, but all start at t=0, 
+ * they follow the Makespan objective function.
+ * Auto converts to the desired solution type.
+ */
+template<typename Solution>
+void gmh1(
+    nyr::SolutionRecord<Solution>& solution_record, 
+    const nyr::VRPInstance& vrp
+) {
+    const nyr::VRPSolutionMakespan makespan_solution = greedy_makespan_heuristic_1(vrp);
+    
+    // Convert the makespan solution to the desired solution type.
+    auto converted_solution = nyr::auto_convert_makespan_solution<Solution>(makespan_solution, vrp);
+
+    // Add the converted solution to the solution record.
+    solution_record.try_add(converted_solution, "GMH1");
+}
 
 } // namespace solver

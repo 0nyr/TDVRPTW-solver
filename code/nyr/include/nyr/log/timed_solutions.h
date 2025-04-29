@@ -78,13 +78,18 @@ public:
         {
             throw std::invalid_argument("Invalid solution type.");
         }
-        sol_records_.push_back({time, *derived_sol, origin});
+        add(time, *derived_sol, origin);
+    }
+
+    void add(nyr::Durex time, const Solution& sol, const std::string& origin)
+    {
+        sol_records_.push_back({time, sol, origin});
 
         std::clog << "✨[" << origin << "]> Solution: "
-                  << "nb routes: " << derived_sol->routes.size()
-                  << ", value: " << derived_sol->value
-                  << " - routes: " << derived_sol->routes
-                  << std::endl;
+            << "nb routes: " << sol.routes.size() << ", "
+            << "value: " << sol.value << ", "
+            << "routes: " << sol.routes
+            << std::endl;
     }
 
     /**
@@ -100,18 +105,22 @@ public:
         {
             throw std::invalid_argument("Invalid solution type.");
         }
+        try_add(*derived_sol, origin);
+    }
 
+    void try_add(const Solution& sol, const std::string& origin)
+    {
         // Check that the solution to add is not the same as the last 
         // solution added, and if its value is smaller than the last solution added.
         if (
             !sol_records_.empty() &&
-            (*derived_sol == sol_records_.back().solution ||
-             derived_sol->value >= sol_records_.back().solution.value)
+            (sol == sol_records_.back().solution ||
+             sol.value >= sol_records_.back().solution.value)
         )
             return;
 
         // Get the time since the program started.
-        add(pclock.elapsed(), std::move(sol), origin);
+        add(pclock.elapsed(), sol, origin);
     }
 
     // Check if there are any solutions.
@@ -157,59 +166,41 @@ private:
     std::vector<AnnotatedSolution<Solution>> sol_records_;
 };
 
-std::unique_ptr<AbstractSolutionRecord> create_solution_record(
-    const ProgramClock& pclock,
-    ObjectiveFunction objective
-) {
-    switch (objective)
-    {
-        case ObjectiveFunction::Duration:
-            return std::make_unique<SolutionRecord<VRPSolutionDuration>>(pclock);
-        case ObjectiveFunction::Makespan:
-            return std::make_unique<SolutionRecord<VRPSolutionMakespan>>(pclock);
-        case ObjectiveFunction::TravelTime:
-            return std::make_unique<SolutionRecord<VRPSolutionTravelTime>>(pclock);
-        default:
-            throw std::invalid_argument("Unknown objective function.");
-    }
-}
+// std::unique_ptr<AbstractSolutionRecord> create_solution_record(
+//     const ProgramClock& pclock,
+//     ObjectiveFunction objective
+// ) {
+//     switch (objective)
+//     {
+//         case ObjectiveFunction::Duration:
+//             return std::make_unique<SolutionRecord<VRPSolutionDuration>>(pclock);
+//         case ObjectiveFunction::Makespan:
+//             return std::make_unique<SolutionRecord<VRPSolutionMakespan>>(pclock);
+//         case ObjectiveFunction::TravelTime:
+//             return std::make_unique<SolutionRecord<VRPSolutionTravelTime>>(pclock);
+//         default:
+//             throw std::invalid_argument("Unknown objective function.");
+//     }
+// }
 
-// Print the last solution found. 
-// Performs a dynamic cast provided the ObjectiveFunction is known.
+template<typename Solution>
 void print_last_solution(
-    const AbstractSolutionRecord& sol_record,
-    const ObjectiveFunction objective
+    const nyr::SolutionRecord<Solution>& rec,
+    const nyr::ObjectiveFunction objective
 )
 {
-    if (sol_record.empty())
+    if (rec.empty())
     {
         std::clog << "No solution found." << std::endl;
-        return;
     }
-
-    std::clog << "Last solution: " << std::endl;
-    switch (objective)
+    else
     {
-        case ObjectiveFunction::Makespan: {
-            const auto& last_sol = dynamic_cast<const VRPSolutionMakespan&>(sol_record.last_solution());
-            std::clog << "Nb routes: " << last_sol.routes.size() << std::endl;
-            std::clog << "Makespan: " << last_sol.value << std::endl;
-            std::clog << "Routes: " << last_sol.routes << std::endl;
-        }
-        case ObjectiveFunction::Duration: {
-            const auto& last_sol_duration = dynamic_cast<const VRPSolutionDuration&>(sol_record.last_solution());
-            std::clog << "Nb routes: " << last_sol_duration.routes.size() << std::endl;
-            std::clog << "Duration: " << last_sol_duration.value << std::endl;
-            std::clog << "Routes: " << last_sol_duration.routes << std::endl;
-        }
-        case ObjectiveFunction::TravelTime: {
-            const auto& last_sol_travel_time = dynamic_cast<const VRPSolutionTravelTime&>(sol_record.last_solution());
-            std::clog << "Nb routes: " << last_sol_travel_time.routes.size() << std::endl;
-            std::clog << "Travel time: " << last_sol_travel_time.value << std::endl;
-            std::clog << "Routes: " << last_sol_travel_time.routes << std::endl;
-        }
-        default:
-            throw std::invalid_argument("Unknown objective function.");
+        const auto& best_solution = rec.last_solution();
+        std::clog << "Best solution:" << std::endl;
+        std::clog << "\tObjective: " << objective << std::endl;
+        std::clog << "\tValue: " << best_solution.value << std::endl;
+        try_print_routes<Solution>(best_solution);
     }
+}
 
 } // namespace nyr

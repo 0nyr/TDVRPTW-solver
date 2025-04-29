@@ -101,7 +101,7 @@ size_t select_next_candidate_index(
     const vector<Vertex>& candidates,
     const vector<vector<double>>& pheromone,
     const VRPInstance& vrp,
-    const AntColonyOptions& options
+    const AntColonyParams& options
 ) {
     double sum = 0.0;
     size_t nb_candidates = candidates.size();
@@ -165,7 +165,7 @@ Vertex select_next_valid_candidate_from_EAT(
     const double t,
     const VertexSet& free_vertices,
     const vector<vector<double>>& pheromone,
-    const AntColonyOptions& options
+    const AntColonyParams& options
 ) {
     // TODO: Make an alternative version using only arrival times
     // TODO: Make a more optimized version returning an array of EAT only for the free vertices.
@@ -290,7 +290,7 @@ Vertex select_next_valid_candidate_from_EAT(
 ACOStatus aco(
     nyr::AbstractSolutionRecord& solution_record, 
     const VRPInstance& vrp,
-    const AntColonyOptions& options
+    const AntColonyParams& options
 ) {
     const size_t n = vrp.D.NbVertices(); // \#{0, ..., n} = n = nb_clients + 2, depot is duplicated
     vector<vector<double>> pheromone(

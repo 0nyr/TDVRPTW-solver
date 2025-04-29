@@ -7,9 +7,10 @@
   ],
   "experiments": [
     {
-      "name": "BPC-initH",
+      "name": "Refactor-initH",
       "executable": "bp",
-      "time_limit": 900,
+      "objective": "Makespan",
+      "time_limit": 30,
       "cut_limit": 500,
       "partial": true,
       "limited_extension": true,

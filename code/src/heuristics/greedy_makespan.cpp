@@ -1,6 +1,4 @@
 #include "heuristics/greedy_makespan.h"
-#include "nyr/vrp/instance.h"
-#include "nyr/solutions/conversions.h"
 
 #include <vector>
 #include <tuple>
@@ -199,58 +197,14 @@ VRPSolutionMakespan greedy_makespan_heuristic_1(
 
         routes.push_back(route);
         total_makespan += route.value;
-        clog << "GMH1: Route: " << route.path 
-            << " -> Makespan: " << route.value 
+        clog << "GMH1: Route: " << route
             << ", route capacity: " << route_capacity 
             << ", nb visited: " << route.path.size()
             << endl;
     }
 
     clog << "Found GMH1 Solution: nb routes: " << routes.size() << ", Makespan: " << total_makespan << " - routes: " << routes << endl;
-    return VRPSolution(total_makespan, routes);
+    return VRPSolutionMakespan(total_makespan, routes);
 }
- 
-/**
- * ### Computing the duration of routes provided by GMH1
- * 
- * All routes from GMH1 are valid, but all start at t=0.
- * Use the obtained route paths to compute their corresponding value
- * in other objective functions.
- */
-void ghm1(
-    nyr::AbstractSolutionRecord& solution_record,
-    const nyr::VRPInstance& vrp,
-    const nyr::GlobalParams& gparams
-) {
-    const auto makespan_solution = greedy_makespan_heuristic_1(vrp);
-
-    auto build_solution = [&]() -> std::unique_ptr<nyr::AbstractSolution> {
-        switch (gparams.objective)
-        {
-            case nyr::ObjectiveFunction::Makespan:
-                return std::make_unique<nyr::VRPSolutionMakespan>(
-                    makespan_solution
-                );
-            case nyr::ObjectiveFunction::Duration:
-                return std::make_unique<nyr::VRPSolutionDuration>(
-                    convert_makespan_solution_to_duration(
-                        makespan_solution, vrp
-                    )
-                );
-            case nyr::ObjectiveFunction::TravelTime:
-                return std::make_unique<nyr::VRPSolutionTravelTime>(
-                    convert_makespan_solution_to_travel_time(
-                        makespan_solution, vrp
-                    )
-                );
-        }
-        throw std::runtime_error(
-            std::string("Unknown ObjectiveFunction: ") + std::string(magic_enum::enum_name(gparams.objective))
-        );
-    };
-
-    solution_record.try_add(build_solution(), "GMH1");
-}
-
 
 } // namespace

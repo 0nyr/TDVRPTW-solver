@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <iostream>
+#include <concepts>
 
 #include "goc/lib/json.hpp"
 #include "goc/print/printable.h"
@@ -95,6 +96,15 @@ bool operator==(const VRPSolution<Route>& s1, const VRPSolution<Route>& s2)
 {
     return s1.value == s2.value && s1.routes == s2.routes;
 }
+
+// Concepts for compile time checks.
+template<typename Solution>
+concept IsMakespanSolution = std::same_as<Solution, VRPSolutionMakespan>;
+template<typename Solution>
+concept IsDurationSolution = std::same_as<Solution, VRPSolutionDuration>;
+template<typename Solution>
+concept IsTravelTimeSolution = std::same_as<Solution, VRPSolutionTravelTime>;
+
 template<typename VRPSolutionType>
 requires std::same_as<VRPSolutionType, VRPSolutionMakespan> || 
 		 std::same_as<VRPSolutionType, VRPSolutionDuration> || 

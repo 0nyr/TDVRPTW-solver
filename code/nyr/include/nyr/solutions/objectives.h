@@ -21,6 +21,9 @@ inline std::ostream& operator<<(std::ostream& os, ObjectiveFunction value)
     return os << magic_enum::enum_name(value);
 }
 
+void throw_invalid_objective_function(
+    const ObjectiveFunction& objective
+);
 
 
 } // namespace nyr

@@ -35,6 +35,9 @@ add_library(
     nyr 
     src/time/time.cpp
     src/vrp/instance.cpp
+    src/solutions/objectives.cpp
+    src/solutions/route.cpp
+    src/solutions/conversions.cpp
 )
 
 # Link against goc, Boost, and other dependencies
