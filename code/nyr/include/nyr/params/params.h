@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <goc/goc.h>
 
 #include "nyr/solutions/objectives.h"

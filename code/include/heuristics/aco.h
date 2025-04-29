@@ -20,7 +20,6 @@ enum class ACOStatus
 class AntCandidates
 {
 public:
-    nyr::VRPSolutionMakespan solution; // solution built by the ant
     uint32_t nb_visited_clients; // number of visited clients
     std::vector<goc::Vertex> candidates; // candidate vertices to visit
     nyr::VertexSet free_vertices; // free vertices to visit
@@ -45,10 +44,6 @@ public:
 
     /**
      * ### Initialize the ant data
-     * 
-     * Ramdomly select a starting vertex from the candidates.
-     * Initialize the candidates vector with all clients except the 
-     * start depot and the preselected client.
      */
     inline void init_candidates(const nyr::VRPInstance& vrp, bool remove_end_depot = true)
     {
@@ -71,32 +66,8 @@ public:
     
         nb_visited_clients = 0; // no clients visited yet
     }
-
-    inline void open_path(const nyr::VRPInstance& vrp)
-    {
-        // Create new empty route starting from the start depot
-        solution.routes.push_back(
-            nyr::RouteMakespan(
-                {vrp.o}, 
-                0.0
-            )
-        );
-    }
     
     void remove_visited_client(goc::Vertex removed_candidate);
-
-    /**
-     * ### Close last path to make it a route
-     */
-    inline void close_path(const nyr::VRPInstance& vrp, goc::Vertex current)
-    {
-        solution.routes.back().path.push_back(vrp.d);
-        solution.routes.back().value = vrp.ArrivalTime(
-            {current, vrp.d}, 
-            solution.routes.back().value
-        );
-        solution.value += solution.routes.back().value;
-    }
 };
 
 inline double bound_pheromone_val(
@@ -112,10 +83,143 @@ inline double bound_pheromone_val(
         return new_val;
 }
 
-ACOStatus aco(
-    nyr::AbstractSolutionRecord& solution_record, 
+nyr::VRPSolutionMakespan build_ant_solution(
     const nyr::VRPInstance& vrp,
-    const AntColonyParams& options
+    const std::vector<std::vector<double>>& pheromones,
+    const nyr::AntColonyParams& options
 );
+
+void evaporate_pheromones(
+    std::vector<std::vector<double>>& pheromones,
+    const nyr::AntColonyParams& options
+);
+
+/**
+ * ### Ant Colony Optimization (ACO)
+ * 
+ * Heuristic solution construction: each route starts at t=0.
+ * Waiting is only useful to wait for TW ealiest arrivals
+ * due to the FIFO property.
+ * 
+ * Solution conversion happens if needed.
+ */
+template<typename Solution>
+ACOStatus aco(
+    nyr::SolutionRecord<Solution>& solution_record, 
+    const nyr::VRPInstance& vrp,
+    const nyr::AntColonyParams& options
+) {
+    const size_t n = vrp.D.NbVertices(); // \#{0, ..., n} = n = nb_clients + 2, depot is duplicated
+    std::vector<std::vector<double>> pheromones(
+        n, 
+        std::vector<double>(n, options.tau_0)
+    );
+    std::vector<Solution> solutions(
+        options.nb_ants
+    );
+    double sum_pheromones_last_iter = 0.0; // Sum to compute the the variation of pheromones since last iteration
+    size_t no_improvement_iter = 0;
+
+    for(size_t iter = 0; iter < options.max_nb_iterations; ++iter)
+    {
+        for (size_t ant = 0; ant < options.nb_ants; ++ant)
+        {
+            const nyr::VRPSolutionMakespan sol = build_ant_solution(vrp, pheromones, options);
+            solutions[ant] = nyr::auto_convert_makespan_solution<Solution>(sol, vrp);
+        }
+
+        evaporate_pheromones(pheromones, options);
+
+        // Deposit pheromones based on solution quality
+        // Also find if a new best solution was found
+        size_t best_ant = 0;
+        bool found_new_best = false;
+        double best_value = solution_record.last_solution_value();
+        nyr::Durex time_to_best;
+        for (size_t ant = 0; ant < options.nb_ants; ++ant)
+        {
+            Solution& sol = solutions[ant];
+            double delta_tau = 1.0 / sol.value; // inverse solution quality
+            for (auto& route : sol.routes)
+            {
+                for (size_t i = 0; i < route.path.size() - 1; ++i)
+                {
+                    #ifndef NDEBUG
+                    if (route.path[i] == route.path[i + 1]) {
+                        std::cerr << "Self-loop detected in route: " << route << std::endl;
+                        std::cerr << "complete solution: " << sol << std::endl;
+                        throw std::runtime_error("Self-loop detected in route");
+                    }
+                    if (route.path[i] >= pheromones.size() || route.path[i + 1] >= pheromones.size()) {
+                        std::cerr << "Invalid vertex index in route: " << route << std::endl;
+                        throw std::out_of_range("Invalid vertex index in route");
+                    }
+                    #endif
+
+                    goc::Vertex u = route.path[i];
+                    goc::Vertex v = route.path[i + 1];
+                    double new_val = pheromones[u][v] + delta_tau;
+                    pheromones[u][v] = bound_pheromone_val(
+                        new_val, 
+                        options.tau_min, 
+                        options.tau_max
+                    );
+                }
+            }
+
+            // Check if this ant has the best solution so far
+            if (sol.value < best_value)
+            {
+                best_value = sol.value;
+                best_ant = ant;
+                found_new_best = true;
+                time_to_best = solution_record.pclock.elapsed();
+            }
+        }
+
+        // If a new best solution was found, add it to the timed solutions
+        if (found_new_best)
+        {
+            auto& best_solution = solutions[best_ant];
+            solution_record.add(time_to_best, best_solution, "ACO");
+        }
+
+        // Compute pheromones delta since last iteration
+        double current_pheromone_sum = 0.0;
+        for (size_t i = 0; i < pheromones.size(); ++i)
+        {
+            for (size_t j = 0; j < pheromones.size(); ++j)
+            {
+                current_pheromone_sum += pheromones[i][j];
+            }
+        }
+        double delta_pheromone = abs(current_pheromone_sum - sum_pheromones_last_iter);
+        #ifdef PRINT_ACO
+        clog << "Delta pheromones: " << delta_pheromone << endl;
+        #endif
+        sum_pheromones_last_iter = current_pheromone_sum;
+
+        if (delta_pheromone < options.delta_pheromone_threshold)
+        {
+            // Start incrementing no-improvement iterations
+            no_improvement_iter++;
+        }
+        if (no_improvement_iter >= options.max_no_improvement)
+        {
+            // Stop the algorithm if no improvement for too long
+            std::clog << "No improvement for " << no_improvement_iter << " iterations, stopping ACO." << std::endl;
+            return ACOStatus::NoImprovement;
+        }
+
+        // Stop the algorithm if time limit is reached
+        if (solution_record.pclock.elapsed() >= options.gparams.time_limit)
+        {
+            std::clog << "Time limit reached, stopping ACO." << std::endl;
+            return ACOStatus::TimeLimitReached;
+        }
+    } // end of iteration loop
+
+    return ACOStatus::Finished;
+}
 
 } // namespace solver

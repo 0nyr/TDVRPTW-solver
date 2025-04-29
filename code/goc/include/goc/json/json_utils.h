@@ -60,4 +60,28 @@ void to_json(nlohmann::json& j, const std::vector<T>& v)
 }
 } // namespace std
 
+namespace nlohmann
+{
+// Serialize any enum to JSON as a string.
+template<typename Enum>
+requires std::is_enum_v<Enum>
+void to_json(json& j, const Enum& e)
+{
+    j = std::string(magic_enum::enum_name(e));
+}
+
+// Deserialize any enum from a JSON string.
+template<typename Enum>
+requires std::is_enum_v<Enum>
+void from_json(const json& j, Enum& e)
+{
+    auto name = j.get<std::string>();
+    auto opt = magic_enum::enum_cast<Enum>(name);
+    if (opt.has_value())
+        e = opt.value();
+    else
+        throw std::runtime_error("Invalid enum name '" + name + "' for enum type.");
+}
+} // namespace nlohmann
+
 #endif //GOC_JSON_JSON_UTILS_H

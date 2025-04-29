@@ -12,6 +12,7 @@
 #include "preprocess/load_igp.h"
 #include "preprocess/preprocess_validity.h"
 #include "heuristics/greedy_makespan.h"
+#include "heuristics/aco.h"
 
 using namespace std;
 using namespace goc;
@@ -34,6 +35,9 @@ SolutionRecord<VRPSolutionMakespan> solve_makespan(
     if (gparams.initialization_heuristics) {
         clog << "Initialization heuristics..." << endl;
 		gmh1(solution_record, vrp);
+
+        auto end_status = aco(solution_record, vrp, aco_options);
+		if (end_status == ACOStatus::TimeLimitReached) return solution_record;
     }
 
     return solution_record;

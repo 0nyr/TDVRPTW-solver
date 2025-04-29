@@ -4,6 +4,8 @@
 #include <iostream>
 #include <concepts>
 
+#include <magic_enum/magic_enum.hpp>
+
 #include "goc/lib/json.hpp"
 #include "goc/print/printable.h"
 
@@ -43,12 +45,11 @@ template<std::derived_from<AbstractRoute> Route>
 class VRPSolution : public AbstractSolution
 {
 public:
-	const ObjectiveFunction objective_function; // Objective function.
 	std::vector<Route> routes; // Solution routes.
 	
 	VRPSolution(): 
 		AbstractSolution(0.0), 
-		objective_function(ObjectiveFunction::Makespan) 
+		routes() 
 	{}
 	
 	// Creates the solution with the specified parameters.
@@ -57,9 +58,14 @@ public:
 		const std::vector<Route>& routes
 	):
 		AbstractSolution(value), 
-		objective_function(ObjectiveFunctionOf<Route>::value), // deduced automatically!
 		routes(routes) 
 	{}
+
+	// Retrieve the associated objective function based on the route type
+	ObjectiveFunction get_objective_function() const
+	{
+		return ObjectiveFunctionOf<Route>::value;
+	}
 	
 	// Prints the JSON representation of the solution.
 	void Print(std::ostream& os) const override
@@ -77,7 +83,7 @@ template<std::derived_from<AbstractRoute> Route>
 void to_json(nlohmann::json& j, const VRPSolution<Route>& solution)
 {
     j["kd_type"] = "vrp_solution";
-    j["objective_function"] = solution.objective_function;
+	j["objective_function"] = solution.get_objective_function();
     j["value"] = solution.value;
     j["routes"] = solution.routes;
 }
