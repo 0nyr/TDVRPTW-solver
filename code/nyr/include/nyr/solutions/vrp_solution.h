@@ -83,7 +83,7 @@ template<std::derived_from<AbstractRoute> Route>
 void to_json(nlohmann::json& j, const VRPSolution<Route>& solution)
 {
     j["kd_type"] = "vrp_solution";
-	j["objective_function"] = solution.get_objective_function();
+	j["objective"] = solution.get_objective_function();
     j["value"] = solution.value;
     j["routes"] = solution.routes;
 }

@@ -79,6 +79,7 @@ int main(int argc, char** argv)
             nyr::Durex(time_limit.Amount(goc::DurationUnit::Seconds)),
             value_or_default(experiment, "initialization_heuristics", true)
         });
+        output["objective"] = gparams.objective;
         const nyr::BCPParams bcp_params = nyr::BCPParams(
             pclock,
             value_or_default(experiment, "cut_limit", 100),
