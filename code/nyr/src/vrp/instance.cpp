@@ -84,6 +84,11 @@ VertexSet VRPInstance::WeakUnreachable(goc::Vertex v, TimeUnit t0) const
 	return U;
 }
 
+RouteTravelTime VRPInstance::BestTravelTimeRoute(const goc::GraphPath& p) const
+{
+	
+}
+
 TimeUnit VRPInstance::MinimumTravelTime(Arc e, TimeUnit t0, TimeUnit tf) const
 {
 	TimeUnit tmin = INFTY;

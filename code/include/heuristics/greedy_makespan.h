@@ -41,4 +41,18 @@ void gmh1(
     solution_record.try_add(converted_solution, "GMH1");
 }
 
+/** 
+ * ### TD-EAT Greedy Nearest Neighbor V2
+ * 
+ * Constructive heuristic: Builds k routes at the
+ * same time.
+ * 
+ * This version of the heuristic takes a (min) number of
+ * routes. For every route, it computes the EAT nearest
+ * neighbors, then selects the closest neighbor of all
+ * neighbors of all open routes, add it to the selected route, 
+ * remove this node from the list of open nodes, and continue.
+ * 
+*/
+
 } // namespace solver

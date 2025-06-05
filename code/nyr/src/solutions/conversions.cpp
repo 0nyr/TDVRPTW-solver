@@ -26,4 +26,14 @@ VRPSolutionDuration convert_makespan_solution_to_duration(
     return VRPSolutionDuration(total_duration, routes);
 }
 
+/**
+ * Converts a VRPSolution from Makespan to TravelTime.
+ */
+VRPSolutionTravelTime convert_makespan_solution_to_travel_time(
+    const VRPSolutionMakespan& makespan_solution,
+    const VRPInstance& vrp
+) {
+    // TODO: implement.
+}
+
 } // namespace solver

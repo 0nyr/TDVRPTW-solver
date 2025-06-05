@@ -9,7 +9,7 @@
     {
       "name": "Refactor-initH",
       "executable": "bp",
-      "objective": "Makespan",
+      "objective": "Duration",
       "time_limit": 30,
       "cut_limit": 500,
       "partial": true,

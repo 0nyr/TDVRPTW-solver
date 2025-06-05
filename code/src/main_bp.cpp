@@ -21,7 +21,7 @@ using namespace nlohmann;
 using namespace solver;
 
 /**
- * @brief Solve the TDVRPTW problem using the makespan objective.
+ * @brief Solve the TDVRPTW problem using the Makespan objective.
  */
 SolutionRecord<VRPSolutionMakespan> solve_makespan(
     const VRPInstance& vrp,
@@ -33,11 +33,57 @@ SolutionRecord<VRPSolutionMakespan> solve_makespan(
 
     // Initialization heuristics.
     if (gparams.initialization_heuristics) {
-        clog << "Initialization heuristics..." << endl;
+        std::clog << "Initialization heuristics..." << std::endl;
 		gmh1(solution_record, vrp);
 
         auto end_status = aco(solution_record, vrp, aco_options);
 		if (end_status == ACOStatus::TimeLimitReached) return solution_record;
+    }
+
+    return solution_record;
+}
+
+/**
+ * @brief Solve the TDVRPTW problem using the Duration objective.
+ */
+SolutionRecord<VRPSolutionDuration> solve_duration(
+    const VRPInstance& vrp,
+    const ProgramClock& pclock,
+    const nyr::GlobalParams& gparams,
+    const AntColonyParams& aco_options
+) {
+    SolutionRecord<VRPSolutionDuration> solution_record(pclock);
+
+    // Initialization heuristics.
+    if (gparams.initialization_heuristics) {
+        std::clog << "Initialization heuristics..." << std::endl;
+		gmh1(solution_record, vrp);
+
+        auto end_status = aco(solution_record, vrp, aco_options);
+		if (end_status == ACOStatus::TimeLimitReached) return solution_record;
+    }
+
+    return solution_record;
+}
+
+/**
+ * @brief Solve the TDVRPTW problem using the TravelTime objective.
+ */
+SolutionRecord<VRPSolutionTravelTime> solve_travel_time(
+    const VRPInstance& vrp,
+    const ProgramClock& pclock,
+    const nyr::GlobalParams& gparams,
+    const AntColonyParams& aco_options
+) {
+    SolutionRecord<VRPSolutionTravelTime> solution_record(pclock);
+
+    // Initialization heuristics.
+    if (gparams.initialization_heuristics) {
+        std::clog << "Initialization heuristics..." << std::endl;
+        gmh1(solution_record, vrp);
+
+        auto end_status = aco(solution_record, vrp, aco_options);
+        if (end_status == ACOStatus::TimeLimitReached) return solution_record;
     }
 
     return solution_record;
@@ -144,10 +190,18 @@ int main(int argc, char** argv)
                 output["timed_solutions"] = rec;
                 break;
             }
-            // case nyr::ObjectiveFunction::Duration: {
-            //     rec = solve_duration(argc, argv, pclock, output);
-            //     break;
-            // }
+            case nyr::ObjectiveFunction::Duration: {
+                auto rec = solve_duration(vrp, pclock, gparams, aco_options);
+                print_last_solution(rec, gparams.objective);
+                output["timed_solutions"] = rec;
+                break;
+            }
+            case nyr::ObjectiveFunction::TravelTime: {
+                auto rec = solve_travel_time(vrp, pclock, gparams, aco_options);
+                print_last_solution(rec, gparams.objective);
+                output["timed_solutions"] = rec;
+                break;
+            }
             default: {
                 throw_invalid_objective_function(gparams.objective);
                 break;

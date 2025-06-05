@@ -51,8 +51,12 @@ public:
 	TimeUnit ReadyTime(const goc::GraphPath& p, TimeUnit t0=0) const;
 
 	// Returns: the route with minimum duration using path p.
-	// If the route is infeasible it returns INFTY.
+	// If the route is infeasible it returns empty route with INFTY duration.
 	RouteDuration BestDurationRoute(const goc::GraphPath& p) const;
+
+	// Returns: the route with minimum travel time using path p.
+	// If the route is infeasible it returns empty route with INFTY TravelTime.
+	RouteTravelTime BestTravelTimeRoute(const goc::GraphPath& p) const;
 	
 	// Returns: a set of all vertices which are unreachable if departing from v at t0.
 	VertexSet Unreachable(goc::Vertex v, TimeUnit t0) const;

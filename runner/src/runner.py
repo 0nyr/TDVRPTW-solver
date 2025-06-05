@@ -34,7 +34,7 @@ def main():
 		annotated_experiment_filepath = join_paths(annotated_experiment_output_dirpath, "annotated_experiment.json")
 		csv_output_filepath =  join_paths(OUTPUT_DIR, f"csv/{output_keyname}.csv")
 		json_output_dirpath = join_paths(annotated_experiment_output_dirpath, "outputs")
-		log_output_dirpath = join_paths(OUTPUT_DIR, f"logs/{output_keyname}")
+		log_output_dirpath = join_paths(annotated_experiment_output_dirpath, "logs")
 
 		annotated_experiment = {
 			"date": str(datetime.date.today()), 
