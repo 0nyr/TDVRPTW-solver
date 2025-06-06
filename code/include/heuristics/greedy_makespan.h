@@ -23,8 +23,11 @@ nyr::VRPSolutionMakespan greedy_makespan_heuristic_1(
 /**
  * ### Use GMH1 heuristic.
  * 
+ * AKA: Greedy Sequential Nearest Arrival Time Neighbor Heuristic 
+ * 
  * All routes from GMH1 are valid, but all start at t=0, 
- * they follow the Makespan objective function.
+ * they follow the Makespan objective function, i.e.,
+ * selects the nearest neighbor considering the arrival time.
  * Auto converts to the desired solution type.
  */
 template<typename Solution>

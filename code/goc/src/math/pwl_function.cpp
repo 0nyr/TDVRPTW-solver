@@ -125,7 +125,7 @@ int PWLFunction::PieceIncluding(double x) const
 	// if x is outside the Domain(), throw exception.
 	if (epsilon_bigger(domain_.left, x) || epsilon_smaller(domain_.right, x))
 	{
-		fail("PWLFunction::Value(" + STR(x) +") failed, becuase domain is " + STR(Domain()));
+		fail("PWLFunction::Value(" + STR(x) +") failed, because domain is " + STR(Domain()));
 		return -1;
 	}
 	
@@ -135,7 +135,7 @@ int PWLFunction::PieceIncluding(double x) const
 			return i;
 	
 	// The function is not continuous and x is not in the domain of any piece.
-	fail("PWLFunction::Value(" + STR(x) +") failed, becuase x is not inside the domain of its pieces.");
+	fail("PWLFunction::Value(" + STR(x) +") failed, because x is not inside the domain of its pieces.");
 	return -1;
 }
 
@@ -154,7 +154,7 @@ double PWLFunction::Value(double x) const
 	// if x is outside the Domain(), throw exception.
 	if (epsilon_bigger(domain_.left, x) || epsilon_smaller(domain_.right, x))
 	{
-		fail("PWLFunction::Value(" + STR(x) +") failed, becuase domain is " + STR(Domain()));
+		fail("PWLFunction::Value(" + STR(x) +") failed, because domain is " + STR(Domain()));
 		return -1;
 	}
 	
@@ -164,7 +164,7 @@ double PWLFunction::Value(double x) const
 			return pieces_[i].Value(x);
 	
 	// The function is not continuous and x is not in the domain of any piece.
-	fail("PWLFunction::Value(" + STR(x) +") failed, becuase x is not inside the domain of its pieces.");
+	fail("PWLFunction::Value(" + STR(x) +") failed, because x is not inside the domain of its pieces.");
 	return -1;
 }
 
@@ -177,7 +177,7 @@ double PWLFunction::PreValue(double y) const
 {
 	if (epsilon_bigger(image_.left, y) || epsilon_smaller(image_.right, y))
 	{
-		fail("PWLFunction::PreValue(" + STR(y) +") failed, becuase image is " + STR(Image()));
+		fail("PWLFunction::PreValue(" + STR(y) +") failed, because image is " + STR(Image()));
 		return -1;
 	}
 	
@@ -187,7 +187,7 @@ double PWLFunction::PreValue(double y) const
 			return pieces_[i].PreValue(y);
 	
 	// The function is not continuous and x is not in the domain of any piece.
-	fail("PWLFunction::PreValue(" + STR(y) +") failed, becuase y is not inside the domain of its pieces.");
+	fail("PWLFunction::PreValue(" + STR(y) +") failed, because y is not inside the domain of its pieces.");
 	return -1;
 }
 
