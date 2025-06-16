@@ -34,6 +34,7 @@ include_directories(${Boost_INCLUDE_DIRS}) # Add Boost headers
 add_library(
     nyr 
     src/time/time.cpp
+    src/math/cpwlf.cpp
     src/vrp/instance.cpp
     src/solutions/objectives.cpp
     src/solutions/route.cpp

@@ -41,6 +41,45 @@ PWLFunction::PWLFunction(const std::vector<LinearFunction>& pieces) : PWLFunctio
 	for (auto& p: pieces) AddPiece(p);
 }
 
+PWLFunction::PWLFunction(
+	const vector<double>& breakpoints,
+    const vector<double>& values
+) {
+	if (breakpoints.empty() || values.empty() || breakpoints.size() != values.size()) {
+        throw invalid_argument("Breakpoints and values must be non-empty and of the same size.");
+    }
+    
+    #ifndef NDEBUG
+    // Check if breakpoints are sorted and unique
+    for (size_t i = 1; i < breakpoints.size(); ++i) {
+        if (epsilon_smaller_equal(breakpoints[i], breakpoints[i-1])) {
+            throw invalid_argument("Breakpoints must be sorted and unique.");
+        }
+    }
+    #endif
+
+	pieces_.reserve(breakpoints.size() - 1);
+	for (size_t i = 0; i < breakpoints.size() - 1; ++i)
+	{
+		double x_left = breakpoints[i];
+		double x_right = breakpoints[i + 1];
+		double y_left = values[i];
+		double y_right = values[i + 1];
+		
+		AddPiece(LinearFunction(
+			Point2D(x_left, y_left),
+			Point2D(x_right, y_right)
+		));
+	}
+
+	#ifndef NDEBUG
+	// Check if the function is normalized.
+	if (!check_invariant()) {
+		throw runtime_error("PWLFunction invariant violated after construction.");
+	}
+	#endif
+}
+
 void PWLFunction::AddPiece(const LinearFunction& piece)
 {
 	// If this piece is a continuation of the last piece, then we need to merge them into one piece to have the

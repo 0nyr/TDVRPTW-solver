@@ -11,7 +11,7 @@ def parse_program_args():
 
     # Set command line parameters.
     arg_parser = argparse.ArgumentParser(description="Runs the experiment file(s) specified.")
-    arg_parser.add_argument("experiments", metavar="EXP_FILE", help="JSON experiment file(s) with the experiments to run.", type=str, nargs='+')
+    arg_parser.add_argument("experiments", metavar="EXP_FILE", help="JSON experiment file(s) with the experiments to run.", type=str, nargs='*')
     arg_parser.add_argument("--instances", "-I", nargs="*", help="Only execute experiment(s) on selected instances (with these names).")
     arg_parser.add_argument("--exps", "-E", nargs="*", help="Only execute selected experiment(s) (with these names).")
     arg_parser.add_argument("--carry-on", "-CO", help="Carry on the experiment from provided .csv output file.", type=str)
@@ -22,6 +22,7 @@ def parse_program_args():
     arg_parser.add_argument("--silent", "-S", help="Do not print the stderr stream of the experiments to the screen.", action="store_true")
     arg_parser.add_argument("--clean-build", help="Clean the obj/ directory before compiling.", action="store_true")
     arg_parser.add_argument("--dry-run", help="Do not run the experiments, only compile the code and load instances and experiments.", action="store_true")
+    arg_parser.add_argument("--just-compile", help="Only compile the code and exit.", action="store_true")
 
     # Read command line parameters.
     args = vars(arg_parser.parse_args())

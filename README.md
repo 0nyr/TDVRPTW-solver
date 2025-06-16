@@ -5,6 +5,7 @@ Source code to replicate the experiments from the article https://doi.org/10.100
 
 ## Commands
 `python runner/src/runner.py experiments/bp_test.json`: run tests on small instances.
+`python runner/src/runner.py --just-compile --clean-build`: Just do a clean full build.
 `python runner/src/runner.py experiments/bp_all.json --carry-on out/csv/2025-03-22-00-20-24-bp_all.csv --dry-run`: continue experiment series of runs, just see how many runs needs to be computed.
 `python runner/src/runner.py experiments/bp_ng_EXPS-835ae8.json > out/tmp/out23.txt`: run experiment, with loading tqdm bar, clogs into a file.
 

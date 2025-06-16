@@ -19,6 +19,9 @@ def main():
 
 	# Compile project.
 	if not compile(args): exit(0)
+	if args["just_compile"]:
+		print(purple("Compilation finished. Exiting (--just_compile)..."))
+		return
 
 	# Run experiment files.
 	for experiment_file in experiment_files:

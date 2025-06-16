@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(solver)
 
 # specify C++ 26 standard
-message("-- C++ version: ${CMAKE_CXX_STANDARD}")
 set(CMAKE_CXX_STANDARD 26)
+message("-- C++ version: ${CMAKE_CXX_STANDARD}")
 
 # Set compiler flags.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -m64")
@@ -59,6 +59,10 @@ target_link_libraries(solver goc nyr) # add compiled libs
 # Create binaries.
 # add_executable(pricing src/main_pricing.cpp)
 # target_link_libraries(pricing solver)
+
+# Test binary.
+add_executable(test_pwlf src/main_test_pwlf.cpp)
+target_link_libraries(test_pwlf solver)
 
 add_executable(bp src/main_bp.cpp)
 target_link_libraries(bp solver)

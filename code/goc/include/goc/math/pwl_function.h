@@ -37,6 +37,13 @@ public:
 	
 	// Creates a piecewise linear function with the specified pieces.
 	PWLFunction(const std::vector<LinearFunction>& pieces);
+
+	// Constructor for 2D continuous piecewise linear function
+    // Precondition: The list of breakpoints must be sorted and unique.
+	PWLFunction(
+		const std::vector<double>& breakpoints,
+		const std::vector<double>& values
+	);
 	
 	// Adds the piece at the end of the function.
 	// Keeps the normalization invariant automatically.
