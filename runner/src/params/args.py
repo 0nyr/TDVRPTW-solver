@@ -24,7 +24,7 @@ def parse_program_args():
     arg_parser.add_argument("--dry-run", help="Do not run the experiments, only compile the code and load instances and experiments.", action="store_true")
     arg_parser.add_argument("--just-compile", "-c", help="Only compile the code and exit.", action="store_true")
     arg_parser.add_argument(
-        "--build_type","-b",
+        "--build-type","-b",
         choices=("debug","release","fastdebug","all"),
         default="all",
         help="Which configuration to build"

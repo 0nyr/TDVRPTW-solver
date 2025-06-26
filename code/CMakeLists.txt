@@ -96,6 +96,13 @@ pybind11_add_module(
     kairos_tdvrptw 
     bindings/src/bindings.cpp
 )
+# make sure we link in the goc/solver code that defines LinearFunction, etc.
+target_link_libraries(kairos_tdvrptw
+    PRIVATE
+      goc    # GOC library by Lera-Romero
+      nyr    # NYR library, on top of GOC, by 0nyr     
+      solver # main solver library
+)
 target_include_directories(kairos_tdvrptw PRIVATE ${CMAKE_SOURCE_DIR}/bindings/src)
 
 # Create binaries.

@@ -1,4 +1,4 @@
-import os, datetime
+import os, datetime, random
 
 from utils.terminal import blue
 from utils.utils import get_a_parent_dir, read_json_from_file
@@ -15,11 +15,19 @@ OUTPUT_DIR =  os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["output_dir"])) # 
 CMAKELISTS_DIR = os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["cmakelists_dir"])) # Directory that contains the root CMakeLists.txt file to compile the project.
 INSTANCES_DIR = os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["instances_dir"])) # Directory where datasets are stored.
 OBJ_DIR = F"{PROJECT_ROOT_DIR}/build" # Directory where the object files will be created.
+PLOT_DIR = os.path.join(
+    PROJECT_ROOT_DIR,
+    "plots"
+) # Directory where the plots will be saved.
 
 # date formats
 FILEPATH_DATE_FORMAT = "%Y-%m-%d-%H-%M-%S"
 CONSOLE_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RUNNER_START_TIME = datetime.datetime.now()
+
+# Random seed for reproducibility.
+RANDOM_SEED = 42
+random.seed(RANDOM_SEED)
 
 # Print constants.
 print("Constants:")
