@@ -319,7 +319,7 @@ PWLFunction PWLFunction::RestrictImage(const Interval& image) const
 	return f;
 }
 
-// TODO: could be optimized if sure that the 
+// TODO: @0nyr - could be optimized if sure that the 
 // function has continuous subdomains.
 PartitionedInterval PWLFunction::DomainBreakpoints() const
 {

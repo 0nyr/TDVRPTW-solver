@@ -92,6 +92,11 @@ void run_benchmark(size_t num_breakpoints, size_t chain_length, std::mt19937& rn
               << " | " << std::setw(8) << (nyr_result.empty() ? 0 : nyr_result.nb_pieces());
     std::cout.flush();
 
+    // Check if the result is well-formed
+    if (!nyr_result.check_invariant()) {
+        std::cerr << "Error: CPWLF invariant check failed after composition.\n";
+    }
+
     // Benchmark goc::PWLFunction
     auto start_goc = std::chrono::high_resolution_clock::now();
     goc::PWLFunction goc_result = goc_functions[0];
@@ -100,6 +105,18 @@ void run_benchmark(size_t num_breakpoints, size_t chain_length, std::mt19937& rn
     }
     auto end_goc = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration_goc = end_goc - start_goc;
+
+    if (!goc_result.check_invariant()) {
+        std::cerr << "Error: PWLFunction invariant check failed after composition.\n";
+    }
+
+    // Check if the results are equivalent
+    auto nyr_converted_to_goc = nyr_result.to_goc_pwl_function();
+    if (nyr_converted_to_goc != goc_result) {
+        std::cerr << "Error: CPWLF and PWLFunction results do not match after composition.\n";
+        print_cpwlf("CPWLF Result", nyr_result);
+        goc_result.Print(std::cout);
+    }
 
     std::cout << " | " << std::setw(9) << std::fixed << std::setprecision(4) << duration_goc.count() << " s"
               << " | " << std::setw(8) << goc_result.Pieces().size()

@@ -86,4 +86,4 @@ public:
 };
 
 
-}
+} // namespace nyr
