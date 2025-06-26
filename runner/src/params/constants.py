@@ -14,7 +14,7 @@ CONFIG = read_json_from_file(F"{RUNNER_DIR}/src/config.json")
 OUTPUT_DIR =  os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["output_dir"])) # Directory where output files should be saved.
 CMAKELISTS_DIR = os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["cmakelists_dir"])) # Directory that contains the root CMakeLists.txt file to compile the project.
 INSTANCES_DIR = os.path.abspath(os.path.join(RUNNER_DIR, CONFIG["instances_dir"])) # Directory where datasets are stored.
-OBJ_DIR = F"{RUNNER_DIR}/obj" # Directory where the object files will be created.
+OBJ_DIR = F"{PROJECT_ROOT_DIR}/build" # Directory where the object files will be created.
 
 # date formats
 FILEPATH_DATE_FORMAT = "%Y-%m-%d-%H-%M-%S"

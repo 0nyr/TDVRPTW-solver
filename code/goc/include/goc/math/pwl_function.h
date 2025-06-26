@@ -4,8 +4,7 @@
 // Departamento de Computacion - Universidad de Buenos Aires.
 //
 
-#ifndef GOC_MATH_PWL_FUNCTION_H
-#define GOC_MATH_PWL_FUNCTION_H
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -21,128 +20,140 @@ namespace goc
 // This class represents a piecewise linear function. It has a sequence of linear functions with bounded domains.
 // Invariant: the linear functions are non overlapping and are increasing in domain.
 // Invariant: the function is stored normalized. A function is normalized iif no two consecutive pieces have the same
-// 			  slope, intercept, and share the end and beginning of their domains.
+//               slope, intercept, and share the end and beginning of their domains.
 // Example: [segment1={(1,2),(2,3)},segment2={(2,3),(3,4)}] is not normalized. [segment1={(1,2),(3,4)}] is normalized.
 class PWLFunction : public Printable
 {
 public:
-	// Returns: f(x)=a with the specific domain.
-	static PWLFunction ConstantFunction(double a, Interval domain);
-	
-	// Returns: f(x)=x with the specific domain.
-	static PWLFunction IdentityFunction(Interval domain);
-	
-	// Creates an empty piecewise linear function.
-	PWLFunction();
-	
-	// Creates a piecewise linear function with the specified pieces.
-	PWLFunction(const std::vector<LinearFunction>& pieces);
+    // Returns: f(x)=a with the specific domain.
+    static PWLFunction ConstantFunction(double a, Interval domain);
+    
+    // Returns: f(x)=x with the specific domain.
+    static PWLFunction IdentityFunction(Interval domain);
+    
+    // Creates an empty piecewise linear function.
+    PWLFunction();
+    
+    // Creates a piecewise linear function with the specified pieces.
+    PWLFunction(const std::vector<LinearFunction>& pieces);
 
-	// Constructor for 2D continuous piecewise linear function
+    // Constructor for 2D continuous piecewise linear function
     // Precondition: The list of breakpoints must be sorted and unique.
-	PWLFunction(
-		const std::vector<double>& breakpoints,
-		const std::vector<double>& values
-	);
-	
-	// Adds the piece at the end of the function.
-	// Keeps the normalization invariant automatically.
-	void AddPiece(const LinearFunction& piece);
-	
-	// Removes the last piece from the function.
-	// Precondition: PieceCount() > 0.
-	void PopPiece();
-	
-	// Returns: if the function has no pieces.
-	bool Empty() const;
-	
-	// Returns: the numer of pieces of the function.
-	int PieceCount() const;
-	
-	// Returns: a vector with the function pieces.
-	const std::vector<LinearFunction>& Pieces() const;
-	
-	// Returns: the i-th piece of the function.
-	// Precondition: i > PieceCount().
-	const LinearFunction& Piece(int i) const;
-	
-	// Returns: the i-th piece of the function.
-	// Precondition: i > PieceCount().
-	const LinearFunction& operator[](int i) const;
-	
-	// Returns: the first piece of the function.
-	// Precondition: !Empty().
-	const LinearFunction& FirstPiece() const;
-	
-	// Returns: the last piece of the function.
-	// Precondition: !Empty().
-	const LinearFunction& LastPiece() const;
-	
-	// Returns: the last piece index that includes x in its domain.
-	// Precondition: x \in dom(p) for any piece p.
-	int PieceIncluding(double x) const;
-	
-	// Returns: the smallest interval [m, M] that includes all pieces domains.
-	// Observation: if Empty() then returns [INFTY, -INFTY].
-	Interval Domain() const;
-	
-	// Returns: the smallest interval [m, M] that includes all pieces images.
-	// Observation: if Empty() then returns [INFTY, -INFTY].
-	Interval Image() const;
-	
-	// Returns: the evaluation of the piece that includes x in its domain.
-	// Exception: if no piece includes x in its domain, it throws an exception.
-	double Value(double x) const;
-	
-	// Returns: the evaluation of the piece that includes x in its domain.
-	// Exception: if no piece includes x in its domain, it throws an exception.
-	double operator()(double x) const;
-	
-	// Returns: the last x such that f(x) = y. Notice that if the function is not bijective it may contain multiple
-	// x such that f(x) = y.
-	// Exception: if no f(x) = y, then it throws an exception.
-	double PreValue(double y) const;
-	
-	// Returns: the composition of this function (f) and g, i.e. fog(x) == f(g(x)).
-	// Observation: the domain of the new function are those x such that g(x) \in dom(f).
-	PWLFunction Compose(const PWLFunction& g) const;
-	
-	// Returns: the inverse of this function (f) if is inversible, otherwise returns g(y) = max{x : f(x) = y}.
-	PWLFunction Inverse() const;
-	
-	// Restricts the domain to only the pieces included in the parameter.
-	// Returns: the restricted function.
-	PWLFunction RestrictDomain(const Interval& domain) const;
-	
-	// Restricts the image to only the pieces included in the parameter.
-	// Returns: the restricted function.
-	PWLFunction RestrictImage(const Interval& image) const;
-	
-	// Returns all the breakpoints (stored preimages) of the function.
-	// Observation: if Empty() then returns [INFTY, -INFTY].
-	PartitionedInterval DomainBreakpoints() const;
+    PWLFunction(
+        const std::vector<double>& breakpoints,
+        const std::vector<double>& values
+    );
+    
+    // Adds the piece at the end of the function.
+    // Keeps the normalization invariant automatically.
+    void AddPiece(const LinearFunction& piece);
+    
+    // Removes the last piece from the function.
+    // Precondition: PieceCount() > 0.
+    void PopPiece();
+    
+    // Returns: if the function has no pieces.
+    bool Empty() const;
+    
+    // Returns: the numer of pieces of the function.
+    int PieceCount() const;
+    
+    // Returns: a vector with the function pieces.
+    const std::vector<LinearFunction>& Pieces() const;
+    
+    // Returns: the i-th piece of the function.
+    // Precondition: i > PieceCount().
+    const LinearFunction& Piece(int i) const;
+    
+    // Returns: the i-th piece of the function.
+    // Precondition: i > PieceCount().
+    const LinearFunction& operator[](int i) const;
+    
+    // Returns: the first piece of the function.
+    // Precondition: !Empty().
+    const LinearFunction& FirstPiece() const;
+    
+    // Returns: the last piece of the function.
+    // Precondition: !Empty().
+    const LinearFunction& LastPiece() const;
+    
+    // Returns: the last piece index that includes x in its domain.
+    // Precondition: x \in dom(p) for any piece p.
+    int PieceIncluding(double x) const;
+    
+    // Returns: the smallest interval [m, M] that includes all pieces domains.
+    // Observation: if Empty() then returns [INFTY, -INFTY].
+    Interval Domain() const;
+    
+    // Returns: the smallest interval [m, M] that includes all pieces images.
+    // Observation: if Empty() then returns [INFTY, -INFTY].
+    Interval Image() const;
+    
+    // Returns: the evaluation of the piece that includes x in its domain.
+    // Exception: if no piece includes x in its domain, it throws an exception.
+    double Value(double x) const;
+    
+    // Returns: the evaluation of the piece that includes x in its domain.
+    // Exception: if no piece includes x in its domain, it throws an exception.
+    double operator()(double x) const;
+    
+    // Returns: the last x such that f(x) = y. Notice that if the function is not bijective it may contain multiple
+    // x such that f(x) = y.
+    // Exception: if no f(x) = y, then it throws an exception.
+    double PreValue(double y) const;
+    
+    // Returns: the composition of this function (f) and g, i.e. fog(x) == f(g(x)).
+    // Observation: the domain of the new function are those x such that g(x) \in dom(f).
+    PWLFunction Compose(const PWLFunction& g) const;
+    
+    // Returns: the inverse of this function (f) if is inversible, otherwise returns g(y) = max{x : f(x) = y}.
+    PWLFunction Inverse() const;
+    
+    // Restricts the domain to only the pieces included in the parameter.
+    // Returns: the restricted function.
+    PWLFunction RestrictDomain(const Interval& domain) const;
+    
+    // Restricts the image to only the pieces included in the parameter.
+    // Returns: the restricted function.
+    PWLFunction RestrictImage(const Interval& image) const;
 
-	// Returns: all the breakpoints (store images) of the function.
-	// Observation: if Empty() then returns [INFTY, -INFTY].
-	PartitionedInterval ImageBreakpoints() const;
+    bool check_invariant() const;
+    bool check_normalization() const;
 
-	bool check_invariant() const;
+    const std::pair<std::vector<double>, std::vector<double>> copy_breakpoints_and_values() const;
 
-	// Prints the function.
-	// Format: [p1, p2, ..., pn].
-	virtual void Print(std::ostream& os) const;
-	
-	// Returns: if all the pieces of both functions are the same.
-	bool operator==(const PWLFunction& f) const;
-	
-	// Returns: if any piece of both functions is different.
-	bool operator!=(const PWLFunction& f) const;
+    // Prints the function.
+    // Format: [p1, p2, ..., pn].
+    virtual void Print(std::ostream& os) const;
+    
+    // Returns: if all the pieces of both functions are the same.
+    bool operator==(const PWLFunction& f) const;
+    
+    // Returns: if any piece of both functions is different.
+    bool operator!=(const PWLFunction& f) const;
+
+    // Returns the total memory footprint of *this* object, in bytes,
+    // including both the fixed‐size portion (sizeof(*this)) and any
+    // heap allocations (e.g. std::vector buffers).
+    std::size_t memory_footprint_bytes() const;
+
+    /**
+     * @brief Computes the area under the non-decreasing continuous piecewise linear function.
+     * * This function calculates the definite integral of the function from its
+     * minimum domain value to its maximum domain value. It achieves this by
+     * summing the areas of the trapezoids formed by each linear piece and the x-axis.
+     * * For each segment from (x_i, y_i) to (x_{i+1}, y_{i+1}), the area of the
+     * trapezoid is calculated as: (y_i + y_{i+1}) * (x_{i+1} - x_i) / 2.0.
+     * * Vertical segments (where x_{i+1} - x_i == 0) correctly contribute 0 area.
+     * * @return The total area under the function. Returns 0.0 if the function is empty.
+     */
+    double compute_area() const;
 private:
-	// Updates the image_ attribute to keep it updated after a Pop() operation.
-	void UpdateImage();
-	
-	std::vector<LinearFunction> pieces_;
-	Interval domain_, image_;
+    // Updates the image_ attribute to keep it updated after a Pop() operation.
+    void UpdateImage();
+    
+    std::vector<LinearFunction> pieces_;
+    Interval domain_, image_;
 };
 
 // JSON format: [p1, p2, ..., pn].
@@ -200,5 +211,3 @@ inline Interval dom(const PWLFunction& f) { return f.Domain(); }
 // Returns: f.image
 inline Interval img(const PWLFunction& f) { return f.Image(); }
 } // namespace goc
-
-#endif //GOC_MATH_PWL_FUNCTION_H

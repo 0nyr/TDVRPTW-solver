@@ -4,8 +4,7 @@
 // Departamento de Computacion - Universidad de Buenos Aires.
 //
 
-#ifndef GOC_MATH_LINEAR_FUNCTION_H
-#define GOC_MATH_LINEAR_FUNCTION_H
+#pragma once
 
 #include <iostream>
 
@@ -23,55 +22,60 @@ namespace goc
 class LinearFunction : public Printable
 {
 public:
-	Interval domain, image;
-	double slope, intercept;
-	
-	LinearFunction() = default;
-	
-	// Creates a linear function from p1 to p2.
-	// Precondition: p1.x <= p2.x.
-	LinearFunction(const Point2D& p1, const Point2D& p2);
-	
-	// Returns: the value of the function f(x).
-	// Precondition: x \in domain.
-	double Value(double x) const;
-	
-	// Returns: the value of the function f(x).
-	// Precondition: x \in domain.
-	double operator()(double x) const;
-	
-	// Returns: the last x such that f(x) = y.
-	// Observation: if slope == 0 the function is not inversible therefore many f(x) = y might exist.
-	// Precondition: y \in image.
-	double PreValue(double y) const;
-	
-	// Returns: if this function intersects the function f inside both functions domains.
-	bool Intersects(const LinearFunction& f) const;
-	
-	// Returns: the coordinate x such that this(x) == f(x).
-	// Precondition: Intersects(*this, f).
-	double Intersection(const LinearFunction& f) const;
-	
-	// Returns: the inverse function of this function (f) if exists, otherwise returns g(y) = max{x : f(x)=y }.
-	LinearFunction Inverse() const;
-	
-	// Restricts the domain.
-	// Returns: the restricted function.
-	LinearFunction RestrictDomain(const Interval& domain) const;
-	
-	// Restricts the image.
-	// Returns: the restricted function.
-	LinearFunction RestrictImage(const Interval& image) const;
-	
-	// Prints the function.
-	// Format: {(x1, y1)->(x2,y2)}.
-	void Print(std::ostream& os) const;
-	
-	// Returns: if two functions have the same p1 and p2.
-	bool operator==(const LinearFunction& f) const;
-	
-	// Returns: if two functions have different p1 and p2.
-	bool operator!=(const LinearFunction& f) const;
+    Interval domain, image;
+    double slope, intercept;
+    
+    LinearFunction() = default;
+    
+    // Creates a linear function from p1 to p2.
+    // Precondition: p1.x <= p2.x.
+    LinearFunction(const Point2D& p1, const Point2D& p2);
+    
+    // Returns: the value of the function f(x).
+    // Precondition: x \in domain.
+    double Value(double x) const;
+    
+    // Returns: the value of the function f(x).
+    // Precondition: x \in domain.
+    double operator()(double x) const;
+    
+    // Returns: the last x such that f(x) = y.
+    // Observation: if slope == 0 the function is not inversible therefore many f(x) = y might exist.
+    // Precondition: y \in image.
+    double PreValue(double y) const;
+    
+    // Returns: if this function intersects the function f inside both functions domains.
+    bool Intersects(const LinearFunction& f) const;
+    
+    // Returns: the coordinate x such that this(x) == f(x).
+    // Precondition: Intersects(*this, f).
+    double Intersection(const LinearFunction& f) const;
+    
+    // Returns: the inverse function of this function (f) if exists, otherwise returns g(y) = max{x : f(x)=y }.
+    LinearFunction Inverse() const;
+    
+    // Restricts the domain.
+    // Returns: the restricted function.
+    LinearFunction RestrictDomain(const Interval& domain) const;
+    
+    // Restricts the image.
+    // Returns: the restricted function.
+    LinearFunction RestrictImage(const Interval& image) const;
+    
+    // Prints the function.
+    // Format: {(x1, y1)->(x2,y2)}.
+    void Print(std::ostream& os) const;
+    
+    // Returns: if two functions have the same p1 and p2.
+    bool operator==(const LinearFunction& f) const;
+    
+    // Returns: if two functions have different p1 and p2.
+    bool operator!=(const LinearFunction& f) const;
+
+    // Returns the total memory footprint of *this* object, in bytes,
+    // including both the fixed‐size portion (sizeof(*this)) and any
+    // heap allocations (e.g. std::vector buffers).
+    std::size_t memory_footprint_bytes() const;    
 };
 
 // JSON format: [p1, p2].
@@ -99,4 +103,3 @@ LinearFunction operator+(const LinearFunction& f, double a);
 // Returns: h(x) = f(x)*a.
 LinearFunction operator*(const LinearFunction& f, double a);
 } // namespace goc
-#endif //GOC_MATH_LINEAR_FUNCTION_H

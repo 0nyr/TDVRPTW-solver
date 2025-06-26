@@ -46,8 +46,8 @@ def compile(
     cmake_cmd = [
         "cmake", 
         F"{CMAKELISTS_DIR}", 
-        F"-DCMAKE_BUILD_TYPE={build_type}", 
-        F"-DRUNNER=ON",
+        F"-DCMAKE_BUILD_TYPE={build_type.capitalize()}", 
+        # F"-DRUNNER=ON",
     ]
     make_cmd = [
         "make",

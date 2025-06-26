@@ -5,10 +5,12 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/code/nyr/**",
+                "/nix/store/b2zcd1z08y0bgiiradpk34g03ny5765y-boost-1.87.0-dev/include/**",
                 "/home/onyr/gurobi1103/linux64/include/**",
                 "/home/onyr/cplex2210/CPLEX_Studio221/cplex/include/**",
                 "/home/onyr/cplex2210/CPLEX_Studio221/concert/include/**",
-                "/home/onyr/cplex2210/CPLEX_Studio221/cpoptimizer/include/**"
+                "/home/onyr/cplex2210/CPLEX_Studio221/cpoptimizer/include/**",
+                "/nix/store/d0qpxpibgknzga46c1z9ibkvhmb761kv-python3.13-pybind11-2.13.6/include/**"
             ],
             "defines": [],
             "compilerPath": "/nix/store/ii75mhh7sxl11167m1b86p0qrjsjyjmd-gcc-wrapper-14-20241116/bin/g++",
@@ -16,7 +18,7 @@
             "cppStandard": "gnu++20",
             "intelliSenseMode": "linux-gcc-x64",
             "compileCommands": [
-                "${workspaceFolder}/build/compile_commands.json"
+                "${workspaceFolder}/build/vscode/compile_commands.json"
             ]
         }
     ],

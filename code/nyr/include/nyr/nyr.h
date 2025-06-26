@@ -18,7 +18,8 @@
 
 #include "nyr/math/fast_math.h"
 #include "nyr/math/fast_rng.h"
-#include "nyr/math/cpwlf.h"
+#include "nyr/math/interval.h"
+#include "nyr/math/ndcpwlf.h"
 
 #include "nyr/log/timed_solutions.h"
 

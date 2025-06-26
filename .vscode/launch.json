@@ -1,4 +1,4 @@
-{    
+{   // This file is used with the Run and Debug (Ctrl+Shift+D) feature in VSCode.
     "configurations": [
         {
             "name": "C++ debug",
