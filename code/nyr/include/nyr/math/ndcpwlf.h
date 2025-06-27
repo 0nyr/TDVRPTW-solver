@@ -21,9 +21,10 @@ namespace nyr {
  * Contains `p` pieces for `b = p + 1` breakpoints.
  */
 class NDCPWLF : public goc::Printable {
+private:
+    std::vector<double> xs; // Sorted x-values
+    std::vector<double> ys; // Corresponding (sorted) y-values
 public:
-    const std::vector<double> xs; // Sorted x-values
-    const std::vector<double> ys; // Corresponding (sorted) y-values
     // NOTE: No need to store domain_ and image_ since they are obtained in O(1) from xs_ and ys_.
 
     // Returns: f(x)=x with the specific domain.
@@ -36,6 +37,10 @@ public:
         const std::vector<double> xs,
         const std::vector<double> ys
     );
+    NDCPWLF(std::pair<std::vector<double>, std::vector<double>> breakpoints_and_values)
+        : NDCPWLF(breakpoints_and_values.first, breakpoints_and_values.second) {}
+    NDCPWLF(const goc::PWLFunction& f)
+        : NDCPWLF(f.copy_breakpoints_and_values()) {}
 
     // Return empty
     NDCPWLF() = default;
@@ -100,8 +105,8 @@ public:
     inline goc::Interval get_image() const {
         return goc::Interval(get_min_image(), get_max_image());
     }
-    const std::vector<double>& get_breakpoints() const { return xs; }
-    const std::vector<double>& get_values() const { return ys; }    
+    const std::vector<double>& get_xs() const { return xs; }
+    const std::vector<double>& get_ys() const { return ys; }    
     const std::pair<std::vector<double>, std::vector<double>> copy_breakpoints_and_values() const {
         return {xs, ys};
     }

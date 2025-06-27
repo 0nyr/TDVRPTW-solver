@@ -23,6 +23,9 @@ public:
 	std::vector<goc::Interval> tw; // time window of customers (tw[i] = time window of customer i).
 	CapacityUnit Q; // vehicle capacity.
 	std::vector<CapacityUnit> q; // demand of customers (q[i] = demand of customer i).
+	
+	// WARN: \tau and \alpha (arr) are modified with Lera's preprocessing.
+	// SHOULD NOT BE USED WITH TravelTime objective.
 	goc::Matrix<goc::PWLFunction> tau; // tau[i][j](t) = travel time of arc (i, j) if departing from i at t.
 	goc::Matrix<goc::PWLFunction> pretau; // pretau[i][j](t) = travel time of arc (i, j) if arriving at j at t.
 	goc::Matrix<goc::PWLFunction> dep; // dep[i][j](t) = departing time of arc (i, j) if arriving to j at t.
@@ -70,6 +73,10 @@ public:
 
 	// Prints the JSON representation of the instance.
 	virtual void Print(std::ostream& os) const;
+
+	inline size_t nb_vertices() const {
+		return D.NbVertices();
+	}
 };
 
 // Serializes the instance.

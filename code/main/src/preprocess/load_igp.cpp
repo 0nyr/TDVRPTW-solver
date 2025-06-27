@@ -5,6 +5,7 @@
 #include "preprocess/preprocess_time_windows.h"
 #include "preprocess/preprocess_service_waiting.h"
 #include "preprocess/preprocess_triangle_depot.h"
+#include "preprocess/preprocess_validity.h"
 
 using namespace std;
 using namespace goc;
@@ -109,7 +110,7 @@ void load_rifki(nlohmann::json& instance)
 }
 } // anonymous namespace
 
-void load_igp(nlohmann::json& instance)
+void preprocess_instance_from_json(nlohmann::json& instance)
 {
     clog << "Loading..." << endl;
     check_required_keys(instance, COMMON_REQUIRED_KEYS);
@@ -129,4 +130,20 @@ void load_igp(nlohmann::json& instance)
     else
         throw runtime_error("The benchmark_basename is not supported: " + benchmark_basename + ". If you need to add support for this benchmark, please modify the load.cpp file.");
 }
+
+nyr::VRPInstance load_instance_from_json(nlohmann::json const& instance) {
+    // make a local copy, since preprocessing mutates the JSON
+    nlohmann::json inst = instance;
+
+    // run exactly the same two steps you were doing in main:
+    preprocess_instance_from_json(inst);
+
+    #ifndef NDEBUG
+    preprocess_validity(inst);
+    #endif
+
+    // then deserialize via from_json overload into a VRPInstance
+    return inst.get<nyr::VRPInstance>();
+}
+
 } // namespace

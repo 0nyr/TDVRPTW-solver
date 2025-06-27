@@ -103,7 +103,10 @@ target_link_libraries(kairos_tdvrptw
       nyr    # NYR library, on top of GOC, by 0nyr     
       solver # main solver library
 )
-target_include_directories(kairos_tdvrptw PRIVATE ${CMAKE_SOURCE_DIR}/bindings/src)
+target_include_directories(kairos_tdvrptw 
+  PRIVATE 
+  ${CMAKE_SOURCE_DIR}/bindings/include
+)
 
 # Create binaries.
 # add_executable(pricing src/main_pricing.cpp)

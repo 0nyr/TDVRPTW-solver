@@ -13,6 +13,7 @@
 #include "preprocess/preprocess_validity.h"
 #include "heuristics/greedy_makespan.h"
 #include "heuristics/aco.h"
+#include "solver.h"
 
 using namespace std;
 using namespace goc;
@@ -112,7 +113,7 @@ int main(int argc, char** argv)
         // clog << "Experiment: " << experiment << endl;
         // clog << "Instance: " << instance << endl;
         // clog << "Solutions: " << solutions << endl;
-        load_igp(instance);
+        preprocess_instance_from_json(instance);
         preprocess_validity(instance);
         VRPInstance vrp = instance;
 

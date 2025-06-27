@@ -384,6 +384,30 @@ bool PWLFunction::check_normalization() const {
     return true;
 }
 
+bool PWLFunction::check_continuity() const 
+{
+	if (pieces_.empty()) return domain_ == Interval(INFTY, -INFTY) && image_ == Interval(INFTY, -INFTY);
+
+	// Check that the pieces are continuous.
+	for (size_t i = 1; i < pieces_.size(); ++i)
+	{
+		if (!epsilon_equal(pieces_[i-1].domain.right, pieces_[i].domain.left) ||
+			!epsilon_equal(pieces_[i-1].Value(pieces_[i-1].domain.right), pieces_[i].Value(pieces_[i].domain.left)))
+		{
+			std::cerr << "PWLFunction::check_continuity: discontinuity found between pieces "
+				<< " at indices " << i-1 << " and " << i
+				<< "piece n°" << i - 1 << " right endpoint: (" << pieces_[i-1].domain.right << ", "
+				<< pieces_[i-1].Value(pieces_[i-1].domain.right) << ") and "
+				<< "piece n°" << i << " left endpoint: (" << pieces_[i].domain.left << ", "
+				<< pieces_[i].Value(pieces_[i].domain.left) << ")"
+				<< std::endl;
+			return false;
+		}
+	}
+
+	return true;
+}
+
 const std::pair<std::vector<double>, std::vector<double>> PWLFunction::copy_breakpoints_and_values() const
 {
     std::vector<double> breakpoints;
@@ -394,6 +418,14 @@ const std::pair<std::vector<double>, std::vector<double>> PWLFunction::copy_brea
     {
         return {breakpoints, values}; // return empty vectors
     }
+
+	#ifndef NDEBUG
+	// Ensure continuity of the pieces.
+	if (!check_continuity()) {
+		Print(std::cerr);
+		throw std::runtime_error("PWLFunction::copy_breakpoints_and_values: discontinuity found in the pieces.");
+	}
+	#endif
 
     for (auto& p: pieces_)
     {
@@ -410,7 +442,7 @@ const std::pair<std::vector<double>, std::vector<double>> PWLFunction::copy_brea
         {
             // check that the last breakpoint matches the first of the current piece
             // else throw an error.
-            // NOTE: We disable this check for now.
+			// #ifndef NDEBUG
             // if (!epsilon_equal(breakpoints.back(), p.domain.left) ||
             //     !epsilon_equal(values.back(), p.Value(p.domain.left)))
             // {
@@ -422,6 +454,7 @@ const std::pair<std::vector<double>, std::vector<double>> PWLFunction::copy_brea
             //     Print(std::cerr);
             //     throw std::runtime_error("PWLFunction::get_breakpoints_and_values: discontinuity found between pieces.");
             // }
+			// #endif
             // add the right endpoint of the current piece
             breakpoints.push_back(p.domain.right);
             values.push_back(p.Value(p.domain.right));

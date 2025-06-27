@@ -4,8 +4,7 @@
 // Departamento de Computacion - Universidad de Buenos Aires.
 //
 
-#ifndef GOC_JSON_JSON_UTILS_H
-#define GOC_JSON_JSON_UTILS_H
+#pragma once
 
 #include <string>
 #include <magic_enum/magic_enum.hpp>
@@ -82,6 +81,6 @@ void from_json(const json& j, Enum& e)
     else
         throw std::runtime_error("Invalid enum name '" + name + "' for enum type.");
 }
-} // namespace nlohmann
 
-#endif //GOC_JSON_JSON_UTILS_H
+
+} // namespace nlohmann

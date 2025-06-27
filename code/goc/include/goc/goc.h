@@ -4,8 +4,7 @@
 // Departamento de Computacion - Universidad de Buenos Aires.
 //
 
-#ifndef GOC_GOC_H
-#define GOC_GOC_H
+#pragma once
 
 #include "goc/base/maybe.h"
 
@@ -68,5 +67,3 @@
 #include "goc/time/point_in_time.h"
 #include "goc/time/stopwatch.h"
 #include "goc/time/watch.h"
-
-#endif // GOC_GOC_H

@@ -801,5 +801,4 @@ double NDCPWLF::compute_area() const {
     return total_area; // Return the accumulated total area.
 }
 
-
 } // namespace nyr

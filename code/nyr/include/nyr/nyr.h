@@ -23,3 +23,6 @@
 
 #include "nyr/log/timed_solutions.h"
 
+#include "nyr/vrp/types.h"
+#include "nyr/vrp/instance.h"
+#include "nyr/vrp/delta.h"

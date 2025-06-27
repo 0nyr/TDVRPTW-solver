@@ -118,7 +118,8 @@ public:
     PWLFunction RestrictImage(const Interval& image) const;
 
     bool check_invariant() const;
-    bool check_normalization() const;
+	bool check_normalization() const;
+    bool check_continuity() const;
 
     const std::pair<std::vector<double>, std::vector<double>> copy_breakpoints_and_values() const;
 

@@ -37,6 +37,7 @@ add_library(
     src/math/interval.cpp
     src/math/ndcpwlf.cpp
     src/vrp/instance.cpp
+    src/vrp/delta.cpp
     src/solutions/objectives.cpp
     src/solutions/route.cpp
     src/solutions/conversions.cpp

@@ -127,13 +127,34 @@ def main():
     experiment_runs = get_runs(args)
 
     for experiment, instance, solutions in experiment_runs:
-        start_time = datetime.datetime.now()
-        print(purple(F"Running [{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
-
+        run_experiment_on_instance(
+            args,
+            experiment,
+            instance,
+            solutions
+        )
 
     # Print total time taken for the program.
     total_time = datetime.datetime.now() - RUNNER_START_TIME
     print(purple(F"Total time taken: {total_time}"))
+
+def run_experiment_on_instance(
+    args: dict[str, Any],
+    experiment,
+    instance,
+    solutions
+):
+    start_time = datetime.datetime.now()
+    print(purple(F"Running [{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
+
+    # Load the instance
+    instance_filepath = F"{instance['instance_dirpath']}/{instance['instance_filename']}"
+    instance_json_data = read_json_from_file(instance_filepath)
+    instance_json_data["instance_filename"] = instance["instance_filename"]
+
+    tdvrptw_instance: ks.nyr.VRPInstance = ks.load_instance_from_json(instance_json_data)
+    print(tdvrptw_instance)
+
 
 if __name__ == "__main__":
     main()

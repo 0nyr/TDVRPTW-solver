@@ -6,11 +6,14 @@
 
 #include <goc/goc.h>
 #include <nyr/nyr.h>
+#include <solver.h>
+
+#include "pybind11_json.hpp"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(kairos_tdvrptw, m) {
-    m.doc() = "Piecewise Linear Function Library";
+    m.doc() = "TDVRPTW library bindings";
 
     // ==================== GOC NAMESPACE ====================
     py::module_ goc = m.def_submodule("goc", "GOC namespace functions and classes");
@@ -58,6 +61,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
 
     // Constants
     goc.attr("EPS") = goc::EPS;
+    goc.attr("EPS_SLOPE_ZERO") = goc::EPS_SLOPE_ZERO; 
     goc.attr("INFTY") = goc::INFTY;
 
     // ==================== INTERVAL CLASS ====================
@@ -254,16 +258,14 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         .def("get_max_image", &nyr::NDCPWLF::get_max_image, "Get maximum image value")
         .def("get_domain", &nyr::NDCPWLF::get_domain, "Get function domain")
         .def("get_image", &nyr::NDCPWLF::get_image, "Get function image")
-        .def("get_breakpoints", &nyr::NDCPWLF::get_breakpoints, "Get breakpoints",
+        .def("get_xs", &nyr::NDCPWLF::get_xs, "Get breakpoints",
              py::return_value_policy::reference_internal)
-        .def("get_values", &nyr::NDCPWLF::get_values, "Get values",
+        .def("get_ys", &nyr::NDCPWLF::get_ys, "Get values",
              py::return_value_policy::reference_internal)
         .def("copy_breakpoints_and_values", &nyr::NDCPWLF::copy_breakpoints_and_values,
              "Get copy of breakpoints and values as pair")
         .def("memory_footprint_bytes", &nyr::NDCPWLF::memory_footprint_bytes,
              "Get memory footprint in bytes")
-        .def_readonly("xs", &nyr::NDCPWLF::xs, "Sorted x-values (breakpoints)")
-        .def_readonly("ys", &nyr::NDCPWLF::ys, "Corresponding y-values")
         .def("__eq__", &nyr::NDCPWLF::operator==)
         .def("__repr__", [](const nyr::NDCPWLF& f) {
             std::ostringstream oss;
@@ -274,11 +276,11 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
 
     // ==================== ADDITIONAL UTILITY FUNCTIONS ====================
     
-     // Test interval intersects
-     nyr.def("test_interval_vector_intersects", &nyr::test_interval_vector_intersects, "Run tests for interval_vector_intersects");
+    // Test interval intersects
+    nyr.def("test_interval_vector_intersects", &nyr::test_interval_vector_intersects, "Run tests for interval_vector_intersects");
 
-     // Test interval includes
-     nyr.def("test_interval_vector_includes", &nyr::test_interval_vector_includes, "Run tests for interval_vector_includes");
+    // Test interval includes
+    nyr.def("test_interval_vector_includes", &nyr::test_interval_vector_includes, "Run tests for interval_vector_includes");
 
     // Print padded vectors function
     m.def("print_padded_vectors", [](const std::vector<double>& vec1, const std::vector<double>& vec2) {
@@ -291,4 +293,57 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     m.def("str", [](py::object obj) {
         return py::str(obj);
     }, "Convert object to string (equivalent to STR macro)", py::arg("obj"));
+
+    // ==================== VRPInstance CLASS ====================
+    py::class_<nyr::VRPInstance>(nyr, "VRPInstance")
+        .def(py::init<>(), "Create empty VRPInstance")
+        .def("nb_vertices", &nyr::VRPInstance::nb_vertices, "Get number of vertices")
+        .def("__repr__", [](const nyr::VRPInstance& instance) {
+            std::ostringstream oss;
+            instance.Print(oss);
+            return oss.str();
+        });
+
+    // ==================== ARTFs (Matrix of NDCPWLF) CLASS ====================
+    py::class_<goc::Matrix<nyr::NDCPWLF>>(nyr, "ARTFs")
+        .def(py::init<int, int>(), py::arg("row_count") = 0, py::arg("col_count") = 0,
+             "Create empty matrix of NDCPWLF")
+        .def(py::init([](const nyr::VRPInstance& instance) {
+                return nyr::make_artfs(instance);
+            }),
+            "Create matrix of NDCPWLF from VRPInstance",
+            py::arg("instance"))
+        .def("row_count", &goc::Matrix<nyr::NDCPWLF>::row_count, "Get number of rows")
+        .def("column_count", &goc::Matrix<nyr::NDCPWLF>::column_count, "Get number of columns")
+        .def("size", &goc::Matrix<nyr::NDCPWLF>::size, "Get number of cells")
+        .def("__getitem__", [](goc::Matrix<nyr::NDCPWLF>& m, int row) { return m[row]; }, py::return_value_policy::reference_internal)
+        .def("__setitem__", [](goc::Matrix<nyr::NDCPWLF>& m, int row, const std::vector<nyr::NDCPWLF>& v) { m[row] = v; })
+        .def("__call__", py::overload_cast<int, int>(&goc::Matrix<nyr::NDCPWLF>::operator(), py::const_), py::arg("row"), py::arg("col"),
+             py::return_value_policy::reference_internal, "Get cell value (const)")
+        .def("__call__", py::overload_cast<int, int>(&goc::Matrix<nyr::NDCPWLF>::operator()), py::arg("row"), py::arg("col"),
+             py::return_value_policy::reference_internal, "Get cell value (mutable)")
+        .def("at", &goc::Matrix<nyr::NDCPWLF>::at, py::arg("row"), py::arg("col"),
+             py::return_value_policy::reference_internal, "Get cell value with bounds checking")
+        .def("clear", &goc::Matrix<nyr::NDCPWLF>::clear, "Clear matrix to default values")
+        .def("__repr__", [](const goc::Matrix<nyr::NDCPWLF>& m) {
+            std::ostringstream oss;
+            m.Print(oss);
+            return oss.str();
+        });
+    
+    // ==================== solver NAMESPACE ====================
+    py::module_ solver = m.def_submodule("solver", "Solver namespace functions and classes");
+
+    // bind loader: Python dict → nlohmann::json → C++ VRPInstance
+    m.def(
+        "load_instance_from_json",
+        &solver::load_instance_from_json,
+        py::arg("instance"),
+        R"pbdoc(
+        Load a VRPInstance from a Python dict (or JSON string, list, etc.).
+        Internally we run your C++ preprocessors on the parsed JSON and then
+        deserialize into a nyr::VRPInstance.
+        )pbdoc"
+    );
+
 }
