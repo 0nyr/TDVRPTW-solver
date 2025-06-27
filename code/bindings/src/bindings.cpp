@@ -331,8 +331,18 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
             return oss.str();
         });
     
+    nyr.def(
+        "make_artfs",
+        &nyr::make_artfs,
+        py::arg("instance"),
+        R"pbdoc(
+        Create a matrix of NDCPWLF from a VRPInstance.
+        This is the main function to create the ARTFs for the solver.
+        )pbdoc"
+    );
+
     // ==================== solver NAMESPACE ====================
-    py::module_ solver = m.def_submodule("solver", "Solver namespace functions and classes");
+    // py::module_ solver = m.def_submodule("solver", "Solver namespace functions and classes");
 
     // bind loader: Python dict → nlohmann::json → C++ VRPInstance
     m.def(
@@ -345,5 +355,6 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         deserialize into a nyr::VRPInstance.
         )pbdoc"
     );
+
 
 }

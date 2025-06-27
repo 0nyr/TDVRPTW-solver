@@ -153,7 +153,9 @@ def run_experiment_on_instance(
     instance_json_data["instance_filename"] = instance["instance_filename"]
 
     tdvrptw_instance: ks.nyr.VRPInstance = ks.load_instance_from_json(instance_json_data)
-    print(tdvrptw_instance)
+    # print(tdvrptw_instance)
+    artfs = ks.nyr.make_artfs(tdvrptw_instance)
+    # print("ARTFs:", artfs)
 
 
 if __name__ == "__main__":
