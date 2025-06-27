@@ -34,6 +34,13 @@ include_directories(${Boost_INCLUDE_DIRS}) # Add Boost headers
 add_library(
     nyr 
     src/time/time.cpp
+    src/math/interval.cpp
+    src/math/ndcpwlf.cpp
+    src/vrp/instance.cpp
+    src/vrp/delta.cpp
+    src/solutions/objectives.cpp
+    src/solutions/route.cpp
+    src/solutions/conversions.cpp
 )
 
 # Link against goc, Boost, and other dependencies

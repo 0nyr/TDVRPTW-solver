@@ -18,17 +18,24 @@ Point2D::Point2D(double x, double y) : x(x), y(y)
 
 void Point2D::Print(ostream& os) const
 {
-	os << "(" << x << "," << y << ")";
+    os << "(" << x << "," << y << ")";
 }
 
 void from_json(const json& j, Point2D& p)
 {
-	p.x = j[0];
-	p.y = j[1];
+    p.x = j[0];
+    p.y = j[1];
 }
 
 void to_json(json& j, const Point2D& p)
 {
-	j = vector<double>({p.x, p.y});
+    j = vector<double>({p.x, p.y});
 }
+
+std::size_t Point2D::memory_footprint_bytes() const {
+    // just two doubles
+    return sizeof(*this);
+}
+
+
 } // namespace goc

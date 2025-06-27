@@ -4,8 +4,7 @@
 // Departamento de Computacion - Universidad de Buenos Aires.
 //
 
-#ifndef GOC_COLLECTION_MATRIX_H
-#define GOC_COLLECTION_MATRIX_H
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -14,8 +13,8 @@
 #include "goc/print/printable.h"
 #include "goc/print/print_utils.h"
 
-namespace goc
-{
+namespace goc {
+
 // Represents a matrix of dimension rxc of elements of type T.
 // Precondition: r>=0, c>=0.
 template<typename T>
@@ -124,4 +123,3 @@ void to_json(nlohmann::json& j, const Matrix<T>& matrix)
 
 } // namespace goc
 
-#endif //GOC_COLLECTION_MATRIX_H

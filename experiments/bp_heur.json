@@ -7,27 +7,10 @@
   ],
   "experiments": [
     {
-      "name": "BPC-Lera",
+      "name": "Refactor-initH",
       "executable": "bp",
-      "time_limit": 900,
-      "cut_limit": 500,
-      "partial": true,
-      "limited_extension": true,
-      "unreachable_strengthened": true,
-      "sort_by_cost": true,
-      "symmetric": false,
-      "iterative_merge": true,
-      "lazy_extension": true,
-      "lal_heuristic_cost": true,
-      "lal_heuristic_elementarity": true,
-      "lal_heuristic_ng_routes": false,
-      "lal_exact_labeling": true,
-      "initialization_heuristics": false
-    },
-    {
-      "name": "BPC-initH",
-      "executable": "bp",
-      "time_limit": 900,
+      "objective": "Duration",
+      "time_limit": 30,
       "cut_limit": 500,
       "partial": true,
       "limited_extension": true,
@@ -41,16 +24,16 @@
       "lal_heuristic_ng_routes": true,
       "lal_exact_labeling": true,
       "initialization_heuristics": true,
-      "aco_max_nb_iterations": 1000,
-      "aco_max_no_improvement": 500,
-      "aco_nb_ants": 1,
+      "aco_max_nb_iterations": 3000,
+      "aco_max_no_improvement": 20,
+      "aco_nb_ants": 8,
       "aco_alpha": 15,
       "aco_beta": 10,
       "aco_rho": 0.02,
       "aco_tau_min": 0.000001,
       "aco_tau_0": 2.0,
       "aco_tau_max": 10.0,
-      "aco_delta_pheromone_threshold": 0.000001
+      "aco_delta_pheromone_threshold": 0.0001
     }
   ]
 }

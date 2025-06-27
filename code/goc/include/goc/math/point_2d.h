@@ -18,11 +18,16 @@ namespace goc
 class Point2D : public Printable
 {
 public:
-	double x, y;
-	
-	Point2D(double x=0.0, double y=0.0);
-	
-	virtual void Print(std::ostream& os) const;
+    double x, y;
+    
+    Point2D(double x=0.0, double y=0.0);
+    
+    virtual void Print(std::ostream& os) const;
+
+    // Returns the total memory footprint of *this* object, in bytes,
+    // including both the fixed‐size portion (sizeof(*this)) and any
+    // heap allocations (e.g. std::vector buffers).
+    std::size_t memory_footprint_bytes() const;    
 };
 
 // JSON format: [x, y].

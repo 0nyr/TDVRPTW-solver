@@ -1,5 +1,5 @@
 {
-  description = "Julia environment";
+  description = "Nix environment";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
@@ -29,6 +29,11 @@
             pythonPackages.python
             pythonPackages.numpy
             pythonPackages.tqdm
+            pythonPackages.pandas
+            pythonPackages.tabulate
+            pythonPackages.jinja2
+            pythonPackages.seaborn
+            pythonPackages.matplotlib
             
             # C/C++ development
             pkgs.gcc
@@ -37,6 +42,9 @@
             pkgs.valgrind
             pkgs.cmake
             pkgs.boost
+
+            # pybind11 for C++/Python bindings
+            pythonPackages.pybind11
           ];
 
           shellHook = ''
@@ -49,8 +57,12 @@
             export BOOST_INCLUDE=${boostDev}/include
             export BOOST_BIN=${boostOut}/lib
 
+            unset NIX_ENFORCE_NO_NATIVE
+            echo "WARNING: This shell is for development purposes only. Disable NIX_ENFORCE_NO_NATIVE to use native code generation."
+
             echo "BOOST_INCLUDE: $BOOST_INCLUDE"
             echo "BOOST_BIN: $BOOST_BIN"
+            echo "pybind11 include: ${pythonPackages.pybind11}/include"
             echo "Nix shell loaded."
           '';
         };

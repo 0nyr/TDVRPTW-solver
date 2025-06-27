@@ -1,0 +1,15 @@
+{
+  "datasets": [
+    {"name": "Dabia2013", "n": [102], "select": "EXPS-835ae8"},
+    {"name": "Ari2018", "n": [42], "select": "EXPS-835ae8"},
+    {"name": "Rifki2020", "n": [62], "select": "EXPS-835ae8"},
+    {"name": "Solomon1987", "n": [102], "select": "EXPS-835ae8"},
+    {"name": "Vu2020", "n": [101], "select": "EXPS-835ae8"}
+  ],
+  "experiments": [
+    {
+      "name": "Kairos-TDVRPTW",
+      "time_limit": 60
+    }
+  ]
+}

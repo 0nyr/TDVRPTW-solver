@@ -76,9 +76,15 @@
         "mutex": "cpp",
         "ranges": "cpp",
         "complex": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "stdfloat": "cpp",
+        "cinttypes": "cpp"
     },
     "cmake.sourceDirectory": "/home/onyr/code/phd/TDVRPTW-solver/code",
+    "cmake.buildDirectory": "${workspaceFolder}/build/vscode",
     "C_Cpp.default.compilerPath": "/nix/store/ii75mhh7sxl11167m1b86p0qrjsjyjmd-gcc-wrapper-14-20241116/bin/g++",
-    "makefile.makefilePath": "${workspaceFolder}/code/CMakeLists.txt"
+    "makefile.makefilePath": "${workspaceFolder}/code/CMakeLists.txt",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/build/debug"
+    ]
 }

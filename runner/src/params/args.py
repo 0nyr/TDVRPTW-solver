@@ -11,7 +11,7 @@ def parse_program_args():
 
     # Set command line parameters.
     arg_parser = argparse.ArgumentParser(description="Runs the experiment file(s) specified.")
-    arg_parser.add_argument("experiments", metavar="EXP_FILE", help="JSON experiment file(s) with the experiments to run.", type=str, nargs='+')
+    arg_parser.add_argument("experiments", metavar="EXP_FILE", help="JSON experiment file(s) with the experiments to run.", type=str, nargs='*')
     arg_parser.add_argument("--instances", "-I", nargs="*", help="Only execute experiment(s) on selected instances (with these names).")
     arg_parser.add_argument("--exps", "-E", nargs="*", help="Only execute selected experiment(s) (with these names).")
     arg_parser.add_argument("--carry-on", "-CO", help="Carry on the experiment from provided .csv output file.", type=str)
@@ -22,6 +22,13 @@ def parse_program_args():
     arg_parser.add_argument("--silent", "-S", help="Do not print the stderr stream of the experiments to the screen.", action="store_true")
     arg_parser.add_argument("--clean-build", help="Clean the obj/ directory before compiling.", action="store_true")
     arg_parser.add_argument("--dry-run", help="Do not run the experiments, only compile the code and load instances and experiments.", action="store_true")
+    arg_parser.add_argument("--just-compile", "-c", help="Only compile the code and exit.", action="store_true")
+    arg_parser.add_argument(
+        "--build-type","-b",
+        choices=("debug","release","fastdebug","all"),
+        default="all",
+        help="Which configuration to build"
+    )
 
     # Read command line parameters.
     args = vars(arg_parser.parse_args())
@@ -34,9 +41,12 @@ def parse_program_args():
     memlimit_gb = args["memlimit"]
     silent = args["silent"]
 
-    # The build type when running callgrind or valgrind is 'debug' otherwise it is 'release'.
-    build_type = "debug" if use_callgrind or use_valgrind else "release"
-    args["build_type"] = build_type
+    # The build type when running callgrind or valgrind must not be release.
+    if use_callgrind or use_valgrind or use_heaptrack:
+        if args["build_type"] == "release":
+            print(red("Cannot run callgrind or valgrind with release build type."))
+            print(red("Please use debug, or fastdebug build type."))
+            exit(1)
 
     # file checks
     check_files_exist(experiment_files)
