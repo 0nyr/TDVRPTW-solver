@@ -47,14 +47,13 @@ def get_entries_from_index_file(
 def get_instance_entry(
         list_of_entries: list[dict[str, Any]],
         instance_filename: str
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
     """
     Get the entry from the list of entries that matches the instance name.
     """
     for entry in list_of_entries:
         if entry["instance_filename"] == instance_filename:
             return entry
-    return None
 
 # List of filenames that are not instances but are in the instance directories.
 NON_INSTANCE_FILENAMES = [
@@ -80,7 +79,8 @@ def instances_for_experiment(
     either not containts TAG1 or contains both TAG2 and TAG3.
     """
     # VRP-benchmarks style instances selection.
-    instances: list[str] = []
+    instances: list[dict] = []
+    tag_sets: list[list[str]] = []
     for dataset in experiment_file_json["datasets"]:
 
         # get all subdirectories of the dataset directory
@@ -106,9 +106,9 @@ def instances_for_experiment(
             instance_dirs.append(dataset_dir)
 
         if "select" in dataset:
-            tag_sets = dataset["select"].split("|")
-            tag_sets = [s.split(" ") for s in tag_sets]
-            tag_sets = [[t.strip() for t in s if t.strip()] for s in tag_sets if any(t.strip() for t in s)]
+            raw_tag_sets = dataset["select"].split("|")
+            raw_tag_sets = [s.split(" ") for s in raw_tag_sets]
+            tag_sets = [[t.strip() for t in s if t.strip()] for s in raw_tag_sets if any(t.strip() for t in s)]
 
         # actual instance selection
         for instance_dir in instance_dirs:

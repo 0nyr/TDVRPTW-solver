@@ -37,7 +37,10 @@ def run_program(
 		preexec_fn=set_memory_limit(memlim_gb),
 		universal_newlines = True
 	)
-	
+
+	if not process.stdin:
+		raise ValueError("Process stdin is not available. Cannot write input to the process.")
+
     # Write input to STDIN.
 	if input_string != "": process.stdin.write(input_string) # Write to STDIN.
 	process.stdin.flush()
