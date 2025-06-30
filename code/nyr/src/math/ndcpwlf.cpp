@@ -174,7 +174,7 @@ bool nyr::NDCPWLF::check_normalization() const {
 
 // NOTE: See my notes, Lab Notebook X104272, p98-99.
 // Time complexity: O(log_2(#pieces_of_g)*#pieces_of_f + log_2(#pieces_of_f)*#pieces_of_g) = O(2*p*log_2(p))
-nyr::NDCPWLF nyr::NDCPWLF::compose(const nyr::NDCPWLF& g) const {
+nyr::NDCPWLF nyr::NDCPWLF::compose_alternative(const nyr::NDCPWLF& g) const {
     const auto& f = *this;
 
     // 1. Pre-check
@@ -584,7 +584,8 @@ nyr::NDCPWLF nyr::NDCPWLF::compose_visser(const nyr::NDCPWLF& g) const {
     return nyr::NDCPWLF(fog_xs, fog_ys);
 }
 
-nyr::NDCPWLF nyr::NDCPWLF::compose_visser_normalization(const nyr::NDCPWLF& g) const {
+// visser+normalization version
+nyr::NDCPWLF nyr::NDCPWLF::compose(const nyr::NDCPWLF& g) const {
     const auto& f = *this;
 
     // 1. Pre-check

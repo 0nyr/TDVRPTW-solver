@@ -77,6 +77,10 @@ public:
 	inline size_t nb_vertices() const {
 		return D.NbVertices();
 	}
+
+	inline size_t nb_clients() const {
+		return D.NbVertices() - 2; // Exclude origin and destination depots.
+	}
 };
 
 // Serializes the instance.

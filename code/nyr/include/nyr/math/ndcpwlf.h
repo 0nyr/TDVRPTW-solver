@@ -73,14 +73,17 @@ public:
     // Returns: the composition of this function (f) and g, i.e. fog(x) == f(g(x)).
     // Observation: the domain of the new function are those x such that g(x) \in dom(f).
     // Note that the composition of 2 NDCPWLFs is necessarily another NDCPWLF (theorem 3, Visser et al. 2020)
-    NDCPWLF compose(const NDCPWLF& g) const;
+    NDCPWLF compose_alternative(const NDCPWLF& g) const;
 
     // Composition with Visser's method, no normalization.
     NDCPWLF compose_visser(const NDCPWLF& g) const;
 
+    // Returns: the composition of this function (f) and g, i.e. fog(x) == f(g(x)).
+    // Observation: the domain of the new function are those x such that g(x) \in dom(f).
+    // Note that the composition of 2 NDCPWLFs is necessarily another NDCPWLF (theorem 3, Visser et al. 2020)
     // Composition with Visser's method
     // Improved with post-normalization.
-    NDCPWLF compose_visser_normalization(const NDCPWLF& g) const;
+    NDCPWLF compose(const NDCPWLF& g) const;
 
     goc::PWLFunction to_goc_pwl_function() const;
 

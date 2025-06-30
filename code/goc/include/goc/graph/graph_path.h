@@ -4,8 +4,7 @@
 // Departamento de Computacion - Universidad de Buenos Aires.
 //
 
-#ifndef GOC_GRAPH_GRAPH_PATH_H
-#define GOC_GRAPH_GRAPH_PATH_H
+#pragma once
 
 #include <limits.h>
 #include <vector>
@@ -23,6 +22,10 @@ bool has_cycle(GraphPath p, int max_size=INT_MAX);
 // Returns: if two paths are equal.
 bool operator==(const GraphPath& p1, const GraphPath& p2);
 
+// Returns: if two paths are different.
+inline bool operator!=(const GraphPath& p1, const GraphPath& p2) {
+    return !(p1 == p2);
+}
+
 } // namespace goc
 
-#endif //GOC_GRAPH_GRAPH_PATH_H

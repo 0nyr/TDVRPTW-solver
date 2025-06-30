@@ -64,25 +64,71 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     goc.attr("EPS_SLOPE_ZERO") = goc::EPS_SLOPE_ZERO; 
     goc.attr("INFTY") = goc::INFTY;
 
+    // ==================== GraphPath CLASS ==================== 
+    // Bind GraphPath (alias for std::vector<Vertex> i.e. vector<int>)
+    py::class_<goc::GraphPath>(goc, "GraphPath")
+        .def(py::init<>(), "Create an empty path")
+        .def("__len__", [](const goc::GraphPath &p){ return p.size(); })
+        .def("__getitem__",
+            [](const goc::GraphPath &p, size_t i) {
+                if (i >= p.size()) throw py::index_error();
+                return p[i];
+            })
+        .def("append", [](goc::GraphPath &p, int v){ p.push_back(v); },
+            py::arg("vertex"), "Append a vertex to the end of the path")
+        .def(
+            "__eq__",
+            [](const goc::GraphPath &a, const goc::GraphPath &b) {
+                return a == b;  // calls your operator==
+            },
+            py::arg("other"),
+            "True if two paths have the same sequence of vertices")
+        .def(
+            "__ne__",
+            [](const goc::GraphPath &a, const goc::GraphPath &b) {
+                return a != b;
+            },
+            py::arg("other"),
+            "True if two paths have different sequences of vertices")
+        .def("__repr__", [](const goc::GraphPath &p){
+            std::ostringstream os;
+            os << "[";
+            for (size_t i = 0; i < p.size(); ++i) {
+                if (i) os << ", ";
+                os << p[i];
+            }
+            os << "]";
+            return os.str();
+        });
+
+    goc.def("has_cycle",
+        &goc::has_cycle,
+        py::arg("path"),
+        py::arg("max_size") = INT_MAX,
+        R"pbdoc(
+        Returns true if `path` contains a cycle of size <= max_size.
+        )pbdoc"
+    );
+
     // ==================== INTERVAL CLASS ====================
     py::class_<goc::Interval>(goc, "Interval")
         .def(py::init<>(), "Create empty interval")
         .def(py::init<double, double>(), "Create interval [left, right]",
-             py::arg("left"), py::arg("right"))
+            py::arg("left"), py::arg("right"))
         .def_readwrite("left", &goc::Interval::left, "Left boundary of interval")
         .def_readwrite("right", &goc::Interval::right, "Right boundary of interval")
         .def("empty", &goc::Interval::Empty, "Check if interval is empty")
         .def("includes", &goc::Interval::Includes, "Check if value is in interval",
-             py::arg("value"))
+            py::arg("value"))
         .def("is_included_in", &goc::Interval::IsIncludedIn, "Check if this interval is included in other",
-             py::arg("other"))
+            py::arg("other"))
         .def("intersects", &goc::Interval::Intersects, "Check if intervals intersect",
-             py::arg("other"))
+            py::arg("other"))
         .def("intersection", &goc::Interval::Intersection, "Get intersection with other interval",
-             py::arg("other"))
+            py::arg("other"))
         .def("is_point", &goc::Interval::IsPoint, "Check if interval is a single point")
         .def("union", &goc::Interval::Union, "Get union with other interval",
-             py::arg("other"))
+            py::arg("other"))
         .def("__eq__", &goc::Interval::operator==)
         .def("__ne__", &goc::Interval::operator!=)
         .def("__repr__", [](const goc::Interval& i) {
@@ -95,7 +141,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     // ==================== POINT2D CLASS ====================
     py::class_<goc::Point2D>(goc, "Point2D")
         .def(py::init<double, double>(), "Create 2D point",
-             py::arg("x") = 0.0, py::arg("y") = 0.0)
+            py::arg("x") = 0.0, py::arg("y") = 0.0)
         .def_readwrite("x", &goc::Point2D::x, "X coordinate")
         .def_readwrite("y", &goc::Point2D::y, "Y coordinate")
         .def("__repr__", [](const goc::Point2D& p) {
@@ -109,27 +155,27 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     py::class_<goc::LinearFunction>(goc, "LinearFunction")
         .def(py::init<>(), "Create default linear function")
         .def(py::init<const goc::Point2D&, const goc::Point2D&>(), 
-             "Create linear function from two points",
-             py::arg("p1"), py::arg("p2"))
+            "Create linear function from two points",
+            py::arg("p1"), py::arg("p2"))
         .def_readwrite("domain", &goc::LinearFunction::domain, "Function domain")
         .def_readwrite("image", &goc::LinearFunction::image, "Function image")
         .def_readwrite("slope", &goc::LinearFunction::slope, "Function slope")
         .def_readwrite("intercept", &goc::LinearFunction::intercept, "Function y-intercept")
         .def("value", &goc::LinearFunction::Value, "Evaluate function at x",
-             py::arg("x"))
+            py::arg("x"))
         .def("__call__", &goc::LinearFunction::operator(), "Evaluate function at x",
-             py::arg("x"))
+            py::arg("x"))
         .def("pre_value", &goc::LinearFunction::PreValue, "Get x such that f(x) = y",
-             py::arg("y"))
+            py::arg("y"))
         .def("intersects", &goc::LinearFunction::Intersects, "Check if functions intersect",
-             py::arg("other"))
+            py::arg("other"))
         .def("intersection", &goc::LinearFunction::Intersection, "Get intersection point with other function",
-             py::arg("other"))
+            py::arg("other"))
         .def("inverse", &goc::LinearFunction::Inverse, "Get inverse function")
         .def("restrict_domain", &goc::LinearFunction::RestrictDomain, "Restrict function domain",
-             py::arg("domain"))
+            py::arg("domain"))
         .def("restrict_image", &goc::LinearFunction::RestrictImage, "Restrict function image",
-             py::arg("image"))
+            py::arg("image"))
         .def("__eq__", &goc::LinearFunction::operator==)
         .def("__ne__", &goc::LinearFunction::operator!=)
         .def("__repr__", [](const goc::LinearFunction& f) {
@@ -146,52 +192,52 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     py::class_<goc::PWLFunction>(goc, "PWLFunction")
         .def(py::init<>(), "Create empty PWL function")
         .def(py::init<const std::vector<goc::LinearFunction>&>(), 
-             "Create PWL function from pieces",
-             py::arg("pieces"))
+            "Create PWL function from pieces",
+            py::arg("pieces"))
         .def(py::init<const std::vector<double>&, const std::vector<double>&>(),
-             "Create PWL function from breakpoints and values",
-             py::arg("breakpoints"), py::arg("values"))
+            "Create PWL function from breakpoints and values",
+            py::arg("breakpoints"), py::arg("values"))
         .def_static("constant_function", &goc::PWLFunction::ConstantFunction,
                    "Create constant function", py::arg("a"), py::arg("domain"))
         .def_static("identity_function", &goc::PWLFunction::IdentityFunction,
                    "Create identity function", py::arg("domain"))
         .def("add_piece", &goc::PWLFunction::AddPiece, "Add piece to function",
-             py::arg("piece"))
+            py::arg("piece"))
         .def("pop_piece", &goc::PWLFunction::PopPiece, "Remove last piece")
         .def("empty", &goc::PWLFunction::Empty, "Check if function is empty")
         .def("piece_count", &goc::PWLFunction::PieceCount, "Get number of pieces")
         .def("pieces", &goc::PWLFunction::Pieces, "Get all pieces", 
-             py::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def("piece", &goc::PWLFunction::Piece, "Get i-th piece",
-             py::arg("i"), py::return_value_policy::reference_internal)
+            py::arg("i"), py::return_value_policy::reference_internal)
         .def("__getitem__", &goc::PWLFunction::operator[], "Get i-th piece",
-             py::arg("i"), py::return_value_policy::reference_internal)
+            py::arg("i"), py::return_value_policy::reference_internal)
         .def("first_piece", &goc::PWLFunction::FirstPiece, "Get first piece",
-             py::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def("last_piece", &goc::PWLFunction::LastPiece, "Get last piece",
-             py::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def("piece_including", &goc::PWLFunction::PieceIncluding, "Get piece index that includes x",
-             py::arg("x"))
+            py::arg("x"))
         .def("domain", &goc::PWLFunction::Domain, "Get function domain")
         .def("image", &goc::PWLFunction::Image, "Get function image")
         .def("value", &goc::PWLFunction::Value, "Evaluate function at x",
-             py::arg("x"))
+            py::arg("x"))
         .def("__call__", &goc::PWLFunction::operator(), "Evaluate function at x",
-             py::arg("x"))
+            py::arg("x"))
         .def("pre_value", &goc::PWLFunction::PreValue, "Get x such that f(x) = y",
-             py::arg("y"))
+            py::arg("y"))
         .def("compose", &goc::PWLFunction::Compose, "Compose with other function",
-             py::arg("g"))
+            py::arg("g"))
         .def("inverse", &goc::PWLFunction::Inverse, "Get inverse function")
         .def("restrict_domain", &goc::PWLFunction::RestrictDomain, "Restrict function domain",
-             py::arg("domain"))
+            py::arg("domain"))
         .def("restrict_image", &goc::PWLFunction::RestrictImage, "Restrict function image",
-             py::arg("image"))
+            py::arg("image"))
         .def("check_invariant", &goc::PWLFunction::check_invariant, "Check function invariant")
         .def("check_normalization", &goc::PWLFunction::check_normalization, "Check function normalization")
         .def("copy_breakpoints_and_values", &goc::PWLFunction::copy_breakpoints_and_values,
-             "Get breakpoints and values as a pair of vectors",
-             py::return_value_policy::reference_internal)
+            "Get breakpoints and values as a pair of vectors",
+            py::return_value_policy::reference_internal)
         .def("__eq__", &goc::PWLFunction::operator==)
         .def("__ne__", &goc::PWLFunction::operator!=)
         .def("__radd__", [](const goc::PWLFunction& f, double a) { return a + f; })
@@ -232,23 +278,23 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     py::class_<nyr::NDCPWLF>(nyr, "NDCPWLF")
         .def(py::init<>(), "Create empty NDCPWLF")
         .def(py::init<const std::vector<double>, const std::vector<double>>(),
-             "Create NDCPWLF from breakpoints and values",
-             py::arg("breakpoints"), py::arg("values"))
+            "Create NDCPWLF from breakpoints and values",
+            py::arg("breakpoints"), py::arg("values"))
         .def_static("make_identity", &nyr::NDCPWLF::make_identity,
                    "Create identity function", py::arg("domain"))
         .def("empty", &nyr::NDCPWLF::empty, "Check if function is empty")
         .def("nb_pieces", &nyr::NDCPWLF::nb_pieces, "Get number of pieces")
         .def("evaluate", &nyr::NDCPWLF::evaluate, "Evaluate function at x",
-             py::arg("x"))
+            py::arg("x"))
         .def("__call__", &nyr::NDCPWLF::operator(), "Evaluate function at x",
-             py::arg("x"))
+            py::arg("x"))
         .def("check_invariant", &nyr::NDCPWLF::check_invariant, "Check function invariant")
         .def("check_normalization", &nyr::NDCPWLF::check_normalization, "Check if function is normalized")
-        .def("compose", &nyr::NDCPWLF::compose, "Compose with other NDCPWLF",
-             py::arg("g"))
+        .def("compose", &nyr::NDCPWLF::compose_alternative, "Compose with other NDCPWLF",
+            py::arg("g"))
         .def("compose_visser", &nyr::NDCPWLF::compose_visser, "Compose with Visser's method without normalization",
-             py::arg("g"))
-        .def("compose_visser_normalization", &nyr::NDCPWLF::compose_visser_normalization,
+            py::arg("g"))
+        .def("compose", &nyr::NDCPWLF::compose,
             "Compose with Visser's method with normalization",
             py::arg("g"))
         .def("to_goc_pwl_function", &nyr::NDCPWLF::to_goc_pwl_function, "Convert to GOC PWL function")
@@ -259,13 +305,13 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         .def("get_domain", &nyr::NDCPWLF::get_domain, "Get function domain")
         .def("get_image", &nyr::NDCPWLF::get_image, "Get function image")
         .def("get_xs", &nyr::NDCPWLF::get_xs, "Get breakpoints",
-             py::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def("get_ys", &nyr::NDCPWLF::get_ys, "Get values",
-             py::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def("copy_breakpoints_and_values", &nyr::NDCPWLF::copy_breakpoints_and_values,
-             "Get copy of breakpoints and values as pair")
+            "Get copy of breakpoints and values as pair")
         .def("memory_footprint_bytes", &nyr::NDCPWLF::memory_footprint_bytes,
-             "Get memory footprint in bytes")
+            "Get memory footprint in bytes")
         .def("__eq__", &nyr::NDCPWLF::operator==)
         .def("__repr__", [](const nyr::NDCPWLF& f) {
             std::ostringstream oss;
@@ -297,7 +343,10 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     // ==================== VRPInstance CLASS ====================
     py::class_<nyr::VRPInstance>(nyr, "VRPInstance")
         .def(py::init<>(), "Create empty VRPInstance")
+        .def_readonly("o", &nyr::VRPInstance::o, "Origin vertex index (depot)")
+        .def_readonly("d", &nyr::VRPInstance::d, "Destination vertex index (depot)")
         .def("nb_vertices", &nyr::VRPInstance::nb_vertices, "Get number of vertices")
+        .def("nb_clients", &nyr::VRPInstance::nb_clients, "Get number of clients (excluding depots)")
         .def("__repr__", [](const nyr::VRPInstance& instance) {
             std::ostringstream oss;
             instance.Print(oss);
@@ -341,6 +390,22 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         )pbdoc"
     );
 
+    nyr.def(
+        "perform_tree_chain_composition",
+        &nyr::perform_tree_chain_composition,
+        py::arg("instance"),
+        py::arg("deltas"),
+        py::arg("path"),
+        R"pbdoc(
+        Perform the (Visser et al 2020) tree-chain composition:
+        
+        - `instance`   : a loaded VRPInstance
+        - `deltas`     : the ARTFs matrix (Matrix<NDCPWLF>)
+        - `path`       : a goc.GraphPath of vertices
+        Returns an NDCPWLF = composition of the arc-ready-time functions along the path.
+        )pbdoc"
+    );
+
     // ==================== solver NAMESPACE ====================
     // py::module_ solver = m.def_submodule("solver", "Solver namespace functions and classes");
 
@@ -355,6 +420,5 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         deserialize into a nyr::VRPInstance.
         )pbdoc"
     );
-
 
 }

@@ -24,7 +24,7 @@ if not os.path.exists(KAIROS_LIB_DIR):
 sys.path.append(KAIROS_LIB_DIR)  # or wherever the .so is
 import kairos_tdvrptw as ks
 
-from utils.terminal import purple
+from utils.terminal import purple, green
 from utils.utils import read_json_from_file, save_json_to_file, save_csv_to_file, load_csv_from_file, get_filename_from_path, join_paths
 from utils.formatting import format_date_for_filepath, format_date_for_console
 from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
@@ -36,6 +36,7 @@ from output.json_output import complete_res_json
 from tqdm import tqdm
 from typing import Any
 import json, datetime
+import random
 
 def get_runs(args: dict[str, Any]):
     """
@@ -133,6 +134,8 @@ def main():
             instance,
             solutions
         )
+        # TODO: remove. Early exit (just for testing)
+        break
 
     # Print total time taken for the program.
     total_time = datetime.datetime.now() - RUNNER_START_TIME
@@ -156,6 +159,34 @@ def run_experiment_on_instance(
     # print(tdvrptw_instance)
     artfs = ks.nyr.make_artfs(tdvrptw_instance)
     # print("ARTFs:", artfs)
+
+    # Create some random routes for testing.
+    random_routes = []
+    # for i in range(5):
+    #     random_route_length = 10
+    #     #random_route_length = random.randint(1, tdvrptw_instance.nb_clients())
+    #     random_clients = random.sample(range(1, tdvrptw_instance.nb_clients() + 1), random_route_length)
+    #     random_route = [tdvrptw_instance.o] + random_clients + [tdvrptw_instance.d]
+    #     random_routes.append(random_route)
+    random_routes.append([
+        0,
+        37,
+        14,
+        44,
+        86,
+        6,
+        101
+    ])
+    
+    for route in random_routes:
+        print(green(f"Random route: {route}"))
+        # Evaluate the route.
+        delta_route = ks.nyr.perform_tree_chain_composition(
+            tdvrptw_instance, 
+            artfs, 
+            route
+        )
+        print(green(f"RRTF: {delta_route}"))
 
 
 if __name__ == "__main__":
