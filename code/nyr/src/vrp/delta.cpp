@@ -72,4 +72,65 @@ NDCPWLF perform_tree_chain_composition(
     return composed_functions[0];
 }
 
+std::pair<nyr::TimeUnit, nyr::TimeUnit> 
+compute_optimal_departure_time_and_duration(
+    const nyr::NDCPWLF& delta_path
+) {
+    // If the delta_path is empty, return INFTY
+    if (delta_path.empty()) {
+        return {goc::INFTY, goc::INFTY};
+    }
+
+    auto& xs = delta_path.get_xs();
+    auto& ys = delta_path.get_ys();
+    
+    // Compute Delta = delta_path - Identity
+    // Keep track of the minimum value of ys
+    double min_y = goc::INFTY;
+    double associated_x = goc::INFTY;
+    for (size_t i = 0; i < ys.size(); ++i) {
+        double y_curr = ys[i] - xs[i];
+        if (y_curr < min_y) {
+            min_y = y_curr;
+            associated_x = xs[i];
+        }
+    }
+
+    #ifndef NDEBUG
+    if (goc::epsilon_bigger_equal(min_y, goc::INFTY)) {
+        throw std::runtime_error("The minimum value of the delta path is INFTY.");
+    }
+    if (goc::epsilon_smaller(min_y, 0.0)) {
+        throw std::runtime_error("The minimum value of the delta path is negative, which is not allowed.");
+    }
+    #endif 
+
+    return {
+        associated_x, // Optimal departure time
+        min_y         // Optimal duration
+    };
+}
+
+// The following code reuses the original Lera's code
+RouteDuration compute_RouteDuration_lera(
+    const VRPInstance& instance,
+    const goc::GraphPath& path
+) {
+    goc::PWLFunction Delta = instance.arr[path[0]][path[0]];
+	if (Delta.Empty()) return {{}, goc::INFTY, goc::INFTY};
+	for (size_t k = 0; k < path.size() - 1; ++k)
+	{
+		goc::Vertex i = path[k], j = path[k+1];
+		Delta = instance.arr[i][j].Compose(Delta);
+		if (Delta.Empty()) return {{}, goc::INFTY, goc::INFTY};
+	}
+	Delta = Delta - goc::PWLFunction::IdentityFunction(dom(Delta));
+	double min_img_Delta = std::min(img(Delta));
+	return RouteDuration(
+		path, 
+		Delta.PreValue(min_img_Delta), 
+		min_img_Delta
+	);
+}
+
 } // namespace nyr

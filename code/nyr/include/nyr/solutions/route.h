@@ -132,5 +132,17 @@ void from_json(const nlohmann::json& j, RouteTravelTime& r);
 bool operator==(const RouteMakespan& r1, const RouteMakespan& r2);
 bool operator==(const RouteDuration& r1, const RouteDuration& r2);
 bool operator==(const RouteTravelTime& r1, const RouteTravelTime& r2);
+inline bool operator!=(const RouteMakespan& r1, const RouteMakespan& r2)
+{
+	return !(r1 == r2);
+}
+inline bool operator!=(const RouteDuration& r1, const RouteDuration& r2)
+{
+	return !(r1 == r2);
+}
+inline bool operator!=(const RouteTravelTime& r1, const RouteTravelTime& r2)
+{
+	return !(r1 == r2);
+}
 
 } // namespace goc

@@ -54,6 +54,7 @@ TimeUnit VRPInstance::ReadyTime(const GraphPath& p, TimeUnit t0) const
 	return t;
 }
 
+// Sequential chain of compositions.
 RouteDuration VRPInstance::BestDurationRoute(const GraphPath& p) const
 {
 	PWLFunction Delta = arr[p[0]][p[0]];
@@ -65,7 +66,12 @@ RouteDuration VRPInstance::BestDurationRoute(const GraphPath& p) const
 		if (Delta.Empty()) return {{}, 0.0, INFTY};
 	}
 	Delta = Delta - PWLFunction::IdentityFunction(dom(Delta));
-	return RouteDuration(p, Delta.PreValue(min(img(Delta))), min(img(Delta)));
+	double min_img_Delta = min(img(Delta));
+	return RouteDuration(
+		p, 
+		Delta.PreValue(min_img_Delta), 
+		min_img_Delta
+	);
 }
 
 VertexSet VRPInstance::Unreachable(Vertex v, TimeUnit t0) const

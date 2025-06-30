@@ -10,7 +10,7 @@
 namespace nyr
 {
 
-typedef double TimeUnit; // Represents time.
+typedef double TimeUnit; // Represents time (time point or duration).
 typedef double CapacityUnit; // Represents the capacity.
 typedef double ProfitUnit; // Represents the profit of vertices.
 typedef std::bitset<MAX_N> VertexSet; // Set of vertices.

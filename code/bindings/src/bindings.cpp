@@ -340,6 +340,73 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         return py::str(obj);
     }, "Convert object to string (equivalent to STR macro)", py::arg("obj"));
 
+    // ==================== RouteMakespan CLASS ====================
+    py::class_<nyr::RouteMakespan, std::shared_ptr<nyr::RouteMakespan>>(m, "RouteMakespan")
+        .def(py::init<>(),
+            "Create an empty makespan-route (path={} , value=0.0)")
+        .def(py::init<const goc::GraphPath&, double>(),
+            py::arg("path"), py::arg("makespan"),
+            "Create a makespan-route with given path and makespan value")
+        // give Python direct read/write access to the members:
+        .def_readwrite("path",  &nyr::RouteMakespan::path,
+            "The sequence of vertices in this route")
+        .def_readwrite("value", &nyr::RouteMakespan::value,
+            "The makespan value")
+        // repr via the JSON-printing Print() override:
+        .def("__repr__",
+            [](const nyr::RouteMakespan &r) {
+                std::ostringstream oss;
+                r.Print(oss);
+                return oss.str();
+            },
+            "Stringify to JSON using the built-in Print()")
+        // equality:
+        .def("__eq__", 
+            [](const nyr::RouteMakespan &a, const nyr::RouteMakespan &b){
+                return a == b;
+            },
+            py::arg("other"),
+            "True if two makespan routes are identical")
+        .def("__ne__",
+            [](const nyr::RouteMakespan &a, const nyr::RouteMakespan &b){
+                return a != b;
+            },
+            py::arg("other"),
+            "True if two makespan routes differ");
+    
+    // ==================== RouteDuration CLASS ====================
+    py::class_<nyr::RouteDuration, std::shared_ptr<nyr::RouteDuration>>(m, "RouteDuration")
+        .def(py::init<>(),
+            "Create an empty duration‐route (path={} , t0=0.0, duration=0.0)")
+        .def(py::init<const goc::GraphPath&, double, double>(),
+             py::arg("path"), py::arg("t0"), py::arg("duration"),
+            "Create a duration‐route with given path, dispatch time t0, and duration")
+        .def_readwrite("path", &nyr::RouteDuration::path,
+            "The sequence of vertices in this route")
+        .def_readwrite("t0",   &nyr::RouteDuration::t0,
+            "Dispatch time (start time) of the first vertex")
+        .def_readwrite("value", &nyr::RouteDuration::value,
+            "The total duration value")
+        .def("__repr__",
+            [](const nyr::RouteDuration &r) {
+                std::ostringstream oss;
+                r.Print(oss);
+                return oss.str();
+            },
+            "Stringify to JSON using the built-in Print()")
+        .def("__eq__", 
+            [](const nyr::RouteDuration &a, const nyr::RouteDuration &b){
+                return a == b;
+            },
+            py::arg("other"),
+            "True if two duration routes are identical")
+        .def("__ne__",
+            [](const nyr::RouteDuration &a, const nyr::RouteDuration &b){
+                return a != b;
+            },
+            py::arg("other"),
+            "True if two duration routes differ");
+
     // ==================== VRPInstance CLASS ====================
     py::class_<nyr::VRPInstance>(nyr, "VRPInstance")
         .def(py::init<>(), "Create empty VRPInstance")
@@ -403,6 +470,60 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         - `deltas`     : the ARTFs matrix (Matrix<NDCPWLF>)
         - `path`       : a goc.GraphPath of vertices
         Returns an NDCPWLF = composition of the arc-ready-time functions along the path.
+        )pbdoc"
+    );
+
+    nyr.def(
+        "compute_optimal_departure_time_and_duration",
+        &nyr::compute_optimal_departure_time_and_duration,
+        py::arg("delta_path"),
+        R"pbdoc(
+        Compute the optimal departure time and duration for a given path of NDCPWLFs.
+        - `delta_path` : a nyr.NDCPWLF function associated with a path of vertices.
+        Returns a tuple (t0, duration) where:
+        - `t0`        : the optimal departure time
+        - `duration`  : the total duration of the route
+        )pbdoc"
+    );
+
+    nyr.def(
+        "compute_RouteDuration_from_delta_path",
+        py::overload_cast<const nyr::NDCPWLF&, const goc::GraphPath&>(&nyr::compute_RouteDuration),
+        py::arg("delta_path"),
+        py::arg("path"),
+        R"pbdoc(
+        Return a RouteDuration object that contains its own copy of the path, t0, and duration.
+        - `delta_path`: NDCPWLF function for the path
+        - `path`: goc.GraphPath of vertices
+        Returns a RouteDuration object.
+        )pbdoc"
+    );
+
+    nyr.def(
+        "compute_RouteDuration_from_scratch",
+        py::overload_cast<const nyr::VRPInstance&, const goc::Matrix<nyr::NDCPWLF>&, const goc::GraphPath&>(&nyr::compute_RouteDuration),
+        py::arg("instance"),
+        py::arg("deltas"),
+        py::arg("path"),
+        R"pbdoc(
+        Returns a RouteDuration provided its path.
+        - `instance`: VRPInstance
+        - `deltas`: ARTFs matrix (Matrix<NDCPWLF>)
+        - `path`: goc.GraphPath of vertices
+        Returns a RouteDuration object.
+        )pbdoc"
+    );
+
+    nyr.def(
+        "compute_RouteDuration_lera",
+        &nyr::compute_RouteDuration_lera,
+        py::arg("instance"),
+        py::arg("path"),
+        R"pbdoc(
+        Returns a RouteDuration provided its path using the Lera-Romero procedure (unoptimal).
+        - `instance`: VRPInstance
+        - `path`: goc.GraphPath of vertices
+        Returns a RouteDuration object.
         )pbdoc"
     );
 

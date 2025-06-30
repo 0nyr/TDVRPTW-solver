@@ -5,16 +5,24 @@
 import os, sys
 
 from params.args import parse_program_args
+args = parse_program_args()
+
+from utils.terminal import purple, green
 from params.constants import PROJECT_ROOT_DIR, RUNNER_START_TIME
 from utils.formatting import format_date_for_console
+print(purple(f"Starting program [datetime: {format_date_for_console(RUNNER_START_TIME)}]..."))
 
-print(f"Starting program [datetime: {format_date_for_console(RUNNER_START_TIME)}]...")
+# Start by compiling the project if needed.
+from compiling.compile import compile
+if not compile(args): exit(0)
+if args["just_compile"]:
+    print(purple("Compilation finished. Exiting (--just_compile)..."))
+    exit(0)
 
 # Get Kairos-TDVRPTW directory and load the lib.
 """
 Load the Kairos library based on the provided arguments.
 """
-args = parse_program_args()
 KAIROS_BUILD_TYPE =  args["build_type"].lower()
 KAIROS_LIB_DIR = os.path.join(
     PROJECT_ROOT_DIR, "build", KAIROS_BUILD_TYPE, 
@@ -24,11 +32,9 @@ if not os.path.exists(KAIROS_LIB_DIR):
 sys.path.append(KAIROS_LIB_DIR)  # or wherever the .so is
 import kairos_tdvrptw as ks
 
-from utils.terminal import purple, green
 from utils.utils import read_json_from_file, save_json_to_file, save_csv_to_file, load_csv_from_file, get_filename_from_path, join_paths
 from utils.formatting import format_date_for_filepath, format_date_for_console
 from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
-from compiling.compile import compile
 from running.experiment import run_experiment, instances_for_experiment
 from params.args import parse_program_args
 from output.csv_output import get_csv_res
@@ -45,12 +51,6 @@ def get_runs(args: dict[str, Any]):
     experiment_files: list[str] = args["experiments"] # List of .json experiment files.
     selected_instances = args["instances"]
     selected_experiments = args["exps"]
-
-    # Compile project.
-    if not compile(args): exit(0)
-    if args["just_compile"]:
-        print(purple("Compilation finished. Exiting (--just_compile)..."))
-        exit(0)
     
     # prepare experiment runs
     experiment_runs:list[tuple] = []
@@ -161,7 +161,7 @@ def run_experiment_on_instance(
     # print("ARTFs:", artfs)
 
     # Create some random routes for testing.
-    random_routes = []
+    random_routes: list[list[int]] = []
     # for i in range(5):
     #     random_route_length = 10
     #     #random_route_length = random.randint(1, tdvrptw_instance.nb_clients())
@@ -181,13 +181,24 @@ def run_experiment_on_instance(
     for route in random_routes:
         print(green(f"Random route: {route}"))
         # Evaluate the route.
-        delta_route = ks.nyr.perform_tree_chain_composition(
+        delta_route: ks.nyr.NDCPWLF = ks.nyr.perform_tree_chain_composition(
             tdvrptw_instance, 
             artfs, 
             route
         )
         print(green(f"RRTF: {delta_route}"))
 
+        route_duration_onyr = ks.nyr.compute_RouteDuration_from_delta_path(
+            delta_route,
+            route
+        )
+        print(green(f"Route duration (ONYR): {route_duration_onyr}"))
+        route_duration_lera = ks.nyr.compute_RouteDuration_lera(
+            tdvrptw_instance,
+            route
+        )
+        print(green(f"Route duration (LERA): {route_duration_lera}"))
+        print("is equal:", route_duration_onyr == route_duration_lera)
 
 if __name__ == "__main__":
     main()
