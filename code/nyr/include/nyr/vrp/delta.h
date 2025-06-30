@@ -28,6 +28,17 @@ NDCPWLF perform_tree_chain_composition(
     const goc::GraphPath& path
 );
 
+/// @brief Performs sequential chain composition of ARTFs
+/// over the given path. This is the equivalent of the Lera-Romero
+/// procedure, which is not optimal.
+/// NOTE: Do NOT save intermediate results, just returns
+/// the final NDCPWLF.
+NDCPWLF perform_sequential_chain_composition(
+    const VRPInstance& instance,
+    const ARTFs& deltas,
+    const goc::GraphPath& path
+);
+
 /// @brief Computes the optimal departure time and duration
 /// for a given \delta^{\textbf{r}} RRTF.
 /// NOTE: If the path is infeasible, it returns {INFTY, INFTY}.

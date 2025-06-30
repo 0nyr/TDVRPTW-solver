@@ -186,7 +186,15 @@ def run_experiment_on_instance(
             artfs, 
             route
         )
-        print(green(f"RRTF: {delta_route}"))
+        print(green(f"RRTF (tree-chain): {delta_route}"))
+        print(green(f"RRTF (tree-chain) duration: {ks.nyr.compute_optimal_departure_time_and_duration(delta_route)}"))
+        delta_route_sequential: ks.nyr.NDCPWLF = ks.nyr.perform_sequential_chain_composition(
+            tdvrptw_instance, 
+            artfs, 
+            route
+        )
+        print(green(f"RRTF (sequential): {delta_route_sequential}"))
+        print(green(f"RRTF (sequential) duration: {ks.nyr.compute_optimal_departure_time_and_duration(delta_route_sequential)}"))
 
         route_duration_onyr = ks.nyr.compute_RouteDuration_from_delta_path(
             delta_route,

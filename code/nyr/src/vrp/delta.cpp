@@ -20,9 +20,8 @@ NDCPWLF perform_tree_chain_composition(
     const ARTFs& deltas,
     const goc::GraphPath& path
 ) {
-    size_t nb_traversed_arcs = path.size() - 1;
     #ifndef NDEBUG
-    if (nb_traversed_arcs <= 0) {
+    if (path.size() - 1 <= 0) {
         throw std::invalid_argument("Path must contain at least one arc.");
     }
     #endif
@@ -33,19 +32,28 @@ NDCPWLF perform_tree_chain_composition(
     composed_functions.reserve(nb_composed_functions);
     size_t k = (size_t) (path.size() - 1) / 2;
     for (size_t i = 0; i < k; ++i) {
+        std::clog << "Composing functions: " 
+                  << "g: " << path[2*i] << " -> " << path[2*i + 1] 
+                  << " and f: " << path[2*i + 1] << " -> " << path[2*i + 2]
+                  << std::endl;
         auto& g = deltas[path[2*i]][path[2*i + 1]];
         auto& f = deltas[path[2*i + 1]][path[2*i + 2]];
         composed_functions.push_back(
             f.compose(g)
         );
     }
-    if (nb_composed_functions % 2 == 1) {
+    if ((path.size() - 1) % 2 == 1) {
         // If odd, append the last element to the next list of composed functions
         composed_functions.push_back(
             // Copy of the last arc ARTF
             deltas[path[path.size() - 2]][path[path.size() - 1]]
         );
     }
+    std::clog << "Initial composed functions size: " 
+              << composed_functions.size() 
+              << ", k = " << k
+              << std::endl;
+
 
     // Loop of tree compositions
     while (composed_functions.size() > 1) {
@@ -54,6 +62,10 @@ NDCPWLF perform_tree_chain_composition(
         next_composed_functions.reserve(nb_next_composed_functions);
         k = (composed_functions.size()) / 2;
         for (size_t i = 0; i < k; ++i) {
+            std::clog << "Composing functions: "
+                      << "g: " << "[" << 2*i << "] " 
+                      << " and f: " << "[" << (2*i + 1) << "] "
+                      << std::endl;
             auto& g = composed_functions[2*i];
             auto& f = composed_functions[2*i + 1];
             next_composed_functions.push_back(
@@ -70,6 +82,38 @@ NDCPWLF perform_tree_chain_composition(
     }
 
     return composed_functions[0];
+}
+
+NDCPWLF perform_sequential_chain_composition(
+    const VRPInstance& instance,
+    const ARTFs& deltas,
+    const goc::GraphPath& path
+) {
+    #ifndef NDEBUG
+    if (path.size() - 1 <= 0) {
+        throw std::invalid_argument("Path must contain at least one arc.");
+    }
+    #endif
+
+    NDCPWLF composed = deltas[path[0]][path[1]];
+    std::clog << "Initial composed function: " 
+        << path[0] << " -> " << path[1] << std::endl;
+
+    for (size_t k = 1; k < path.size() - 1; ++k) {
+        goc::Vertex i = path[k], j = path[k + 1];
+        auto& delta_ij = deltas[i][j];
+        composed = delta_ij.compose(composed);
+        std::clog << "Composing functions: "
+                  << "f: " << i << " -> " << j
+                  << " with g: " << path[0] << " ~~> " << i
+                  << std::endl;
+        if (composed.empty()) {
+            // Early return
+            return NDCPWLF();
+        }
+    }
+
+    return composed;
 }
 
 std::pair<nyr::TimeUnit, nyr::TimeUnit> 

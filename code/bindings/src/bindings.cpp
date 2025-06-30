@@ -474,6 +474,22 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     );
 
     nyr.def(
+        "perform_sequential_chain_composition",
+        &nyr::perform_sequential_chain_composition,
+        py::arg("instance"),
+        py::arg("deltas"),
+        py::arg("path"),
+        R"pbdoc(
+        Perform the sequential chain composition:
+        - `instance`   : a loaded VRPInstance
+        - `deltas`     : the ARTFs matrix (Matrix<NDCPWLF>)
+        - `path`       : a goc.GraphPath of vertices
+        Returns an NDCPWLF equals to the composition of the arc-ready-time functions along the path.
+        This is a less optimal version of the tree-chain composition.
+        )pbdoc"
+    );
+
+    nyr.def(
         "compute_optimal_departure_time_and_duration",
         &nyr::compute_optimal_departure_time_and_duration,
         py::arg("delta_path"),
