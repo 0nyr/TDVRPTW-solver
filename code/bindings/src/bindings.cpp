@@ -603,6 +603,17 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     );
 
     m.def(
+        "greedy_nearest_neighbor_makespan",
+        &solver::greedy_nearest_neighbor_makespan,
+        py::arg("instance"),
+        R"pbdoc(
+        Greedy nearest neighbor algorithm for constructing a route based on makespan.
+        - `instance`: VRPInstance
+        Returns a nyr::VRPSolutionDuration object containing the constructed routes forming the solution.
+        )pbdoc"
+    );
+
+    m.def(
         "greedy_nearest_neighbor_duration",
         &solver::greedy_nearest_neighbor_duration,
         py::arg("instance"),

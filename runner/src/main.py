@@ -37,8 +37,7 @@ from utils.formatting import format_date_for_filepath, format_date_for_console
 from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
 from running.experiment import run_experiment, instances_for_experiment
 from params.args import parse_program_args
-from output.csv_output import get_csv_res
-from output.json_output import complete_res_json
+from utils.math import percentage_difference
 from tqdm import tqdm
 from typing import Any
 import json, datetime
@@ -160,8 +159,18 @@ def run_experiment_on_instance(
     artfs = ks.nyr.make_artfs(tdvrptw_instance)
     # print("ARTFs:", artfs)
 
+    vrp_solution_gmh1: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_makespan(tdvrptw_instance)
+    print(green(json.dumps(json.loads(f"{vrp_solution_gmh1}"), indent=4)))
+
     vrp_solution: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_duration(tdvrptw_instance, artfs)
     print(green(json.dumps(json.loads(f"{vrp_solution}"), indent=4)))
+
+    # Print the approach with best duration.
+    if vrp_solution_gmh1.value < vrp_solution.value:
+        print(green(f"Best approach: Greedy Nearest Neighbor Makespan ({vrp_solution_gmh1.value})"))
+    else:
+        print(green(f"Best approach: Greedy Nearest Neighbor Duration ({vrp_solution.value})"))
+    print(green(f"Percentage difference: {percentage_difference(vrp_solution_gmh1.value, vrp_solution.value)}%"))
 
     return 
     # Create some random routes for testing.

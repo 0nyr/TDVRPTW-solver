@@ -20,6 +20,17 @@ nyr::VRPSolutionMakespan greedy_makespan_heuristic_1(
     const nyr::VRPInstance& vrp
 );
 
+/// Builds a Makespan solution using the Greedy Nearest Neighbor 
+/// Makespan heuristic 1. Then converts it to a Duration solution.
+inline nyr::VRPSolutionDuration greedy_nearest_neighbor_makespan(
+    const nyr::VRPInstance& vrp
+) {
+    return convert_makespan_solution_to_duration(
+        greedy_makespan_heuristic_1(vrp), 
+        vrp
+    );
+}
+
 /**
  * ### Use GMH1 heuristic.
  * 
@@ -42,7 +53,7 @@ void gmh1(
 
     // Add the converted solution to the solution record.
     solution_record.try_add(converted_solution, "GMH1");
-}
+} 
 
 /** 
  * ### TD-EAT Greedy Nearest Neighbor V2
