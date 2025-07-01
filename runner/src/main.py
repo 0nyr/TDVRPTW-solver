@@ -40,8 +40,9 @@ from params.args import parse_program_args
 from utils.math import percentage_difference
 from tqdm import tqdm
 from typing import Any
-import json, datetime
+import json, datetime, time
 import random
+import pandas as pd
 
 def get_runs(args: dict[str, Any]):
     """
@@ -126,53 +127,41 @@ def main():
     if args["dry_run"]: return
     experiment_runs = get_runs(args)
 
+    df = pd.DataFrame()
     for experiment, instance, solutions in experiment_runs:
-        run_experiment_on_instance(
+        df_res_stats = run_experiment_on_instance(
             args,
             experiment,
             instance,
-            solutions
+            solutions,
+            df
         )
-        # TODO: remove. Early exit (just for testing)
-        break
+        df = pd.concat(
+            [df, df_res_stats],
+            ignore_index=True
+        )
+        # # TODO: remove. Early exit (just for testing)
+        # break
+    
+    # Print the full results
+    print(f"\nFull benchmark results: [build type: {KAIROS_BUILD_TYPE}]\n")
+    print(df.to_markdown(index=False))
 
     # Print total time taken for the program.
     total_time = datetime.datetime.now() - RUNNER_START_TIME
     print(purple(F"Total time taken: {total_time}"))
 
-def run_experiment_on_instance(
-    args: dict[str, Any],
-    experiment,
-    instance,
-    solutions
+
+def legacy_test_route_duration_calculation(
+    tdvrptw_instance: ks.nyr.VRPInstance,
+    artfs: ks.nyr.ARTFs
 ):
-    start_time = datetime.datetime.now()
-    print(purple(F"Running [{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
+    """
+    legacy manual test function.
+    Test the route duration calculation using ONYR and LERA methods.
+    You need to ensure the route selected is valid and feasible for the instance.
+    """
 
-    # Load the instance
-    instance_filepath = F"{instance['instance_dirpath']}/{instance['instance_filename']}"
-    instance_json_data = read_json_from_file(instance_filepath)
-    instance_json_data["instance_filename"] = instance["instance_filename"]
-
-    tdvrptw_instance: ks.nyr.VRPInstance = ks.load_instance_from_json(instance_json_data)
-    # print(tdvrptw_instance)
-    artfs = ks.nyr.make_artfs(tdvrptw_instance)
-    # print("ARTFs:", artfs)
-
-    vrp_solution_gmh1: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_makespan(tdvrptw_instance)
-    print(green(json.dumps(json.loads(f"{vrp_solution_gmh1}"), indent=4)))
-
-    vrp_solution: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_duration(tdvrptw_instance, artfs)
-    print(green(json.dumps(json.loads(f"{vrp_solution}"), indent=4)))
-
-    # Print the approach with best duration.
-    if vrp_solution_gmh1.value < vrp_solution.value:
-        print(green(f"Best approach: Greedy Nearest Neighbor Makespan ({vrp_solution_gmh1.value})"))
-    else:
-        print(green(f"Best approach: Greedy Nearest Neighbor Duration ({vrp_solution.value})"))
-    print(green(f"Percentage difference: {percentage_difference(vrp_solution_gmh1.value, vrp_solution.value)}%"))
-
-    return 
     # Create some random routes for testing.
     random_routes: list[list[int]] = []
     # for i in range(5):
@@ -220,6 +209,62 @@ def run_experiment_on_instance(
         )
         print(green(f"Route duration (LERA): {route_duration_lera}"))
         print("is equal:", route_duration_onyr == route_duration_lera)
+
+def run_experiment_on_instance(
+    args: dict[str, Any],
+    experiment,
+    instance,
+    solutions,
+    df: pd.DataFrame # for storing results
+):
+    start_time = datetime.datetime.now()
+    print(purple(F"Running [{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
+
+    # Load the instance
+    instance_filepath = F"{instance['instance_dirpath']}/{instance['instance_filename']}"
+    instance_json_data = read_json_from_file(instance_filepath)
+    instance_json_data["instance_filename"] = instance["instance_filename"]
+
+    tdvrptw_instance: ks.nyr.VRPInstance = ks.load_instance_from_json(instance_json_data)
+    # print(tdvrptw_instance)
+    artfs = ks.nyr.make_artfs(tdvrptw_instance)
+    # print("ARTFs:", artfs)
+
+    heuristic_time_start = time.time()
+    vrp_solution_gmh1: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_makespan(tdvrptw_instance)
+    gmh1_time_taken = time.time() - heuristic_time_start
+    # print(green(json.dumps(json.loads(f"{vrp_solution_gmh1}"), indent=4)))
+
+    heuristic_time_start = time.time()
+    vrp_solution_gdh1: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_duration(tdvrptw_instance, artfs)
+    gdh1_time_taken = time.time() - heuristic_time_start
+    # print(green(json.dumps(json.loads(f"{vrp_solution_gdh1}"), indent=4)))
+
+    # Print the approach with best duration.
+    best_approach = ""
+    if vrp_solution_gmh1.value < vrp_solution_gdh1.value:
+        best_approach = "GNN-Makespan"
+        print(green(f"Best approach: Greedy Nearest Neighbor Makespan ({vrp_solution_gmh1.value})"))
+    else:
+        best_approach = "GNN-Duration"
+        print(green(f"Best approach: Greedy Nearest Neighbor Duration ({vrp_solution_gdh1.value})"))
+    print(green(f"Percentage difference: {percentage_difference(vrp_solution_gmh1.value, vrp_solution_gdh1.value)}%"))
+
+    stats = {
+        "instance_name": instance["instance_filename"],
+        "dataset_name": instance["dataset_name"],
+        "duration_gmh1": vrp_solution_gmh1.value,
+        "gmh1_time_taken": gmh1_time_taken,
+        "duration_gdh1": vrp_solution_gdh1.value,
+        "gdh1_time_taken": gdh1_time_taken,
+        "best_approach": best_approach,
+        "duration_difference": percentage_difference(vrp_solution_gmh1.value, vrp_solution_gdh1.value),
+        "total_time_taken": (datetime.datetime.now() - start_time).total_seconds()
+    }
+    df_current_stats = pd.DataFrame(stats, index=[0])
+    #print(df_current_stats.to_markdown(index=False))
+    return df_current_stats
+    
 
 if __name__ == "__main__":
     main()
