@@ -144,7 +144,7 @@ nyr::VRPSolutionDuration greedy_nearest_neighbor_duration(
                 last_visited_vertex
             );
 
-            if (next_vertex == -1 || goc::epsilon_bigger_equal(duration, INFTY)) { // No more candidates available
+            if (next_vertex == -1 || goc::is_plus_infty(duration)) { // No more candidates available
                 break; // Exit the loop if no next vertex is found.
             }
             
@@ -161,25 +161,44 @@ nyr::VRPSolutionDuration greedy_nearest_neighbor_duration(
         }
 
         // Close the route by returning to the depot.
-        route.push_back(vrp.d);
         delta_route = deltas[route.back()][vrp.d].compose(delta_route);
+        route.push_back(vrp.d);
+        
         auto [departure_time, duration] = 
             compute_optimal_departure_time_and_duration(delta_route);
         
         #ifndef NDEBUG
         bool throw_error = false;
-        if (goc::epsilon_bigger_equal(duration, INFTY)) {
+        if (delta_route.empty()) {
             std::clog << "greedy_nearest_neighbor_duration: Error: "
-                << "Route duration is INFTY.";
+                << "delta_route is empty." << std::endl;
+            throw_error = true;
+            // Try recomputing the delta_route from scratch
+            NDCPWLF recomputed_delta_route = 
+                perform_tree_chain_composition(vrp, deltas, route);
+            auto [recomputed_departure_time, recomputed_duration] = 
+                compute_optimal_departure_time_and_duration(recomputed_delta_route);
+            std::clog << "Recomputed delta_route gives departure_time: "
+                << recomputed_departure_time
+                << ", duration: " << recomputed_duration
+                << std::endl;
+        }
+        if (goc::is_plus_infty(duration)) {
+            std::clog << "greedy_nearest_neighbor_duration: Error: "
+                << "Route duration is INFTY." << std::endl;
             throw_error = true;
         }
-        if (goc::epsilon_bigger_equal(departure_time, INFTY)) {
+        if (goc::is_plus_infty(departure_time)) {
             std::clog << "greedy_nearest_neighbor_duration: Error: "
-                << "Route departure_time is INFTY.";
+                << "Route departure_time is INFTY." << std::endl;
             throw_error = true;
         }
         if (throw_error) {
             std::clog << " current route: " << route 
+                << ", departure_time is INFTY?: "
+                << (goc::is_plus_infty(duration) ? "yes" : "no")
+                << ", duration is INFTY?: "
+                << (goc::is_plus_infty(departure_time) ? "yes" : "no")
                 << ", departure time: " << departure_time
                 << ", duration: " << duration
                 << ", nb of already built routes: " << vrp_solution.routes.size()
@@ -199,7 +218,23 @@ nyr::VRPSolutionDuration greedy_nearest_neighbor_duration(
             duration
         );
         vrp_solution.routes.push_back(std::move(route_duration));
+        vrp_solution.value += duration;
     }
+
+    #ifndef NDEBUG
+    // Check if all clients have been visited
+    if (visits_tracker.nb_visited_clients != n) {
+        std::clog << "greedy_nearest_neighbor_duration: Error: "
+            << "Not all clients have been visited. "
+            << "Visited clients: " << visits_tracker.nb_visited_clients
+            << ", Total clients: " << n
+            << ", Remaining candidates: " << visits_tracker.candidates.size()
+            << ", Candidates: " << visits_tracker.candidates
+            << std::endl;
+        throw std::runtime_error("greedy_nearest_neighbor_duration: Error: "
+            "Not all clients have been visited.");
+    }
+    #endif
 
     return vrp_solution;
 }

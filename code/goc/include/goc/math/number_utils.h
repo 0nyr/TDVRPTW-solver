@@ -51,9 +51,20 @@ inline bool epsilon_bigger(double x, double y)
 }
 
 // Returns: if x >= y with respect to the tolerance EPS.
+// WARN: Should NOT be used to compare with INFTY.
 inline bool epsilon_bigger_equal(double x, double y)
 {
     return x + EPS > y;
+}
+
+// Returns: if x is a number that is bigger or equal to INFTY.
+// Remember that:
+// >>> 10e50 + 0.00001 > 10e50
+// False
+// When comparing with INFTY, use direct comparison
+inline bool is_plus_infty(double x)
+{
+    return x >= INFTY;
 }
 
 // Returns: the sum of all numbers in 'numbers'.
