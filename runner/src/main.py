@@ -160,6 +160,10 @@ def run_experiment_on_instance(
     artfs = ks.nyr.make_artfs(tdvrptw_instance)
     # print("ARTFs:", artfs)
 
+    vrp_solution: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_duration(tdvrptw_instance, artfs)
+    print(green(json.dumps(json.loads(f"{vrp_solution}"), indent=4)))
+
+    return 
     # Create some random routes for testing.
     random_routes: list[list[int]] = []
     # for i in range(5):

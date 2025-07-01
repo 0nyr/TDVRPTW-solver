@@ -85,6 +85,7 @@ add_library(
     # src/bcp/bcp.cpp
     main/src/heuristics/greedy_makespan.cpp
     main/src/heuristics/aco.cpp
+    main/src/heuristics/greedy_duration.cpp
 )
 target_link_libraries(solver goc nyr) # add compiled libs
 

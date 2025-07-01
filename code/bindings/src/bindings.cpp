@@ -407,6 +407,50 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
             py::arg("other"),
             "True if two duration routes differ");
 
+    // ==================== VRPSolutionMakespan CLASS ====================
+    py::class_<nyr::VRPSolutionMakespan>(m, "VRPSolutionMakespan")
+        .def(py::init<>(), "Create an empty VRPSolutionMakespan")
+        .def(py::init<double, const std::vector<nyr::RouteMakespan>&>(),
+            py::arg("value"), py::arg("routes"),
+            "Create a VRPSolutionMakespan from value and list of RouteMakespan")
+        .def_readwrite("value", &nyr::VRPSolutionMakespan::value, "Objective value of the solution")
+        .def_readwrite("routes", &nyr::VRPSolutionMakespan::routes, "List of routes in the solution")
+        .def("__len__", [](const nyr::VRPSolutionMakespan& sol) { return sol.routes.size(); })
+        .def("__getitem__", [](const nyr::VRPSolutionMakespan& sol, size_t i) {
+            if (i >= sol.routes.size()) throw py::index_error();
+            return sol.routes[i];
+        }, py::return_value_policy::reference_internal)
+        .def("__repr__", [](const nyr::VRPSolutionMakespan& sol) {
+            std::ostringstream oss;
+            sol.Print(oss);
+            return oss.str();
+        })
+        .def("__eq__", [](const nyr::VRPSolutionMakespan& a, const nyr::VRPSolutionMakespan& b) {
+            return a == b;
+        });
+
+    // ==================== VRPSolutionDuration CLASS ====================
+    py::class_<nyr::VRPSolutionDuration>(m, "VRPSolutionDuration")
+        .def(py::init<>(), "Create an empty VRPSolutionDuration")
+        .def(py::init<double, const std::vector<nyr::RouteDuration>&>(),
+            py::arg("value"), py::arg("routes"),
+            "Create a VRPSolutionDuration from value and list of RouteDuration")
+        .def_readwrite("value", &nyr::VRPSolutionDuration::value, "Objective value of the solution")
+        .def_readwrite("routes", &nyr::VRPSolutionDuration::routes, "List of routes in the solution")
+        .def("__len__", [](const nyr::VRPSolutionDuration& sol) { return sol.routes.size(); })
+        .def("__getitem__", [](const nyr::VRPSolutionDuration& sol, size_t i) {
+            if (i >= sol.routes.size()) throw py::index_error();
+            return sol.routes[i];
+        }, py::return_value_policy::reference_internal)
+        .def("__repr__", [](const nyr::VRPSolutionDuration& sol) {
+            std::ostringstream oss;
+            sol.Print(oss);
+            return oss.str();
+        })
+        .def("__eq__", [](const nyr::VRPSolutionDuration& a, const nyr::VRPSolutionDuration& b) {
+            return a == b;
+        });
+
     // ==================== VRPInstance CLASS ====================
     py::class_<nyr::VRPInstance>(nyr, "VRPInstance")
         .def(py::init<>(), "Create empty VRPInstance")
@@ -555,6 +599,19 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         Load a VRPInstance from a Python dict (or JSON string, list, etc.).
         Internally we run your C++ preprocessors on the parsed JSON and then
         deserialize into a nyr::VRPInstance.
+        )pbdoc"
+    );
+
+    m.def(
+        "greedy_nearest_neighbor_duration",
+        &solver::greedy_nearest_neighbor_duration,
+        py::arg("instance"),
+        py::arg("deltas"),
+        R"pbdoc(
+        Greedy nearest neighbor algorithm for constructing a route based on duration.
+        - `instance`: VRPInstance
+        - `deltas`: ARTFs matrix (Matrix<NDCPWLF>)
+        Returns a nyr::VRPSolutionDuration object containing the constructed routes forming the solution.
         )pbdoc"
     );
 

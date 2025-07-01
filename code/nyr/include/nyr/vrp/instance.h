@@ -19,6 +19,7 @@ public:
 	goc::Digraph D; // digraph representing the network.
 	goc::Vertex o, d; // origin and destination depot.
 	TimeUnit T; // end of planning horizon ([0,T]). TODO: Remove, replace by horizon.right.
+	goc::Interval horizon; // horizon of the instance [0, T]
 	//goc::Interval horizon; // horizon of the instance.
 	std::vector<goc::Interval> tw; // time window of customers (tw[i] = time window of customer i).
 	CapacityUnit Q; // vehicle capacity.
@@ -81,6 +82,9 @@ public:
 	inline size_t nb_clients() const {
 		return D.NbVertices() - 2; // Exclude origin and destination depots.
 	}
+
+	/// Returns: a vector with all the clients (vertices except depots).
+	std::vector<goc::Vertex> copy_clients() const;
 };
 
 // Serializes the instance.

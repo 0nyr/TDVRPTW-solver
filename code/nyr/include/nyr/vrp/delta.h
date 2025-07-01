@@ -31,6 +31,7 @@ NDCPWLF perform_tree_chain_composition(
 /// @brief Performs sequential chain composition of ARTFs
 /// over the given path. This is the equivalent of the Lera-Romero
 /// procedure, which is not optimal.
+/// NOTE: This function is intended to be used for testing and debugging purposes.
 /// NOTE: Do NOT save intermediate results, just returns
 /// the final NDCPWLF.
 NDCPWLF perform_sequential_chain_composition(
@@ -74,5 +75,30 @@ RouteDuration compute_RouteDuration_lera(
     const VRPInstance& instance,
     const goc::GraphPath& path
 );
+
+/// Tree of delta functions
+/// This is a tree of NDCPWLFs, where each node is a non-arc delta function.
+/// The tree is built by performing the tree chain composition along the path.
+/// More info, see Visser et al. 2020 & Blauth et al. 2024
+/// It contains a hash map (subpath) -> NDCPWLF (associated delta function)
+/// Such that evaluating a LS move can be done very fast.
+class DeltaTree {
+public:
+    using Subpath = std::pair<goc::Vertex, goc::Vertex>;
+    using DeltaMap = std::unordered_map<Subpath, NDCPWLF>;
+
+    DeltaMap delta_map;
+    goc::GraphPath path; // The (current) path.
+
+    /// Constructs a DeltaTree from the given instance and path.
+    DeltaTree(
+        const VRPInstance& instance,
+        const goc::GraphPath& path
+    );
+    
+    /// Local Search Moves
+    
+};
+
 
 } // namespace nyr

@@ -119,6 +119,20 @@ void VRPInstance::Print(ostream& os) const
 	os << json(*this);
 }
 
+std::vector<goc::Vertex> VRPInstance::copy_clients() const {
+	std::vector<goc::Vertex> vertices = D.Vertices();
+
+	#ifndef NDEBUG
+	assert(vertices[0] == this->o);
+	assert(vertices.back() == this->d);
+	#endif
+
+	return std::vector<goc::Vertex>(
+		vertices.begin() + 1, 
+		vertices.end() - 1
+	);
+}
+
 void to_json(json& j, const VRPInstance& instance)
 {
 	j["digraph"] = instance.D;
@@ -138,6 +152,7 @@ void from_json(const json& j, VRPInstance& instance)
 	instance.o = j["start_depot"];
 	instance.d = j["end_depot"];
 	instance.T = j["horizon"][1];
+	instance.horizon = Interval(0.0, instance.T);
 	//instance.horizon = j["horizon"];
 	instance.tw = vector<Interval>(j["time_windows"].begin(), j["time_windows"].end());
 	instance.Q = value_or_default(j, "vehicle_capacity", 1.0);
