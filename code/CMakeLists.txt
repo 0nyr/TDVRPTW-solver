@@ -33,7 +33,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Fastdebug")
   message(STATUS "-- Compiling in Fastdebug Mode (UBSan, no logging, quick iter)")
   # a light optimization level to keep compile+link cheap
-  string(APPEND CMAKE_CXX_FLAGS " -g -O1 -Wall -Wextra ${UBSAN_FLAGS}")
+  string(APPEND CMAKE_CXX_FLAGS " -g -DNDEBUG -O1 -Wall -Wextra ${UBSAN_FLAGS}")
   string(APPEND CMAKE_SHARED_LINKER_FLAGS " ${UBSAN_FLAGS}")
 else()
   message(FATAL_ERROR "Unknown CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}. Valid types: ${VALID_BUILD_TYPES}")

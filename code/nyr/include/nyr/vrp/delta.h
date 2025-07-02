@@ -132,6 +132,19 @@ compute_optimal_departure_time_and_duration(
     const nyr::NDCPWLF& delta_path
 );
 
+/// @brief  Computes the optimal departure time and duration
+/// for a given path, using tree-chain composition of ARTFs.
+template<typename PathContainer>
+std::pair<nyr::TimeUnit, nyr::TimeUnit> 
+compute_optimal_departure_time_and_duration_from_path(
+    const VRPInstance& instance,
+    const ARTFs& deltas,
+    const PathContainer& path
+) {
+    nyr::NDCPWLF delta_path = perform_tree_chain_composition(instance, deltas, path);
+    return compute_optimal_departure_time_and_duration(delta_path);
+}
+
 /// Return a RouteDuration object that contains its own 
 /// copy of the path, t0, and duration.
 inline RouteDuration compute_RouteDuration(

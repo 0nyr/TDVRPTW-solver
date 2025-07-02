@@ -263,6 +263,8 @@ def run_experiment_on_instance(
             "duration": solution.value,
             "time_taken": time_taken,
         })
+        solution_as_str = json.dumps(json.loads(str(solution)), indent=4)
+        print(green(f"({heuristic['name']}) - Sol. Duration: {solution.value}, : \n{solution_as_str}"))
 
     # Find best approach (lowest duration)
     best_result = min(heuristic_results, key=lambda x: x["duration"])
