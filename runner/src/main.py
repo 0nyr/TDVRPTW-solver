@@ -230,39 +230,66 @@ def run_experiment_on_instance(
     artfs = ks.nyr.make_artfs(tdvrptw_instance)
     # print("ARTFs:", artfs)
 
-    heuristic_time_start = time.time()
-    vrp_solution_gmh1: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_makespan(tdvrptw_instance)
-    gmh1_time_taken = time.time() - heuristic_time_start
-    # print(green(json.dumps(json.loads(f"{vrp_solution_gmh1}"), indent=4)))
+    # Run heuristics and measure time
+    heuristics = [
+        {
+            "name": "GNN-Makespan",
+            "func": lambda: ks.greedy_nearest_neighbor_makespan(tdvrptw_instance),
+            "args": (),
+            "kwargs": {},
+        },
+        {
+            "name": "GNN-Duration",
+            "func": lambda: ks.greedy_nearest_neighbor_duration(tdvrptw_instance, artfs),
+            "args": (),
+            "kwargs": {},
+        },
+        {
+            "name": "Regret-Insertion",
+            "func": lambda: ks.regret_insertion_duration(tdvrptw_instance, artfs),
+            "args": (),
+            "kwargs": {},
+        },
+    ]
 
-    heuristic_time_start = time.time()
-    vrp_solution_gdh1: ks.nyr.VRPSolutionDuration = ks.greedy_nearest_neighbor_duration(tdvrptw_instance, artfs)
-    gdh1_time_taken = time.time() - heuristic_time_start
-    # print(green(json.dumps(json.loads(f"{vrp_solution_gdh1}"), indent=4)))
+    heuristic_results = []
+    for heuristic in heuristics:
+        time_start = time.time()
+        solution = heuristic["func"](*heuristic["args"], **heuristic["kwargs"])
+        time_taken = time.time() - time_start
+        heuristic_results.append({
+            "name": heuristic["name"],
+            "solution": solution,
+            "duration": solution.value,
+            "time_taken": time_taken,
+        })
 
-    # Print the approach with best duration.
-    best_approach = ""
-    if vrp_solution_gmh1.value < vrp_solution_gdh1.value:
-        best_approach = "GNN-Makespan"
-        print(green(f"Best approach: Greedy Nearest Neighbor Makespan ({vrp_solution_gmh1.value})"))
-    else:
-        best_approach = "GNN-Duration"
-        print(green(f"Best approach: Greedy Nearest Neighbor Duration ({vrp_solution_gdh1.value})"))
-    print(green(f"Percentage difference: {percentage_difference(vrp_solution_gmh1.value, vrp_solution_gdh1.value)}%"))
+    # Find best approach (lowest duration)
+    best_result = min(heuristic_results, key=lambda x: x["duration"])
+    print(green(f"Best approach: {best_result['name']} ({best_result['duration']})"))
 
+    # Print all approaches and percentage differences
+    for res in heuristic_results:
+        print(green(f"{res['name']}: {res['duration']} (time: {res['time_taken']:.4f}s)"))
+    for i in range(len(heuristic_results)):
+        for j in range(i + 1, len(heuristic_results)):
+            diff = percentage_difference(heuristic_results[i]["duration"], heuristic_results[j]["duration"])
+            print(green(f"Percentage difference between {heuristic_results[i]['name']} and {heuristic_results[j]['name']}: {diff}%"))
+
+    # Prepare stats for DataFrame
     stats = {
         "instance_name": instance["instance_filename"],
         "dataset_name": instance["dataset_name"],
-        "duration_gmh1": vrp_solution_gmh1.value,
-        "gmh1_time_taken": gmh1_time_taken,
-        "duration_gdh1": vrp_solution_gdh1.value,
-        "gdh1_time_taken": gdh1_time_taken,
-        "best_approach": best_approach,
-        "duration_difference": percentage_difference(vrp_solution_gmh1.value, vrp_solution_gdh1.value),
-        "total_time_taken": (datetime.datetime.now() - start_time).total_seconds()
+        "best_approach": best_result["name"],
+        "best_duration": best_result["duration"],
+        "total_time_taken": (datetime.datetime.now() - start_time).total_seconds(),
     }
+    # Add each heuristic's duration and time_taken to stats
+    for res in heuristic_results:
+        stats[f"duration_{res['name'].lower().replace('-', '_')}"] = res["duration"]
+        stats[f"time_{res['name'].lower().replace('-', '_')}"] = res["time_taken"]
+
     df_current_stats = pd.DataFrame(stats, index=[0])
-    #print(df_current_stats.to_markdown(index=False))
     return df_current_stats
     
 

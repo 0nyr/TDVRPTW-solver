@@ -503,13 +503,16 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
 
     nyr.def(
         "perform_tree_chain_composition",
-        &nyr::perform_tree_chain_composition,
+        static_cast<nyr::NDCPWLF (*)(
+            const nyr::VRPInstance&,
+            const nyr::ARTFs&,
+            const goc::GraphPath&
+        )>(&nyr::perform_tree_chain_composition<goc::GraphPath>),
         py::arg("instance"),
         py::arg("deltas"),
         py::arg("path"),
         R"pbdoc(
         Perform the (Visser et al 2020) tree-chain composition:
-        
         - `instance`   : a loaded VRPInstance
         - `deltas`     : the ARTFs matrix (Matrix<NDCPWLF>)
         - `path`       : a goc.GraphPath of vertices
@@ -620,6 +623,19 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         py::arg("deltas"),
         R"pbdoc(
         Greedy nearest neighbor algorithm for constructing a route based on duration.
+        - `instance`: VRPInstance
+        - `deltas`: ARTFs matrix (Matrix<NDCPWLF>)
+        Returns a nyr::VRPSolutionDuration object containing the constructed routes forming the solution.
+        )pbdoc"
+    );
+
+    m.def(
+        "regret_insertion_duration",
+        &solver::regret_insertion_duration,
+        py::arg("instance"),
+        py::arg("deltas"),
+        R"pbdoc(
+        Regret insertion algorithm for constructing a route based on duration.
         - `instance`: VRPInstance
         - `deltas`: ARTFs matrix (Matrix<NDCPWLF>)
         Returns a nyr::VRPSolutionDuration object containing the constructed routes forming the solution.

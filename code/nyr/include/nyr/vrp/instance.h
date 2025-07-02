@@ -85,6 +85,20 @@ public:
 
 	/// Returns: a vector with all the clients (vertices except depots).
 	std::vector<goc::Vertex> copy_clients() const;
+
+	/// Returns: first (included) vertex in the range of clients.
+	inline size_t clients_range_start() const {
+		return 1;
+	}
+	/// Returns: last (excluded) vertex in the range of clients.
+	inline size_t clients_range_end() const {
+		return d; // Exclude destination depot.
+	}
+	/// Returns: The range of clients [first client, d] to be iterated
+	/// over with '<' operator.
+	inline std::pair<size_t, size_t> clients_range() const {
+		return {1, d};
+	}
 };
 
 // Serializes the instance.

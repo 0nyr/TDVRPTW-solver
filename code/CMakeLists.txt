@@ -64,28 +64,29 @@ include_directories(nyr/include)
 
 # Create library with source codes.
 add_library(
-    solver 
-    main/src/preprocess/load_igp.cpp 
-    main/src/preprocess/preprocess_utils.cpp
-    main/src/preprocess/preprocess_capacity.cpp 
-    main/src/preprocess/preprocess_time_windows.cpp 
-    main/src/preprocess/preprocess_service_waiting.cpp 
-    main/src/preprocess/preprocess_travel_times.cpp 
-    main/src/preprocess/preprocess_triangle_depot.cpp 
-    main/src/preprocess/preprocess_ng_neighborhoods.cpp 
-    main/src/preprocess/preprocess_validity.cpp 
-    # src/labeling/label.cpp 
-    # src/labeling/monodirectional_labeling.cpp 
-    # src/labeling/lazy_label.cpp 
-    # src/labeling/pwl_domination_function.cpp 
-    # src/labeling/bidirectional_labeling.cpp 
-    # src/labeling/ng_neighborhoods.cpp 
-    # src/bcp/pricing_problem.cpp 
-    # src/bcp/spf.cpp 
-    # src/bcp/bcp.cpp
-    main/src/heuristics/greedy_makespan.cpp
-    main/src/heuristics/aco.cpp
-    main/src/heuristics/greedy_duration.cpp
+  solver 
+  main/src/preprocess/load_igp.cpp 
+  main/src/preprocess/preprocess_utils.cpp
+  main/src/preprocess/preprocess_capacity.cpp 
+  main/src/preprocess/preprocess_time_windows.cpp 
+  main/src/preprocess/preprocess_service_waiting.cpp 
+  main/src/preprocess/preprocess_travel_times.cpp 
+  main/src/preprocess/preprocess_triangle_depot.cpp 
+  main/src/preprocess/preprocess_ng_neighborhoods.cpp 
+  main/src/preprocess/preprocess_validity.cpp 
+  # src/labeling/label.cpp 
+  # src/labeling/monodirectional_labeling.cpp 
+  # src/labeling/lazy_label.cpp 
+  # src/labeling/pwl_domination_function.cpp 
+  # src/labeling/bidirectional_labeling.cpp 
+  # src/labeling/ng_neighborhoods.cpp 
+  # src/bcp/pricing_problem.cpp 
+  # src/bcp/spf.cpp 
+  # src/bcp/bcp.cpp
+  main/src/heuristics/greedy_makespan.cpp
+  main/src/heuristics/aco.cpp
+  main/src/heuristics/greedy_duration.cpp
+  main/src/heuristics/regret_insertion.cpp
 )
 target_link_libraries(solver goc nyr) # add compiled libs
 

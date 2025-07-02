@@ -22,11 +22,94 @@ ARTFs make_artfs(const VRPInstance& instance);
 /// Visser et al. 2020: doi = {10.1287/trsc.2019.0938}
 /// NOTE: Do NOT save intermediate results, just returns
 /// the final NDCPWLF.
+template<typename PathContainer>
 NDCPWLF perform_tree_chain_composition(
     const VRPInstance& instance,
     const ARTFs& deltas,
-    const goc::GraphPath& path
-);
+    const PathContainer& path
+) {
+    using std::begin;
+    using std::end;
+    auto path_begin = begin(path);
+    auto path_end = end(path);
+    size_t path_size = std::distance(path_begin, path_end);
+
+    #ifndef NDEBUG
+    if (path_size <= 1) {
+        throw std::invalid_argument("Path must contain at least one arc.");
+    }
+    #endif
+
+    // First init loop done manually over refs of ARTFs
+    size_t nb_composed_functions = path_size / 2;
+    std::vector<nyr::NDCPWLF> composed_functions;
+    composed_functions.reserve(nb_composed_functions);
+
+    size_t k = (path_size - 1) / 2;
+    auto it = path_begin;
+    for (size_t i = 0; i < k; ++i) {
+        auto v0 = *it++;
+        auto v1 = *it++;
+        auto v2 = *it;
+        #ifndef NDEBUG
+        std::clog << "Composing functions: " 
+                  << "g: " << v0 << " -> " << v1
+                  << " and f: " << v1 << " -> " << v2
+                  << std::endl;
+        #endif
+        auto& g = deltas[v0][v1];
+        auto& f = deltas[v1][v2];
+        composed_functions.push_back(
+            f.compose(g)
+        );
+    }
+    if ((path_size - 1) % 2 == 1) {
+        // If odd, append the last element to the next list of composed functions
+        auto it_last1 = path_begin;
+        std::advance(it_last1, path_size - 2);
+        auto it_last2 = it_last1;
+        ++it_last2;
+        composed_functions.push_back(
+            deltas[*it_last1][*it_last2]
+        );
+    }
+    #ifndef NDEBUG
+    std::clog << "Initial composed functions size: " 
+              << composed_functions.size() 
+              << ", k = " << k
+              << std::endl;
+    #endif
+
+    // Loop of tree compositions
+    while (composed_functions.size() > 1) {
+        size_t nb_next_composed_functions = (composed_functions.size() + 1) / 2;
+        std::vector<nyr::NDCPWLF> next_composed_functions;
+        next_composed_functions.reserve(nb_next_composed_functions);
+        k = composed_functions.size() / 2;
+        for (size_t i = 0; i < k; ++i) {
+            #ifndef NDEBUG
+            std::clog << "Composing functions: "
+                      << "g: " << "[" << 2*i << "] " 
+                      << " and f: " << "[" << (2*i + 1) << "] "
+                      << std::endl;
+            #endif
+            auto& g = composed_functions[2*i];
+            auto& f = composed_functions[2*i + 1];
+            next_composed_functions.push_back(
+                f.compose(g)
+            );
+        }
+        if (composed_functions.size() % 2 == 1) {
+            next_composed_functions.push_back(
+                std::move(composed_functions.back())
+            );
+        }
+        composed_functions = std::move(next_composed_functions); 
+    }
+
+    return composed_functions[0];
+}
+
 
 /// @brief Performs sequential chain composition of ARTFs
 /// over the given path. This is the equivalent of the Lera-Romero
@@ -97,7 +180,7 @@ public:
     );
     
     /// Local Search Moves
-    
+
 };
 
 
