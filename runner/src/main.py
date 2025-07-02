@@ -32,7 +32,9 @@ if not os.path.exists(KAIROS_LIB_DIR):
 sys.path.append(KAIROS_LIB_DIR)  # or wherever the .so is
 import kairos_tdvrptw as ks
 
-from utils.utils import read_json_from_file, save_json_to_file, save_csv_to_file, load_csv_from_file, get_filename_from_path, join_paths
+KAIROS_OBJECTIVE = "Duration"
+
+from utils.utils import read_json_from_file, join_paths, check_key_series_in_dict
 from utils.formatting import format_date_for_filepath, format_date_for_console
 from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
 from running.experiment import run_experiment, instances_for_experiment
@@ -87,12 +89,13 @@ def get_runs(args: dict[str, Any]):
 
         for instance in instances:
             # Get instance solutions from the dataset directory.
-            solutions = []
+            solution = None
             solutions_filepath = f"{instance["instance_dirpath"]}/solutions.json"
             # TODO: the day I need solutions in the solver, edit
-            # if os.path.isfile(f"{instance["instance_dirpath"]}/solutions.json"):
-            #     solutions = read_json_from_file(F"{INSTANCES_DIR}/{instance["dataset_name"]}/solutions.json")
-            #     solutions = [s for s in solutions if s["instance_name"] == instance["instance_name"]]
+            if os.path.isfile(solutions_filepath):
+                solution_data = read_json_from_file(solutions_filepath)
+                if check_key_series_in_dict(solution_data, [KAIROS_OBJECTIVE, instance["instance_filename"]]):
+                    solution = solution_data[KAIROS_OBJECTIVE][instance["instance_filename"]]
 
             # For each experiment defined in the experiment file.
             for experiment in experiment_file_json["experiments"]:
@@ -102,12 +105,12 @@ def get_runs(args: dict[str, Any]):
                 # Run the experiment.
                 #print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]} ({datetime.datetime.now()})"), flush=True)
                 
-                experiment_runs.append((experiment, instance, solutions))
+                experiment_runs.append((experiment, instance, solution))
 
         print("Total number of runs:", len(experiment_runs))
         
         # Print each run.
-        for experiment, instance, solutions in experiment_runs:
+        for experiment, instance, solution in experiment_runs:
             print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
         print()
 
@@ -128,12 +131,12 @@ def main():
     experiment_runs = get_runs(args)
 
     df = pd.DataFrame()
-    for experiment, instance, solutions in experiment_runs:
+    for experiment, instance, solution in experiment_runs:
         df_res_stats = run_experiment_on_instance(
             args,
             experiment,
             instance,
-            solutions,
+            solution,
             df
         )
         df = pd.concat(
@@ -219,6 +222,9 @@ def run_experiment_on_instance(
 ):
     start_time = datetime.datetime.now()
     print(purple(F"Running [{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
+
+    print(purple(f"BKS: \n{json.dumps(solutions, indent=4)}"))
+    exit(0)
 
     # Load the instance
     instance_filepath = F"{instance['instance_dirpath']}/{instance['instance_filename']}"

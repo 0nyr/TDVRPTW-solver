@@ -88,3 +88,17 @@ def join_paths(path1: str, path2: str):
     Join two paths.
     """
     return os.path.abspath(os.path.join(path1, path2))
+
+def check_key_series_in_dict(
+    dict_: dict, # The dictionary to check
+    key_series: list[str], # The series of keys to check
+) -> bool:
+    """
+    Check if a successive series of keys are in the dictionary.
+    """
+    current_dict = dict_
+    for key in key_series:
+        if key not in current_dict:
+            return False
+        current_dict = current_dict[key]
+    return True
