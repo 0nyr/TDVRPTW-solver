@@ -213,6 +213,7 @@ def legacy_test_route_duration_calculation(
 
 def check_bks(
     solution: dict,
+    tdvrptw_instance: ks.nyr.VRPInstance,
     artfs: ks.nyr.ARTFs
 ):
     """
@@ -222,23 +223,30 @@ def check_bks(
     if check_key_series_in_dict(solution, ["solution", "routes"]):
         # Recompute the solution route durations to ensure they are correct.
         solution_routes: list[dict] = solution["solution"]["routes"]
-        recomputed_duration_sum = 0
+        recomputed_duration_sum_onyr = 0
+        recomputed_duration_sum_lera = 0
         for route_obj in solution_routes:
             route: list[int] = route_obj["path"]
             stored_duration = route_obj["duration"]
-            recomputed_duration: ks.nyr.RouteDuration = ks.nyr.compute_RouteDuration_from_scratch(
+            recomputed_duration_onyr: ks.nyr.RouteDuration = ks.nyr.compute_RouteDuration_from_scratch(
                 artfs, route
             )
-            recomputed_duration_sum += recomputed_duration.value
-            print(green(f"Recomputed duration for route {route}: {recomputed_duration} (stored: {stored_duration})"))
-    
+            recomputed_duration_sum_onyr += recomputed_duration_onyr.value
+            print(green(f"Recomputed duration for route (onyr) {route}: {recomputed_duration_onyr} (stored: {stored_duration})"))
+            
+            recomputed_duration_lera: ks.nyr.RouteDuration = ks.nyr.compute_RouteDuration_lera(
+                tdvrptw_instance, route
+            )
+            recomputed_duration_sum_lera += recomputed_duration_lera.value
+            print(green(f"Recomputed duration for route (lera) {route}: {recomputed_duration_lera} (stored: {stored_duration})"))
+
         stored_duration_sum = solution["value"]
-        print(green(f"Total recomputed duration: {recomputed_duration_sum} (stored: {stored_duration_sum})"))
+        print(green(f"Total recomputed duration: {recomputed_duration_sum_onyr} (stored: {stored_duration_sum})"))
         
-        return (stored_duration_sum, recomputed_duration_sum)
+        return (stored_duration_sum, recomputed_duration_sum_onyr, recomputed_duration_sum_lera)
     
     else:
-        return (ks.goc.INFTY, ks.goc.INFTY)
+        return (ks.goc.INFTY, ks.goc.INFTY, ks.goc.INFTY)
 
 def run_experiment_on_instance(
     args: dict[str, Any],
@@ -260,7 +268,7 @@ def run_experiment_on_instance(
     artfs = ks.nyr.make_artfs(tdvrptw_instance)
     # print("ARTFs:", artfs)
 
-    (stored_duration_sum, recomputed_duration_sum) = check_bks(solution, artfs)
+    (stored_duration_sum, recomputed_duration_sum_onyr, recomputed_duration_sum_lera) = check_bks(solution, tdvrptw_instance, artfs)
 
     # Run heuristics and measure time
     heuristics = [
@@ -314,19 +322,19 @@ def run_experiment_on_instance(
             "time_taken": time_taken,
         })
         solution_as_str = json.dumps(json.loads(str(solution)), indent=4)
-        print(green(f"({heuristic['name']}) - Sol. Duration: {solution.value}, : \n{solution_as_str}"))
+        # print(green(f"({heuristic['name']}) - Sol. Duration: {solution.value}, : \n{solution_as_str}"))
 
     # Find best approach (lowest duration)
     best_result = min(heuristic_results, key=lambda x: x["duration"])
-    print(green(f"Best approach: {best_result['name']} ({best_result['duration']})"))
+    # print(green(f"Best approach: {best_result['name']} ({best_result['duration']})"))
 
-    # Print all approaches and percentage differences
-    for res in heuristic_results:
-        print(green(f"{res['name']}: {res['duration']} (time: {res['time_taken']:.4f}s)"))
-    for i in range(len(heuristic_results)):
-        for j in range(i + 1, len(heuristic_results)):
-            diff = percentage_difference(heuristic_results[i]["duration"], heuristic_results[j]["duration"])
-            print(green(f"Percentage difference between {heuristic_results[i]['name']} and {heuristic_results[j]['name']}: {diff}%"))
+    # # Print all approaches and percentage differences
+    # for res in heuristic_results:
+    #     print(green(f"{res['name']}: {res['duration']} (time: {res['time_taken']:.4f}s)"))
+    # for i in range(len(heuristic_results)):
+    #     for j in range(i + 1, len(heuristic_results)):
+    #         diff = percentage_difference(heuristic_results[i]["duration"], heuristic_results[j]["duration"])
+    #         print(green(f"Percentage difference between {heuristic_results[i]['name']} and {heuristic_results[j]['name']}: {diff}%"))
 
     # Prepare stats for DataFrame
     stats = {
@@ -336,8 +344,9 @@ def run_experiment_on_instance(
         "best_duration": best_result["duration"],
         "total_time_taken": (datetime.datetime.now() - start_time).total_seconds(),
         "bks_stored_duration": stored_duration_sum,
-        "bks_recomputed_duration": recomputed_duration_sum,
-        "best_duration_per-diff_bks": percentage_difference(best_result["duration"], recomputed_duration_sum),
+        "bks_recomp_dur_onyr": recomputed_duration_sum_onyr,
+        "bks_recomp_dur_lera": recomputed_duration_sum_lera,
+        "best_duration_per-diff_bks": percentage_difference(best_result["duration"], recomputed_duration_sum_onyr),
     }
     # Add each heuristic's duration and time_taken to stats
     for res in heuristic_results:
