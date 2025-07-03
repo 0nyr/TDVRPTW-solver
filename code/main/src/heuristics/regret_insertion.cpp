@@ -159,7 +159,7 @@ nyr::VRPSolutionDuration regret_insertion_duration(
                     
                     // Compute the duration of the new route where the client is inserted.
                     NDCPWLF delta_new_route = perform_tree_chain_composition(
-                        vrp, deltas, route // modified with v inserted
+                        deltas, route // modified with v inserted
                     );
                     auto [
                         new_departure_time, new_duration
@@ -252,7 +252,7 @@ nyr::VRPSolutionDuration regret_insertion_duration(
         // TODO: Remove, this is a debug check.
         auto [recomputed_departure_time, recomputed_duration] = 
             compute_optimal_departure_time_and_duration_from_path(
-                vrp, deltas, solution_route
+                deltas, solution_route
             );
         if (recomputed_departure_time != route_departure_time ||
             recomputed_duration != route_duration) {

@@ -98,6 +98,8 @@ def check_key_series_in_dict(
     """
     current_dict = dict_
     for key in key_series:
+        if current_dict is None or not isinstance(current_dict, dict):
+            return False
         if key not in current_dict:
             return False
         current_dict = current_dict[key]

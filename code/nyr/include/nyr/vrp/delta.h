@@ -24,7 +24,6 @@ ARTFs make_artfs(const VRPInstance& instance);
 /// the final NDCPWLF.
 template<typename PathContainer>
 NDCPWLF perform_tree_chain_composition(
-    const VRPInstance& instance,
     const ARTFs& deltas,
     const PathContainer& path
 ) {
@@ -118,7 +117,6 @@ NDCPWLF perform_tree_chain_composition(
 /// NOTE: Do NOT save intermediate results, just returns
 /// the final NDCPWLF.
 NDCPWLF perform_sequential_chain_composition(
-    const VRPInstance& instance,
     const ARTFs& deltas,
     const goc::GraphPath& path
 );
@@ -137,11 +135,10 @@ compute_optimal_departure_time_and_duration(
 template<typename PathContainer>
 std::pair<nyr::TimeUnit, nyr::TimeUnit> 
 compute_optimal_departure_time_and_duration_from_path(
-    const VRPInstance& instance,
     const ARTFs& deltas,
     const PathContainer& path
 ) {
-    nyr::NDCPWLF delta_path = perform_tree_chain_composition(instance, deltas, path);
+    nyr::NDCPWLF delta_path = perform_tree_chain_composition(deltas, path);
     return compute_optimal_departure_time_and_duration(delta_path);
 }
 
@@ -157,11 +154,10 @@ inline RouteDuration compute_RouteDuration(
 
 /// Returns a RouteDuration provided its path.
 inline RouteDuration compute_RouteDuration(
-    const VRPInstance& instance,
     const ARTFs& deltas,
     const goc::GraphPath& path
 ) {
-    NDCPWLF delta_path = perform_tree_chain_composition(instance, deltas, path);
+    NDCPWLF delta_path = perform_tree_chain_composition(deltas, path);
     return compute_RouteDuration(delta_path, path);
 }
 

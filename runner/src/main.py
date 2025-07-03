@@ -88,10 +88,9 @@ def get_runs(args: dict[str, Any]):
         )
 
         for instance in instances:
-            # Get instance solutions from the dataset directory.
+            # Get instance solution (BKS) from the dataset directory.
             solution = None
             solutions_filepath = f"{instance["instance_dirpath"]}/solutions.json"
-            # TODO: the day I need solutions in the solver, edit
             if os.path.isfile(solutions_filepath):
                 solution_data = read_json_from_file(solutions_filepath)
                 if check_key_series_in_dict(solution_data, [KAIROS_OBJECTIVE, instance["instance_filename"]]):
@@ -194,7 +193,6 @@ def legacy_test_route_duration_calculation(
         print(green(f"RRTF (tree-chain): {delta_route}"))
         print(green(f"RRTF (tree-chain) duration: {ks.nyr.compute_optimal_departure_time_and_duration(delta_route)}"))
         delta_route_sequential: ks.nyr.NDCPWLF = ks.nyr.perform_sequential_chain_composition(
-            tdvrptw_instance, 
             artfs, 
             route
         )
@@ -213,18 +211,44 @@ def legacy_test_route_duration_calculation(
         print(green(f"Route duration (LERA): {route_duration_lera}"))
         print("is equal:", route_duration_onyr == route_duration_lera)
 
+def check_bks(
+    solution: dict,
+    artfs: ks.nyr.ARTFs
+):
+    """
+    Check the BKS (Best Known Solution) for the instance.
+    Recompute the solution route durations to ensure they are correct.
+    """
+    if check_key_series_in_dict(solution, ["solution", "routes"]):
+        # Recompute the solution route durations to ensure they are correct.
+        solution_routes: list[dict] = solution["solution"]["routes"]
+        recomputed_duration_sum = 0
+        for route_obj in solution_routes:
+            route: list[int] = route_obj["path"]
+            stored_duration = route_obj["duration"]
+            recomputed_duration: ks.nyr.RouteDuration = ks.nyr.compute_RouteDuration_from_scratch(
+                artfs, route
+            )
+            recomputed_duration_sum += recomputed_duration.value
+            print(green(f"Recomputed duration for route {route}: {recomputed_duration} (stored: {stored_duration})"))
+    
+        stored_duration_sum = solution["value"]
+        print(green(f"Total recomputed duration: {recomputed_duration_sum} (stored: {stored_duration_sum})"))
+        
+        return (stored_duration_sum, recomputed_duration_sum)
+    
+    else:
+        return (ks.goc.INFTY, ks.goc.INFTY)
+
 def run_experiment_on_instance(
     args: dict[str, Any],
     experiment,
     instance,
-    solutions,
+    solution,
     df: pd.DataFrame # for storing results
 ):
     start_time = datetime.datetime.now()
     print(purple(F"Running [{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
-
-    print(purple(f"BKS: \n{json.dumps(solutions, indent=4)}"))
-    exit(0)
 
     # Load the instance
     instance_filepath = F"{instance['instance_dirpath']}/{instance['instance_filename']}"
@@ -235,6 +259,8 @@ def run_experiment_on_instance(
     # print(tdvrptw_instance)
     artfs = ks.nyr.make_artfs(tdvrptw_instance)
     # print("ARTFs:", artfs)
+
+    (stored_duration_sum, recomputed_duration_sum) = check_bks(solution, artfs)
 
     # Run heuristics and measure time
     heuristics = [
@@ -291,6 +317,9 @@ def run_experiment_on_instance(
         "best_approach": best_result["name"],
         "best_duration": best_result["duration"],
         "total_time_taken": (datetime.datetime.now() - start_time).total_seconds(),
+        "bks_stored_duration": stored_duration_sum,
+        "bks_recomputed_duration": recomputed_duration_sum,
+        "best_duration_per-diff_bks": percentage_difference(best_result["duration"], recomputed_duration_sum),
     }
     # Add each heuristic's duration and time_taken to stats
     for res in heuristic_results:

@@ -90,7 +90,6 @@ ARTFs make_artfs(const VRPInstance& instance) {
 // }
 
 NDCPWLF perform_sequential_chain_composition(
-    const VRPInstance& instance,
     const ARTFs& deltas,
     const goc::GraphPath& path
 ) {

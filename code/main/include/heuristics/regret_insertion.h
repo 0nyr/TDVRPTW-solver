@@ -35,7 +35,7 @@ private:
         const nyr::ARTFs& deltas,
         std::list<goc::Vertex> route
     ) {
-        auto [departure_time, duration] = compute_optimal_departure_time_and_duration_from_path(vrp, deltas, route);
+        auto [departure_time, duration] = compute_optimal_departure_time_and_duration_from_path(deltas, route);
         add_route(std::move(route), departure_time, duration);
     }
 

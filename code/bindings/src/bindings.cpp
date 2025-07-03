@@ -341,7 +341,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     }, "Convert object to string (equivalent to STR macro)", py::arg("obj"));
 
     // ==================== RouteMakespan CLASS ====================
-    py::class_<nyr::RouteMakespan, std::shared_ptr<nyr::RouteMakespan>>(m, "RouteMakespan")
+    py::class_<nyr::RouteMakespan, std::shared_ptr<nyr::RouteMakespan>>(nyr, "RouteMakespan")
         .def(py::init<>(),
             "Create an empty makespan-route (path={} , value=0.0)")
         .def(py::init<const goc::GraphPath&, double>(),
@@ -375,7 +375,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
             "True if two makespan routes differ");
     
     // ==================== RouteDuration CLASS ====================
-    py::class_<nyr::RouteDuration, std::shared_ptr<nyr::RouteDuration>>(m, "RouteDuration")
+    py::class_<nyr::RouteDuration, std::shared_ptr<nyr::RouteDuration>>(nyr, "RouteDuration")
         .def(py::init<>(),
             "Create an empty duration‐route (path={} , t0=0.0, duration=0.0)")
         .def(py::init<const goc::GraphPath&, double, double>(),
@@ -408,7 +408,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
             "True if two duration routes differ");
 
     // ==================== VRPSolutionMakespan CLASS ====================
-    py::class_<nyr::VRPSolutionMakespan>(m, "VRPSolutionMakespan")
+    py::class_<nyr::VRPSolutionMakespan>(nyr, "VRPSolutionMakespan")
         .def(py::init<>(), "Create an empty VRPSolutionMakespan")
         .def(py::init<double, const std::vector<nyr::RouteMakespan>&>(),
             py::arg("value"), py::arg("routes"),
@@ -430,7 +430,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         });
 
     // ==================== VRPSolutionDuration CLASS ====================
-    py::class_<nyr::VRPSolutionDuration>(m, "VRPSolutionDuration")
+    py::class_<nyr::VRPSolutionDuration>(nyr, "VRPSolutionDuration")
         .def(py::init<>(), "Create an empty VRPSolutionDuration")
         .def(py::init<double, const std::vector<nyr::RouteDuration>&>(),
             py::arg("value"), py::arg("routes"),
@@ -504,11 +504,9 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     nyr.def(
         "perform_tree_chain_composition",
         static_cast<nyr::NDCPWLF (*)(
-            const nyr::VRPInstance&,
             const nyr::ARTFs&,
             const goc::GraphPath&
         )>(&nyr::perform_tree_chain_composition<goc::GraphPath>),
-        py::arg("instance"),
         py::arg("deltas"),
         py::arg("path"),
         R"pbdoc(
@@ -523,7 +521,6 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     nyr.def(
         "perform_sequential_chain_composition",
         &nyr::perform_sequential_chain_composition,
-        py::arg("instance"),
         py::arg("deltas"),
         py::arg("path"),
         R"pbdoc(
@@ -564,8 +561,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
 
     nyr.def(
         "compute_RouteDuration_from_scratch",
-        py::overload_cast<const nyr::VRPInstance&, const goc::Matrix<nyr::NDCPWLF>&, const goc::GraphPath&>(&nyr::compute_RouteDuration),
-        py::arg("instance"),
+        py::overload_cast<const goc::Matrix<nyr::NDCPWLF>&, const goc::GraphPath&>(&nyr::compute_RouteDuration),
         py::arg("deltas"),
         py::arg("path"),
         R"pbdoc(
