@@ -61,7 +61,7 @@ void RegretInsertionData::visit_max_regret_client(
     if (best_route.size() == 3) {
         add_empty_route(vrp);
 
-        // #ifndef NDEBUG
+        #ifndef NDEBUG
         // Assert that there is only one empty route.
         if (std::count_if(routes.begin(), routes.end(), [](const auto& r) {
             return r.size() == 2; // Only depot.
@@ -82,13 +82,14 @@ void RegretInsertionData::visit_max_regret_client(
             }
             throw std::logic_error("More than one empty route found.");
         }
-        // #endif
+        #endif
     }
 }
 
-nyr::VRPSolutionDuration regret_insertion_duration(
+nyr::VRPSolutionDuration regret_k_insertion_duration(
     const nyr::VRPInstance& vrp,
-    const nyr::ARTFs& deltas
+    const nyr::ARTFs& deltas,
+    const size_t k
 ) {
     VRPSolutionDuration vrp_solution;
     RegretInsertionData data(vrp, deltas);
@@ -107,10 +108,12 @@ nyr::VRPSolutionDuration regret_insertion_duration(
         TimeUnit max_regret_modified_route_departure_time = INFTY;
         TimeUnit max_regret_modified_route_duration = INFTY;
 
+        #ifndef NDEBUG
         std::clog << "  [iter: " << data.visits_tracker.nb_visited_clients
             << "/" << n << "]"
             << " nb routes: " << data.routes.size()
             << "\n";
+        #endif
 
         // Compute the regret for each unvisited client.
         // And select the one with the maximum regret.
@@ -126,18 +129,20 @@ nyr::VRPSolutionDuration regret_insertion_duration(
 
             // We need to store all insertion costs to be able to determine the min.
             vector<TimeUnit> route_min_insertion_costs(data.routes.size(), INFTY);
+            vector<size_t> route_indices; // Used when k > 0 to store the sorted indices of the routes.
 
             for (size_t route_index = 0; route_index < data.routes.size(); ++route_index) {
                 // We use routes as list of vertices to allow fast insertion and removal.
                 auto& route = data.routes[route_index];
                 TimeUnit route_duration = data.route_durations[route_index];
                 if (route_duration >= INFTY) {
+                    #ifndef NDEBUG
                     // Check that it is an empty route
                     if (route.size() != 2 || route.front() != vrp.o || route.back() != vrp.d) {
                         std::clog << "Error: Route duration is INFTY but the route is not empty." << std::endl;
                         throw std::logic_error("Route duration cannot be INFTY for non-empty routes.");
                     }
-                    // throw std::logic_error("Route duration cannot be INFTY.");
+                    #endif
                     // For empty route, the insertion cost is the duration of the route,
                     // so we fix route_duration to 0.
                     // WARN: This is a special case for empty routes.
@@ -189,9 +194,24 @@ nyr::VRPSolutionDuration regret_insertion_duration(
                 }
             }
 
+            if (k > 0) {
+                // We need to consider only the k best routes.
+                // Sort the route_min_insertion_costs to find the k best routes.
+                route_indices = nyr::sort_indices_by_ascending_values(route_min_insertion_costs);
+            }
+
             // Compute the regrets and sum of regrets.
             TimeUnit sum_of_regrets = 0;
-            for (size_t route_index = 0; route_index < data.routes.size(); ++route_index) {
+            for (size_t j = 0; j < data.routes.size(); ++j) {
+                size_t route_index = j;
+                if (k > 0) {
+                    // If k > 0, we consider only the k best routes.
+                    if (j >= k) {
+                        break; // Stop after k best routes.
+                    }
+                    route_index = route_indices[j]; // Get the index of the j-th best route.
+                }
+
                 if (route_index == best_route_index) {
                     continue; // Skip the best route, since its regret is 0.
                 }
@@ -205,13 +225,13 @@ nyr::VRPSolutionDuration regret_insertion_duration(
                 sum_of_regrets += regret;
             }
 
-            // #ifndef NDEBUG
+            #ifndef NDEBUG
             // Print debug information.
             std::clog 
                 << "    + v: " << v
                 << ", sum-regret: " << sum_of_regrets
                 << std::endl;
-            // #endif
+            #endif
 
             //vertex_regrets[v] = sum_of_regrets;
             if (sum_of_regrets > max_regret) {
@@ -249,7 +269,8 @@ nyr::VRPSolutionDuration regret_insertion_duration(
         TimeUnit route_duration = data.route_durations[route_index];
         TimeUnit route_departure_time = data.route_departure_times[route_index];
         
-        // TODO: Remove, this is a debug check.
+        #ifndef NDEBUG
+        // NOTE: his is a debug check to ensure correct duration of route.
         auto [recomputed_departure_time, recomputed_duration] = 
             compute_optimal_departure_time_and_duration_from_path(
                 deltas, solution_route
@@ -261,6 +282,7 @@ nyr::VRPSolutionDuration regret_insertion_duration(
                       << " - Got: (" << recomputed_departure_time << ", " << recomputed_duration << ")\n";
             throw std::logic_error("Recomputed departure time or duration does not match the stored values.");
         }
+        #endif
 
         vrp_solution.routes.push_back(
             // compute_RouteDuration(

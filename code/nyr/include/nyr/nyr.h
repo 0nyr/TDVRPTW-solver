@@ -7,6 +7,8 @@
  * It builds on GOC library for graph and combinatorial optimization.
  */
 
+#include "nyr/collection/collection_utils.h"
+
 #include "nyr/solutions/route.h"
 #include "nyr/solutions/vrp_solution.h"
 #include "nyr/solutions/objectives.h"

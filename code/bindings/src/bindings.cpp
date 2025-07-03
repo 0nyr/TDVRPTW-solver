@@ -637,5 +637,18 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         Returns a nyr::VRPSolutionDuration object containing the constructed routes forming the solution.
         )pbdoc"
     );
-
+    m.def(
+        "regret_k_insertion_duration",
+        &solver::regret_k_insertion_duration,
+        py::arg("instance"),
+        py::arg("deltas"),
+        py::arg("k") = 1,
+        R"pbdoc(
+        Regret k-insertion algorithm for constructing a route based on duration.
+        - `instance`: VRPInstance
+        - `deltas`: ARTFs matrix (Matrix<NDCPWLF>)
+        - `k`: number of insertions to consider (default is 1)
+        Returns a nyr::VRPSolutionDuration object containing the constructed routes forming the solution.
+        )pbdoc"
+    );
 }

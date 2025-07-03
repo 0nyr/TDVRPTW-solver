@@ -31,7 +31,7 @@ private:
     }
 
     inline void add_route(
-        const nyr::VRPInstance& vrp,
+        const nyr::VRPInstance& vrp,  
         const nyr::ARTFs& deltas,
         std::list<goc::Vertex> route
     ) {
@@ -62,6 +62,23 @@ public:
 };
 
 /**
+ * Variation of the Regret Insertion Heuristic
+ * (See `regret_insertion_duration`)
+ * 
+ * The only difference with the original Regret Insertion
+ * heuristic is how the regret sum for a client is computed.
+ * Instead of computing the regret for each route except the
+ * one with the minimum insertion cost, we sort these other
+ * routes by increasing insertion cost and compute the 
+ * regret sum with the first k routes.
+ */
+nyr::VRPSolutionDuration regret_k_insertion_duration(
+    const nyr::VRPInstance& vrp,
+    const nyr::ARTFs& deltas,
+    const size_t k // Common values are rather small {1, 2, 3}
+);
+
+/**
  * Regret Insertion Heuristic
  * 
  * A variant of the Regret Insertion of Foisy et al. (1993). 
@@ -73,11 +90,11 @@ public:
  * feasible solution from scratch.
  * 
  * Regret is defined as the difference between the
- * minimum duration of the route where inserting the considered
- * customer would be best, and the duration of any other route
- * where inserting the considered customer would be worse, sorted 
- * by Duration. The total regret of a client is the sum of the 
- * regrets for all theses routes.
+ * minimum insertion cost of the route where inserting the 
+ * considered customer would be best, and the duration of any 
+ * other route where inserting the considered customer would 
+ * be worse, sorted by insertion cost. The total regret of a 
+ * client is the sum of the regrets for all theses routes.
  * 
  * The heuristic works as follows:
  * 1. For each unvisited client, for each route, compute the minimal 
@@ -90,11 +107,14 @@ public:
  * 
  * Note that an empty route is always checked for insertion.
  */
-nyr::VRPSolutionDuration regret_insertion_duration(
+inline nyr::VRPSolutionDuration regret_insertion_duration(
     const nyr::VRPInstance& vrp,
     const nyr::ARTFs& deltas
-);
-
+) {
+    // NOTE: k=0 means that we consider all routes.
+    // This is the original Regret Insertion heuristic.
+    return regret_k_insertion_duration(vrp, deltas, 0);
+}
 
 
 } // namespace solver
