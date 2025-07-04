@@ -40,6 +40,9 @@ from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
 from running.experiment import run_experiment, instances_for_experiment
 from params.args import parse_program_args
 from utils.math import percentage_difference
+from benchmarks.bks import check_bks
+from loading.load import load_instance_to_tdvrptw_instance
+
 from tqdm import tqdm
 from typing import Any
 import json, datetime, time
@@ -131,13 +134,23 @@ def main():
 
     df = pd.DataFrame()
     for experiment, instance, solution in experiment_runs:
-        df_res_stats = run_experiment_on_instance(
-            args,
-            experiment,
-            instance,
+        (tdvrptw_instance, artfs) = load_instance_to_tdvrptw_instance(instance)
+        df_res_stats = check_bks(
+            instance["instance_filename"],
+            instance["dataset_name"],
             solution,
-            df
+            tdvrptw_instance,
+            artfs
         )
+        # df_res_stats = run_experiment_on_instance(
+        #     args,
+        #     experiment,
+        #     instance,
+        #     solution,
+        #     df,
+        #     tdvrptw_instance,
+        #     artfs
+        # )
         df = pd.concat(
             [df, df_res_stats],
             ignore_index=True
@@ -211,64 +224,25 @@ def legacy_test_route_duration_calculation(
         print(green(f"Route duration (LERA): {route_duration_lera}"))
         print("is equal:", route_duration_onyr == route_duration_lera)
 
-def check_bks(
-    solution: dict,
-    tdvrptw_instance: ks.nyr.VRPInstance,
-    artfs: ks.nyr.ARTFs
-):
-    """
-    Check the BKS (Best Known Solution) for the instance.
-    Recompute the solution route durations to ensure they are correct.
-    """
-    if check_key_series_in_dict(solution, ["solution", "routes"]):
-        # Recompute the solution route durations to ensure they are correct.
-        solution_routes: list[dict] = solution["solution"]["routes"]
-        recomputed_duration_sum_onyr = 0
-        recomputed_duration_sum_lera = 0
-        for route_obj in solution_routes:
-            route: list[int] = route_obj["path"]
-            stored_duration = route_obj["duration"]
-            recomputed_duration_onyr: ks.nyr.RouteDuration = ks.nyr.compute_RouteDuration_from_scratch(
-                artfs, route
-            )
-            recomputed_duration_sum_onyr += recomputed_duration_onyr.value
-            print(green(f"Recomputed duration for route (onyr) {route}: {recomputed_duration_onyr} (stored: {stored_duration})"))
-            
-            recomputed_duration_lera: ks.nyr.RouteDuration = ks.nyr.compute_RouteDuration_lera(
-                tdvrptw_instance, route
-            )
-            recomputed_duration_sum_lera += recomputed_duration_lera.value
-            print(green(f"Recomputed duration for route (lera) {route}: {recomputed_duration_lera} (stored: {stored_duration})"))
 
-        stored_duration_sum = solution["value"]
-        print(green(f"Total recomputed duration: {recomputed_duration_sum_onyr} (stored: {stored_duration_sum})"))
-        
-        return (stored_duration_sum, recomputed_duration_sum_onyr, recomputed_duration_sum_lera)
-    
-    else:
-        return (ks.goc.INFTY, ks.goc.INFTY, ks.goc.INFTY)
 
 def run_experiment_on_instance(
     args: dict[str, Any],
     experiment,
     instance,
     solution,
-    df: pd.DataFrame # for storing results
+    df: pd.DataFrame, # for storing results
+    tdvrptw_instance: ks.nyr.VRPInstance,
+    artfs: ks.nyr.ARTFs
 ):
     start_time = datetime.datetime.now()
     print(purple(F"Running [{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
 
-    # Load the instance
-    instance_filepath = F"{instance['instance_dirpath']}/{instance['instance_filename']}"
-    instance_json_data = read_json_from_file(instance_filepath)
-    instance_json_data["instance_filename"] = instance["instance_filename"]
-
-    tdvrptw_instance: ks.nyr.VRPInstance = ks.load_instance_from_json(instance_json_data)
-    # print(tdvrptw_instance)
-    artfs = ks.nyr.make_artfs(tdvrptw_instance)
-    # print("ARTFs:", artfs)
-
-    (stored_duration_sum, recomputed_duration_sum_onyr, recomputed_duration_sum_lera) = check_bks(solution, tdvrptw_instance, artfs)
+    (stored_duration_sum, recomputed_duration_sum_onyr, recomputed_duration_sum_lera) = check_bks(
+        instance["instance_filename"],
+        instance["dataset_name"],
+        solution, tdvrptw_instance, artfs
+    )
 
     # Run heuristics and measure time
     heuristics = [
@@ -358,4 +332,6 @@ def run_experiment_on_instance(
     
 
 if __name__ == "__main__":
-    main()
+    # main()
+    from benchmarks.bks import check_all_lera_bks
+    check_all_lera_bks()
