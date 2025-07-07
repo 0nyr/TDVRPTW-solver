@@ -37,7 +37,7 @@ from utils.formatting import format_date_for_console
 from params.constants import RUNNER_START_TIME
 from params.args import parse_program_args
 from utils.math import percentage_difference
-from benchmarks.bks import check_bks
+from benchmarks.bks import check_bks, BKSCheckStats
 from loading.load import load_instance_to_tdvrptw_instance
 
 from typing import Any
@@ -62,22 +62,15 @@ def main():
     df = pd.DataFrame()
     for experiment, instance, solution in experiment_runs:
         (tdvrptw_instance, artfs) = load_instance_to_tdvrptw_instance(instance)
-        df_res_stats = check_bks(
-            instance["instance_filename"],
-            instance["dataset_name"],
+        df_res_stats = run_experiment_on_instance(
+            args,
+            experiment,
+            instance,
             solution,
+            df,
             tdvrptw_instance,
             artfs
         )
-        # df_res_stats = run_experiment_on_instance(
-        #     args,
-        #     experiment,
-        #     instance,
-        #     solution,
-        #     df,
-        #     tdvrptw_instance,
-        #     artfs
-        # )
         df = pd.concat(
             [df, df_res_stats],
             ignore_index=True
@@ -105,12 +98,17 @@ def run_experiment_on_instance(
     artfs: ks.nyr.ARTFs
 ):
     start_time = datetime.datetime.now()
-    print(purple(F"Running [{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
 
-    (stored_duration_sum, recomputed_duration_sum_onyr, recomputed_duration_sum_lera) = check_bks(
-        instance["instance_filename"],
-        instance["dataset_name"],
-        solution, tdvrptw_instance, artfs
+    instance_filename = instance["instance_filename"]
+    dataset_name = instance["dataset_name"]
+    print(purple(F"Running [{dataset_name}] {instance_filename} - {experiment["name"]}"), flush=True)
+
+    bks_stats = check_bks(
+        instance_filename,
+        dataset_name,
+        solution,
+        tdvrptw_instance,
+        artfs
     )
 
     # Run heuristics and measure time
@@ -164,7 +162,7 @@ def run_experiment_on_instance(
             "duration": solution.value,
             "time_taken": time_taken,
         })
-        solution_as_str = json.dumps(json.loads(str(solution)), indent=4)
+        # solution_as_str = json.dumps(json.loads(str(solution)), indent=4)
         # print(green(f"({heuristic['name']}) - Sol. Duration: {solution.value}, : \n{solution_as_str}"))
 
     # Find best approach (lowest duration)
@@ -186,10 +184,13 @@ def run_experiment_on_instance(
         "best_approach": best_result["name"],
         "best_duration": best_result["duration"],
         "total_time_taken": (datetime.datetime.now() - start_time).total_seconds(),
-        "bks_stored_duration": stored_duration_sum,
-        "bks_recomp_dur_onyr": recomputed_duration_sum_onyr,
-        "bks_recomp_dur_lera": recomputed_duration_sum_lera,
-        "best_duration_per-diff_bks": percentage_difference(best_result["duration"], recomputed_duration_sum_onyr),
+        "bks_stored_duration": bks_stats.bks_stored_duration,
+        "bks_recomp_dur_onyr": bks_stats.bks_recomp_dur_onyr,
+        "bks_recomp_dur_lera": bks_stats.bks_recomp_dur_lera,
+        "best_duration_per-diff_bks": percentage_difference(
+            best_result["duration"], 
+            bks_stats.bks_recomp_dur_onyr
+        ),
     }
     # Add each heuristic's duration and time_taken to stats
     for res in heuristic_results:
@@ -198,16 +199,16 @@ def run_experiment_on_instance(
 
     df_current_stats = pd.DataFrame(stats, index=[0])
     return df_current_stats
-    
+
 
 if __name__ == "__main__":
-    # main()
+    main()
 
     # from benchmarks.bks import check_all_bks_duration
     # check_all_bks_duration()
 
-    from benchmarks.bks import check_and_remove_incorrect_bks
-    check_and_remove_incorrect_bks()
+    # from benchmarks.bks import check_all_and_remove_incorrect_bks
+    # check_all_and_remove_incorrect_bks()
 
     # from benchmarks.bks import check_all_lera_bks
     # check_all_lera_bks()

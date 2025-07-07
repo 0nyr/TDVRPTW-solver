@@ -11,6 +11,7 @@ from params.constants import INSTANCES_DIR, RUNNER_START_TIME, OPTIMIZATION_OBJE
 from loading.load import load_instance_to_tdvrptw_instance, load_all_instances_and_solutions
 from output.latex import generate_latex_longtable
 from utils.formatting import format_date_for_filepath
+from dataclasses import dataclass, asdict
 
 import kairos_tdvrptw as ks
 
@@ -22,6 +23,29 @@ class SolutionStatus(Enum):
 
     def __str__(self):
         return self.value
+
+@dataclass
+class BKSCheckStats:
+    """
+    Stats for a BKS (Best Known Solution) for a given instance.
+    Recomputes the Duration sum for the BKS using both the
+    original Lera method and the new ONYR method.
+    """
+    instance_name: str
+    dataset_name: str
+    bks_stored_duration: float
+    bks_recomp_dur_onyr: float
+    bks_recomp_dur_lera: float
+    percentage_diff_lera_onyr: float
+    percentage_diff_stored_onyr: float
+    is_stored_bks_correct: bool
+    solution_status: SolutionStatus
+
+    def to_dict(self):
+        return asdict(self)
+
+    def to_dataframe(self):
+        return pd.DataFrame([self.to_dict()], index=[0])
 
 
 def load_original_lera_Duration_bks():
@@ -125,7 +149,7 @@ def check_bks(
     solution,
     tdvrptw_instance: ks.nyr.VRPInstance,
     artfs: ks.nyr.ARTFs
-):
+) -> BKSCheckStats:
     # Recompute the BKS duration in 2 different ways:
     # 1. Using the 0nyr method with `NDCPWLF`s
     # 2. Using the original Lera method using `PWLFunction`s.`
@@ -155,19 +179,19 @@ def check_bks(
         stored_duration_sum, recomputed_duration_sum_onyr
     )
 
-    # Prepare stats for DataFrame and return
-    stats = {
-        "instance_name": instance_name,
-        "dataset_name": dataset_name,
-        "bks_stored_duration": stored_duration_sum,
-        "bks_recomp_dur_onyr": recomputed_duration_sum_onyr,
-        "bks_recomp_dur_lera": recomputed_duration_sum_lera,
-        "percentage_diff_lera_onyr": percentage_diff_lera_onyr,
-        "percentage_diff_stored_onyr": percentage_diff_stored_onyr,
-        "is_stored_bks_correct": is_stored_bks_correct,
-        "solution_status": solution_status,
-    }
-    return pd.DataFrame(stats, index=[0])
+    # Prepare stats as a BKSStats dataclass and return
+    stats = BKSCheckStats(
+        instance_name=instance_name,
+        dataset_name=dataset_name,
+        bks_stored_duration=stored_duration_sum,
+        bks_recomp_dur_onyr=recomputed_duration_sum_onyr,
+        bks_recomp_dur_lera=recomputed_duration_sum_lera,
+        percentage_diff_lera_onyr=percentage_diff_lera_onyr,
+        percentage_diff_stored_onyr=percentage_diff_stored_onyr,
+        is_stored_bks_correct=is_stored_bks_correct,
+        solution_status=solution_status,
+    )
+    return stats
 
 def check_all_lera_bks():
     """
@@ -225,7 +249,7 @@ def check_all_lera_bks():
                     bks,
                     tdvrptw_instance,
                     artfs
-                )
+                ).to_dataframe()
             ],
             ignore_index=True
         )
@@ -317,7 +341,7 @@ def check_all_bks_duration():
                 solution,
                 tdvrptw_instance,
                 artfs
-            )
+            ).to_dataframe()
 
         df_bks_stats = pd.concat(
             [
@@ -405,7 +429,7 @@ def remove_all_incorrect_bks(
 
     print(green(f"Total number of incorrect BKS removed: {nb_removed}"))
 
-def check_and_remove_incorrect_bks():
+def check_all_and_remove_incorrect_bks():
     """
     Check all BKS (Duration) for all datasets by recomputing their durations.
     If the BKS is incorrect, remove it from storage.
