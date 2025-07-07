@@ -34,10 +34,10 @@ import kairos_tdvrptw as ks
 
 from loading.load import get_runs
 from utils.formatting import format_date_for_console
-from params.constants import RUNNER_START_TIME
+from params.constants import RUNNER_START_TIME, PROJECT_COMMIT_HASH, PROGRAM_SHORT_NAME
 from params.args import parse_program_args
 from utils.math import percentage_difference
-from benchmarks.bks import check_bks, BKSCheckStats
+from benchmarks.bks import check_bks, BKSCheckStats, SolutionStatus, save_new_bks_in_storage
 from loading.load import load_instance_to_tdvrptw_instance
 
 from typing import Any
@@ -114,13 +114,13 @@ def run_experiment_on_instance(
     # Run heuristics and measure time
     heuristics = [
         {
-            "name": "GNN-Makespan",
+            "name": "NNH-Makespan",
             "func": lambda: ks.greedy_nearest_neighbor_makespan(tdvrptw_instance),
             "args": (),
             "kwargs": {},
         },
         {
-            "name": "GNN-Duration",
+            "name": "NNH-Duration",
             "func": lambda: ks.greedy_nearest_neighbor_duration(tdvrptw_instance, artfs),
             "args": (),
             "kwargs": {},
@@ -176,6 +176,32 @@ def run_experiment_on_instance(
     #     for j in range(i + 1, len(heuristic_results)):
     #         diff = percentage_difference(heuristic_results[i]["duration"], heuristic_results[j]["duration"])
     #         print(green(f"Percentage difference between {heuristic_results[i]['name']} and {heuristic_results[j]['name']}: {diff}%"))
+
+    # Save new solution is it is better than the current BKS
+    if best_result["duration"] < bks_stats.bks_recomp_dur_onyr:
+        print(green(f"New best solution found: {best_result['name']} with duration {best_result['duration']}"))
+        
+        solution_routes_as_dict = best_result["solution"].to_json()
+        del solution_routes_as_dict["objective"]
+        new_solution = {
+            "value": best_result["duration"],
+            "solution": solution_routes_as_dict,
+            "status": str(SolutionStatus.HEURISTIC),
+            "metadata": {
+                "authors": "0nyr (Florian Rascoussier)",
+                "time": best_result["time_taken"],
+                "program": PROGRAM_SHORT_NAME,
+                "origin": best_result["name"],
+                "commit_hash": PROJECT_COMMIT_HASH,
+                "instexp_start_time": format_date_for_console(RUNNER_START_TIME),
+            }
+        }
+        save_new_bks_in_storage(
+            instance["instance_dirpath"],
+            instance["instance_filename"],
+            new_solution,
+            throw_on_failed_check=False
+        )
 
     # Prepare stats for DataFrame
     stats = {

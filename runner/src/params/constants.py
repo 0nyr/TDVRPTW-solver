@@ -4,6 +4,8 @@ from utils.terminal import blue
 from utils.utils import get_a_parent_dir, read_json_from_file
 
 OPTIMIZATION_OBJECTIVE = "Duration"  # The optimization objective for the TDVRPTW problem.
+PROJECT_COMMIT_HASH = os.popen("git rev-parse HEAD").read().strip()
+PROGRAM_SHORT_NAME = "KAYROS-Python"
 
 # Directories.
 RUNNER_DIR = get_a_parent_dir(os.path.dirname(__file__), 2) # Where Python runner files are located.

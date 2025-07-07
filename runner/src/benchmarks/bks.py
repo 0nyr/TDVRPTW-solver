@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import Any
-import os
+import os, json
 from enum import Enum
 
 from utils.utils import read_json_from_file, join_paths, check_key_series_in_dict
@@ -301,7 +301,6 @@ def check_all_lera_bks():
     )
     print(f"Saving correct Lera BKS to {LERA_SOLUTIONS_FILEPATH}...")
     with open(LERA_SOLUTIONS_FILEPATH, "w") as f:
-        import json
         json.dump(lera_bks, f, indent=4)
 
 def check_all_bks_duration():
@@ -387,7 +386,6 @@ def remove_bks_from_storage(
             del solution_data[OPTIMIZATION_OBJECTIVE][instance_filename]
             # Save the updated solution_data back to the file
             with open(solutions_filepath, "w") as f:
-                import json
                 json.dump(solution_data, f, indent=4)
 
             print(purple(f"  > Removed BKS for instance {instance_filename} from storage..."))
@@ -399,6 +397,80 @@ def remove_bks_from_storage(
         print(purple(f"WARNING: No BKS file found for instance {instance_filename} in storage."))
 
     return False
+
+def save_new_bks_in_storage(
+    instance_dirpath: str,
+    instance_filename: str,
+    new_solution: dict,
+    throw_on_failed_check: bool = True
+):
+    """
+    Save a new BKS solution in storage if it is better (smaller 'value') than the stored one.
+    The BKS file is stored in the instance directory with the name "solutions.json".
+    """
+    assert isinstance(new_solution, dict), "new_solution must be a dictionary."
+    assert "value" in new_solution, "new_solution must contain a 'value' key."
+
+    # Load existing solutions or create new structure
+    solutions_filepath = join_paths(
+        instance_dirpath,
+        "solutions.json"
+    )
+    if os.path.isfile(solutions_filepath):
+        solution_data = read_json_from_file(solutions_filepath)
+    else:
+        # create empty solution data structure
+        solution_data = {}
+
+    # Ensure nested dict structure
+    if OPTIMIZATION_OBJECTIVE not in solution_data:
+        solution_data[OPTIMIZATION_OBJECTIVE] = {}
+
+    current_best = solution_data[OPTIMIZATION_OBJECTIVE].get(instance_filename)
+    new_value = new_solution["value"]
+    current_best_value = float(current_best["value"]) if current_best else ks.goc.INFTY
+    current_best_solution_status = get_solution_status(current_best) if current_best else SolutionStatus.MISSING
+
+    # Layers of checks before saving the new BKS
+    def check_new_solution_validity(
+        new_value: float,
+        current_best_value: float,
+        current_best_solution_status: SolutionStatus
+    ):
+        """
+        Check if the new solution is valid.
+        """
+        if new_value <= 0:
+            print(purple(f"  > ISSUE with new BKS for {instance_filename}: new value {new_value} is not valid (<= 0)."))
+            return False
+        if new_value >= ks.goc.INFTY:
+            print(purple(f"  > ISSUE with new BKS for {instance_filename}: new value {new_value} is not valid (>= INFTY)."))
+            return False
+        if new_value >= current_best_value:
+            print(purple(f"  > ISSUE with new BKS for {instance_filename}: new value {new_value} is not better than current {current_best_value}."))
+            return False
+        if current_best_solution_status == SolutionStatus.OPTIMAL:
+            print(purple(f"  > ISSUE with new BKS for {instance_filename}: current best solution is already optimal ({current_best_value})."))
+            return False
+        # All checks passed, the new solution is valid
+        return True
+
+    is_new_sol_new_bks = check_new_solution_validity(
+        new_value,
+        current_best_value,
+        current_best_solution_status
+    )
+    if throw_on_failed_check and not is_new_sol_new_bks:
+        raise ValueError(
+            f"New solution for {instance_filename} is not valid. "
+        )
+
+    # Save new solution as the new BKS
+    solution_data[OPTIMIZATION_OBJECTIVE][instance_filename] = new_solution
+    with open(solutions_filepath, "w") as f:
+        json.dump(solution_data, f, indent=4)
+    print(green(f"  > 💾 Saved new BKS for instance {instance_filename} (improved: {current_best_value} [{current_best_solution_status}] -> {new_value})."))
+    return True
 
 def remove_all_incorrect_bks(
     df_bks_stats: pd.DataFrame,

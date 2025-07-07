@@ -60,9 +60,13 @@ def load_instances_with_solutions(
         solution = None
         solutions_filepath = f"{instance["instance_dirpath"]}/solutions.json"
         if os.path.isfile(solutions_filepath):
-            solution_data = read_json_from_file(solutions_filepath)
-            if check_key_series_in_dict(solution_data, [OPTIMIZATION_OBJECTIVE, instance["instance_filename"]]):
-                solution = solution_data[OPTIMIZATION_OBJECTIVE][instance["instance_filename"]]
+            try:
+                solution_data = read_json_from_file(solutions_filepath)
+                if check_key_series_in_dict(solution_data, [OPTIMIZATION_OBJECTIVE, instance["instance_filename"]]):
+                    solution = solution_data[OPTIMIZATION_OBJECTIVE][instance["instance_filename"]]
+            except json.JSONDecodeError as e:
+                print(purple(f"Error decoding JSON from {solutions_filepath}: {e}"))
+                raise e
 
         yield (instance, solution)
 

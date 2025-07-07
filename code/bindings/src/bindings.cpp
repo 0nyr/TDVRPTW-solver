@@ -449,7 +449,12 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         })
         .def("__eq__", [](const nyr::VRPSolutionDuration& a, const nyr::VRPSolutionDuration& b) {
             return a == b;
-        });
+        })
+        .def("to_json", [](const nyr::VRPSolutionDuration &sol) {
+                return nlohmann::json(sol);
+            }, 
+            "Convert this solution to a nlohmann::json object"
+        );
 
     // ==================== VRPInstance CLASS ====================
     py::class_<nyr::VRPInstance>(nyr, "VRPInstance")
