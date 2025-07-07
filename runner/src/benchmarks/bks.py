@@ -7,9 +7,10 @@ from utils.utils import read_json_from_file, join_paths, check_key_series_in_dic
 from utils.terminal import purple, green
 from utils.math import percentage_difference
 from running.experiment import instances_for_experiment
-from params.constants import INSTANCES_DIR
+from params.constants import INSTANCES_DIR, RUNNER_START_TIME, OPTIMIZATION_OBJECTIVE
 from loading.load import load_instance_to_tdvrptw_instance, load_all_instances_and_solutions
 from output.latex import generate_latex_longtable
+from utils.formatting import format_date_for_filepath
 
 import kairos_tdvrptw as ks
 
@@ -335,7 +336,81 @@ def check_all_bks_duration():
     bks_check_csv_filepath = join_paths(
         PROJECT_ROOT_DIR,
         "out/res/"
-        "bks_check_results.csv"
+        f"bks_check_results_{format_date_for_filepath(RUNNER_START_TIME)}.csv"
     )
     print(f"Saving BKS check results to {bks_check_csv_filepath}...")
     df_bks_stats.to_csv(bks_check_csv_filepath, index=False)
+
+    return all_instance_solution_pairs, df_bks_stats
+
+def remove_bks_from_storage(
+    instance_dirpath: str,
+    instance_filename: str,
+):
+    """
+    Remove the BKS file from storage.
+    The BKS file is stored in the instance directory with the name "solution.json".
+    """
+    solutions_filepath = join_paths(
+        instance_dirpath,
+        "solutions.json"
+    )
+    
+    if os.path.isfile(solutions_filepath):
+        solution_data = read_json_from_file(solutions_filepath)
+        if check_key_series_in_dict(solution_data, [OPTIMIZATION_OBJECTIVE, instance_filename]):
+            # Remove the key [OPTIMIZATION_OBJECTIVE][instance_filename] from the solution_data dict
+            del solution_data[OPTIMIZATION_OBJECTIVE][instance_filename]
+            # Save the updated solution_data back to the file
+            with open(solutions_filepath, "w") as f:
+                import json
+                json.dump(solution_data, f, indent=4)
+
+            print(purple(f"  > Removed BKS for instance {instance_filename} from storage..."))
+            return True
+        else:
+            print(purple(f"WARNING: BKS marked for removal for instance {instance_filename} not found in storage."))
+            return False
+    else:
+        print(purple(f"WARNING: No BKS file found for instance {instance_filename} in storage."))
+
+    return False
+
+def remove_all_incorrect_bks(
+    df_bks_stats: pd.DataFrame,
+    all_instance_solution_pairs: list[tuple[dict[str, Any], dict[str, Any]]]
+):
+    """
+    Remove all incorrect BKS from storage.
+    """
+    nb_removed = 0
+    for instance, _ in all_instance_solution_pairs:
+        instance_filename = instance["instance_filename"]
+        
+        # Get the BKS stats for this instance
+        bks_stats = df_bks_stats[df_bks_stats["instance_name"] == instance_filename]
+        if bks_stats.empty:
+            print(purple(f"WARNING: No BKS stats found for instance {instance_filename}."))
+            continue
+        else:
+            is_stored_bks_correct = bks_stats["is_stored_bks_correct"].bool()
+            if not is_stored_bks_correct:
+                print(purple(f"Removing incorrect BKS for instance {instance_filename}..."))
+                is_removed = remove_bks_from_storage(
+                    instance["instance_dirpath"],
+                    instance_filename
+                )
+                if is_removed:
+                    nb_removed += 1
+
+    print(green(f"Total number of incorrect BKS removed: {nb_removed}"))
+
+def check_and_remove_incorrect_bks():
+    """
+    Check all BKS (Duration) for all datasets by recomputing their durations.
+    If the BKS is incorrect, remove it from storage.
+    """
+    (all_instance_solution_pairs, df_bks_stats) = check_all_bks_duration()
+    
+    # Remove all incorrect BKS from storage
+    remove_all_incorrect_bks(df_bks_stats, all_instance_solution_pairs)

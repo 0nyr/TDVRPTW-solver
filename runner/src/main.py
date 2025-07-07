@@ -203,8 +203,11 @@ def run_experiment_on_instance(
 if __name__ == "__main__":
     # main()
 
-    from benchmarks.bks import check_all_bks_duration
-    check_all_bks_duration()
+    # from benchmarks.bks import check_all_bks_duration
+    # check_all_bks_duration()
+
+    from benchmarks.bks import check_and_remove_incorrect_bks
+    check_and_remove_incorrect_bks()
 
     # from benchmarks.bks import check_all_lera_bks
     # check_all_lera_bks()
