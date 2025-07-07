@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import Any
 import os
+from enum import Enum
 
 from utils.utils import read_json_from_file, join_paths, check_key_series_in_dict
 from utils.terminal import purple, green
@@ -11,6 +12,16 @@ from loading.load import load_instance_to_tdvrptw_instance
 from output.latex import generate_latex_longtable
 
 import kairos_tdvrptw as ks
+
+
+class SolutionStatus(Enum):
+    OPTIMAL = "optimal"
+    HEURISTIC = "heuristic"
+    MISSING = "missing"
+
+    def __str__(self):
+        return self.value
+
 
 def load_original_lera_Duration_bks():
     """
@@ -23,6 +34,29 @@ def load_original_lera_Duration_bks():
     )
     lera_bks = read_json_from_file(LERA_SOLUTIONS_FILEPATH)
     return lera_bks
+
+def get_solution_status(solution: dict[str, Any]) -> SolutionStatus:
+    """
+    Check if the solution is marked as optimal.
+    The solution is marked as optimal if it has a "tags" key with "OPT" in it.
+    """
+
+    # Lera's solution format has a "tags" key that is a list.
+    # We check if "OPT" is in the tags list.
+    if "tags" in solution and isinstance(solution["tags"], list):
+        if "OPT" in solution["tags"]:
+            return SolutionStatus.OPTIMAL
+        else:
+            return SolutionStatus.HEURISTIC
+    
+    # Onyr's solution format has a "status" key that is a string.
+    if "status" in solution and isinstance(solution["status"], str):
+        if solution["status"].lower() == "optimum":
+            return SolutionStatus.OPTIMAL
+        else: 
+            return SolutionStatus.HEURISTIC
+        
+    return SolutionStatus.MISSING
 
 def recompute_route_duration(
     route: list[int],
@@ -109,10 +143,7 @@ def check_bks(
         is_stored_bks_correct = False
     
     # Determine if the BKS is marked as Optimal
-    solution_status = ""
-    if isinstance(solution["tags"], list) and len(solution["tags"]) > 0:
-        solution_status = "optimal" if "OPT" in solution["tags"] else ""
-
+    solution_status = get_solution_status(solution)
     percentage_diff_stored_onyr = percentage_difference(
         stored_duration_sum, recomputed_duration_sum_onyr
     )
@@ -127,7 +158,7 @@ def check_bks(
         "percentage_diff_lera_onyr": percentage_diff_lera_onyr,
         "percentage_diff_stored_onyr": percentage_diff_stored_onyr,
         "is_stored_bks_correct": is_stored_bks_correct,
-        "marked_optimal": solution_status,
+        "solution_status": solution_status,
     }
     return pd.DataFrame(stats, index=[0])
 
@@ -209,35 +240,36 @@ def check_all_lera_bks():
     print(f"Number of incorrect BKS with n=100: {num_incorrect_n100}")
 
     print()
-    # Remove the "dataset_name" column before generating the LaTeX table
-    df_bks_stats = df_bks_stats.drop(columns=["dataset_name"])
-    print(generate_latex_longtable(
-        df_bks_stats,
-        table_caption=r"Lera-Romero BKS check results. The BKS Duration is recomputed using both the original corrected Lera \texttt{PWLFunction} composition method (column \texttt{bks recomp dur lera}) and the new (onyr) \texttt{NDCPWLF} composition method (column \texttt{bks recomp dur onyr}), with the percentage difference between the two given in the following column.",
-        table_label="tab:lera_bks_check"
-    ))
+    # # Remove the "dataset_name" column before generating the LaTeX table
+    # df_bks_stats = df_bks_stats.drop(columns=["dataset_name"])
+    # print(generate_latex_longtable(
+    #     df_bks_stats,
+    #     table_caption=r"Lera-Romero BKS check results. The BKS Duration is recomputed using both the original corrected Lera \texttt{PWLFunction} composition method (column \texttt{bks recomp dur lera}) and the new (onyr) \texttt{NDCPWLF} composition method (column \texttt{bks recomp dur onyr}), with the percentage difference between the two given in the following column.",
+    #     table_label="tab:lera_bks_check"
+    # ))
 
-    # Remove BKS from lera_bks that are not correct
-    to_remove = []
-    for bks in lera_bks:
-        if not df_bks_stats[df_bks_stats["instance_name"] == bks["instance_name"]]["is_stored_bks_correct"].bool():
-            print(purple(f"Removing incorrect BKS: {bks['instance_name']}"))
-            to_remove.append(bks)
+    # # Remove BKS from lera_bks that are not correct
+    # to_remove = []
+    # for bks in lera_bks:
+    #     if not df_bks_stats[df_bks_stats["instance_name"] == bks["instance_name"]]["is_stored_bks_correct"].bool():
+    #         print(purple(f"Removing incorrect BKS: {bks['instance_name']}"))
+    #         to_remove.append(bks)
     
-    nb_removed = 0
-    for bks in to_remove:
-        lera_bks.remove(bks)
-        nb_removed += 1
+    # nb_removed = 0
+    # for bks in to_remove:
+    #     lera_bks.remove(bks)
+    #     nb_removed += 1
     
-    print(f"Removed {nb_removed} incorrect BKS from the original Lera BKS list.")
+    # print(f"Removed {nb_removed} incorrect BKS from the original Lera BKS list.")
 
-    # Save the correct BKS to a file
-    LERA_SOLUTIONS_FILEPATH = os.path.join(
-        INSTANCES_DIR,
-        "../",
-        "benchmarks/tdvrptw/Lera2019/dabia_et_al_2013/lera_bks_checked.json"
-    )
-    print(f"Saving correct Lera BKS to {LERA_SOLUTIONS_FILEPATH}...")
-    with open(LERA_SOLUTIONS_FILEPATH, "w") as f:
-        import json
-        json.dump(lera_bks, f, indent=4)
+    # # Save the correct BKS to a file
+    # LERA_SOLUTIONS_FILEPATH = os.path.join(
+    #     INSTANCES_DIR,
+    #     "../",
+    #     "benchmarks/tdvrptw/Lera2019/dabia_et_al_2013/lera_bks_checked.json"
+    # )
+    # print(f"Saving correct Lera BKS to {LERA_SOLUTIONS_FILEPATH}...")
+    # with open(LERA_SOLUTIONS_FILEPATH, "w") as f:
+    #     import json
+    #     json.dump(lera_bks, f, indent=4)
+
