@@ -8,7 +8,7 @@ from utils.terminal import purple, green
 from utils.math import percentage_difference
 from running.experiment import instances_for_experiment
 from params.constants import INSTANCES_DIR
-from loading.load import load_instance_to_tdvrptw_instance
+from loading.load import load_instance_to_tdvrptw_instance, load_all_instances_and_solutions
 from output.latex import generate_latex_longtable
 
 import kairos_tdvrptw as ks
@@ -40,6 +40,8 @@ def get_solution_status(solution: dict[str, Any]) -> SolutionStatus:
     Check if the solution is marked as optimal.
     The solution is marked as optimal if it has a "tags" key with "OPT" in it.
     """
+    if solution is None:
+        return SolutionStatus.MISSING
 
     # Lera's solution format has a "tags" key that is a list.
     # We check if "OPT" is in the tags list.
@@ -85,6 +87,10 @@ def recompute_bks_duration(
     This is useful to ensure that the stored durations in the solution
     are correct. 
     """
+    # If solution is missing, skip it
+    if solution is None:
+        return (ks.goc.INFTY, ks.goc.INFTY, ks.goc.INFTY)
+
     if "solution" in solution:
         solution = solution["solution"]
 
@@ -240,36 +246,96 @@ def check_all_lera_bks():
     print(f"Number of incorrect BKS with n=100: {num_incorrect_n100}")
 
     print()
-    # # Remove the "dataset_name" column before generating the LaTeX table
-    # df_bks_stats = df_bks_stats.drop(columns=["dataset_name"])
-    # print(generate_latex_longtable(
-    #     df_bks_stats,
-    #     table_caption=r"Lera-Romero BKS check results. The BKS Duration is recomputed using both the original corrected Lera \texttt{PWLFunction} composition method (column \texttt{bks recomp dur lera}) and the new (onyr) \texttt{NDCPWLF} composition method (column \texttt{bks recomp dur onyr}), with the percentage difference between the two given in the following column.",
-    #     table_label="tab:lera_bks_check"
-    # ))
+    # Remove the "dataset_name" column before generating the LaTeX table
+    df_bks_stats = df_bks_stats.drop(columns=["dataset_name"])
+    print(generate_latex_longtable(
+        df_bks_stats,
+        table_caption=r"Lera-Romero BKS check results. The BKS Duration is recomputed using both the original corrected Lera \texttt{PWLFunction} composition method (column \texttt{bks recomp dur lera}) and the new (onyr) \texttt{NDCPWLF} composition method (column \texttt{bks recomp dur onyr}), with the percentage difference between the two given in the following column.",
+        table_label="tab:lera_bks_check"
+    ))
 
-    # # Remove BKS from lera_bks that are not correct
-    # to_remove = []
-    # for bks in lera_bks:
-    #     if not df_bks_stats[df_bks_stats["instance_name"] == bks["instance_name"]]["is_stored_bks_correct"].bool():
-    #         print(purple(f"Removing incorrect BKS: {bks['instance_name']}"))
-    #         to_remove.append(bks)
+    # Remove BKS from lera_bks that are not correct
+    to_remove = []
+    for bks in lera_bks:
+        if not df_bks_stats[df_bks_stats["instance_name"] == bks["instance_name"]]["is_stored_bks_correct"].bool():
+            print(purple(f"Removing incorrect BKS: {bks['instance_name']}"))
+            to_remove.append(bks)
     
-    # nb_removed = 0
-    # for bks in to_remove:
-    #     lera_bks.remove(bks)
-    #     nb_removed += 1
+    nb_removed = 0
+    for bks in to_remove:
+        lera_bks.remove(bks)
+        nb_removed += 1
     
-    # print(f"Removed {nb_removed} incorrect BKS from the original Lera BKS list.")
+    print(f"Removed {nb_removed} incorrect BKS from the original Lera BKS list.")
 
-    # # Save the correct BKS to a file
-    # LERA_SOLUTIONS_FILEPATH = os.path.join(
-    #     INSTANCES_DIR,
-    #     "../",
-    #     "benchmarks/tdvrptw/Lera2019/dabia_et_al_2013/lera_bks_checked.json"
-    # )
-    # print(f"Saving correct Lera BKS to {LERA_SOLUTIONS_FILEPATH}...")
-    # with open(LERA_SOLUTIONS_FILEPATH, "w") as f:
-    #     import json
-    #     json.dump(lera_bks, f, indent=4)
+    # Save the correct BKS to a file
+    LERA_SOLUTIONS_FILEPATH = os.path.join(
+        INSTANCES_DIR,
+        "../",
+        "benchmarks/tdvrptw/Lera2019/dabia_et_al_2013/lera_bks_checked.json"
+    )
+    print(f"Saving correct Lera BKS to {LERA_SOLUTIONS_FILEPATH}...")
+    with open(LERA_SOLUTIONS_FILEPATH, "w") as f:
+        import json
+        json.dump(lera_bks, f, indent=4)
 
+def check_all_bks_duration():
+    """
+    Check all BKS (Duration) for all datasets by recomputing their durations.
+    """
+    all_instance_solution_pairs = load_all_instances_and_solutions()
+    df_bks_stats = pd.DataFrame()
+    for instance, solution in all_instance_solution_pairs:
+        print(purple(f"Checking BKS for {instance['instance_filename']}..."))
+        instance_name = instance["instance_filename"]
+        dataset_name = instance["dataset_name"]
+
+        stats = None
+        # In case the solution is None (missing)
+        if solution is None:
+            print(purple(f"WARNING: No solution found for instance {instance_name}."))
+            stats = pd.DataFrame(
+                {
+                    "instance_name": instance_name,
+                    "dataset_name": dataset_name,
+                    "bks_stored_duration": ks.goc.INFTY,
+                    "bks_recomp_dur_onyr": ks.goc.INFTY,
+                    "bks_recomp_dur_lera": ks.goc.INFTY,
+                    "percentage_diff_lera_onyr": 0,
+                    "percentage_diff_stored_onyr": 0,
+                    "is_stored_bks_correct": True,
+                    "solution_status": SolutionStatus.MISSING
+                }, 
+                index=[0]
+            )
+        else:
+            (tdvrptw_instance, artfs) = load_instance_to_tdvrptw_instance(instance)
+            stats = check_bks(
+                instance["instance_filename"],
+                instance["dataset_name"],
+                solution,
+                tdvrptw_instance,
+                artfs
+            )
+
+        df_bks_stats = pd.concat(
+            [
+                df_bks_stats,
+                stats
+            ],
+            ignore_index=True
+        )
+    
+    # Print the full results
+    print(f"\nFull BKS check results:\n")
+    print(df_bks_stats.to_markdown(index=False))
+
+    # Save as CSV file
+    from params.constants import PROJECT_ROOT_DIR
+    bks_check_csv_filepath = join_paths(
+        PROJECT_ROOT_DIR,
+        "out/res/"
+        "bks_check_results.csv"
+    )
+    print(f"Saving BKS check results to {bks_check_csv_filepath}...")
+    df_bks_stats.to_csv(bks_check_csv_filepath, index=False)

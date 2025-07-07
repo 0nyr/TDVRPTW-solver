@@ -32,91 +32,18 @@ if not os.path.exists(KAIROS_LIB_DIR):
 sys.path.append(KAIROS_LIB_DIR)  # or wherever the .so is
 import kairos_tdvrptw as ks
 
-KAIROS_OBJECTIVE = "Duration"
-
-from utils.utils import read_json_from_file, join_paths, check_key_series_in_dict
-from utils.formatting import format_date_for_filepath, format_date_for_console
-from params.constants import OUTPUT_DIR, INSTANCES_DIR, RUNNER_START_TIME
-from running.experiment import run_experiment, instances_for_experiment
+from loading.load import get_runs
+from utils.formatting import format_date_for_console
+from params.constants import RUNNER_START_TIME
 from params.args import parse_program_args
 from utils.math import percentage_difference
 from benchmarks.bks import check_bks
 from loading.load import load_instance_to_tdvrptw_instance
 
-from tqdm import tqdm
 from typing import Any
 import json, datetime, time
-import random
 import pandas as pd
 
-def get_runs(args: dict[str, Any]):
-    """
-    Load the experiment file and return the runs.
-    """
-    experiment_files: list[str] = args["experiments"] # List of .json experiment files.
-    selected_instances = args["instances"]
-    selected_experiments = args["exps"]
-    
-    # prepare experiment runs
-    experiment_runs:list[tuple] = []
-
-    # Run experiment files.
-    for experiment_file in experiment_files:
-        experiment_file_json = json.load(open(experiment_file))
-        experiment_filename = os.path.basename(experiment_file).replace(".json", "")
-
-        # Outputs of the experiments will be stored in this object.
-        print("experiment_file", experiment_file)
-        print("type of experiment_file", type(experiment_file))
-        
-        output_keyname = f"{format_date_for_filepath(RUNNER_START_TIME)}-{experiment_filename}"
-        annotated_experiment_output_dirpath =  join_paths(OUTPUT_DIR, output_keyname)
-        annotated_experiment_filepath = join_paths(annotated_experiment_output_dirpath, "annotated_experiment.json")
-        csv_output_filepath =  join_paths(OUTPUT_DIR, f"csv/{output_keyname}.csv")
-        json_output_dirpath = join_paths(annotated_experiment_output_dirpath, "outputs")
-        log_output_dirpath = join_paths(annotated_experiment_output_dirpath, "logs")
-
-        annotated_experiment = {
-            "date": str(datetime.date.today()), 
-            "experiment_file": os.path.abspath(experiment_file),
-            "experiment_params": experiment_file_json,
-            "annotated_experiment_output_dirpath": annotated_experiment_output_dirpath,
-            "csv_output_filepath": csv_output_filepath
-        }
-
-        # For each instances specified in the experiment file.
-        instances = instances_for_experiment(
-            experiment_file_json, 
-            selected_instances
-        )
-
-        for instance in instances:
-            # Get instance solution (BKS) from the dataset directory.
-            solution = None
-            solutions_filepath = f"{instance["instance_dirpath"]}/solutions.json"
-            if os.path.isfile(solutions_filepath):
-                solution_data = read_json_from_file(solutions_filepath)
-                if check_key_series_in_dict(solution_data, [KAIROS_OBJECTIVE, instance["instance_filename"]]):
-                    solution = solution_data[KAIROS_OBJECTIVE][instance["instance_filename"]]
-
-            # For each experiment defined in the experiment file.
-            for experiment in experiment_file_json["experiments"]:
-                # Check if the experiment was selected in the exps argument.
-                if selected_experiments != None and experiment["name"] not in selected_experiments: continue
-
-                # Run the experiment.
-                #print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]} ({datetime.datetime.now()})"), flush=True)
-                
-                experiment_runs.append((experiment, instance, solution))
-
-        print("Total number of runs:", len(experiment_runs))
-        
-        # Print each run.
-        for experiment, instance, solution in experiment_runs:
-            print(purple(F"[{instance["dataset_name"]}] {instance["instance_filename"]} - {experiment["name"]}"), flush=True)
-        print()
-
-    return experiment_runs
 
 def main():
     # Create intervals
@@ -165,64 +92,6 @@ def main():
     # Print total time taken for the program.
     total_time = datetime.datetime.now() - RUNNER_START_TIME
     print(purple(F"Total time taken: {total_time}"))
-
-
-def legacy_test_route_duration_calculation(
-    tdvrptw_instance: ks.nyr.VRPInstance,
-    artfs: ks.nyr.ARTFs
-):
-    """
-    legacy manual test function.
-    Test the route duration calculation using ONYR and LERA methods.
-    You need to ensure the route selected is valid and feasible for the instance.
-    """
-
-    # Create some random routes for testing.
-    random_routes: list[list[int]] = []
-    # for i in range(5):
-    #     random_route_length = 10
-    #     #random_route_length = random.randint(1, tdvrptw_instance.nb_clients())
-    #     random_clients = random.sample(range(1, tdvrptw_instance.nb_clients() + 1), random_route_length)
-    #     random_route = [tdvrptw_instance.o] + random_clients + [tdvrptw_instance.d]
-    #     random_routes.append(random_route)
-    random_routes.append([
-        0,
-        37,
-        14,
-        44,
-        86,
-        6,
-        101
-    ])
-    
-    for route in random_routes:
-        print(green(f"Random route: {route}"))
-        # Evaluate the route.
-        delta_route: ks.nyr.NDCPWLF = ks.nyr.perform_tree_chain_composition(
-            tdvrptw_instance, 
-            artfs, 
-            route
-        )
-        print(green(f"RRTF (tree-chain): {delta_route}"))
-        print(green(f"RRTF (tree-chain) duration: {ks.nyr.compute_optimal_departure_time_and_duration(delta_route)}"))
-        delta_route_sequential: ks.nyr.NDCPWLF = ks.nyr.perform_sequential_chain_composition(
-            artfs, 
-            route
-        )
-        print(green(f"RRTF (sequential): {delta_route_sequential}"))
-        print(green(f"RRTF (sequential) duration: {ks.nyr.compute_optimal_departure_time_and_duration(delta_route_sequential)}"))
-
-        route_duration_onyr = ks.nyr.compute_RouteDuration_from_delta_path(
-            delta_route,
-            route
-        )
-        print(green(f"Route duration (ONYR): {route_duration_onyr}"))
-        route_duration_lera = ks.nyr.compute_RouteDuration_lera(
-            tdvrptw_instance,
-            route
-        )
-        print(green(f"Route duration (LERA): {route_duration_lera}"))
-        print("is equal:", route_duration_onyr == route_duration_lera)
 
 
 
@@ -333,5 +202,9 @@ def run_experiment_on_instance(
 
 if __name__ == "__main__":
     # main()
-    from benchmarks.bks import check_all_lera_bks
-    check_all_lera_bks()
+
+    from benchmarks.bks import check_all_bks_duration
+    check_all_bks_duration()
+
+    # from benchmarks.bks import check_all_lera_bks
+    # check_all_lera_bks()

@@ -3,6 +3,8 @@ import os, datetime, random
 from utils.terminal import blue
 from utils.utils import get_a_parent_dir, read_json_from_file
 
+OPTIMIZATION_OBJECTIVE = "Duration"  # The optimization objective for the TDVRPTW problem.
+
 # Directories.
 RUNNER_DIR = get_a_parent_dir(os.path.dirname(__file__), 2) # Where Python runner files are located.
 PROJECT_ROOT_DIR = get_a_parent_dir(RUNNER_DIR, 1) # Root of the repository.
