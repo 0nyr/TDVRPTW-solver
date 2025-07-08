@@ -131,30 +131,30 @@ def run_experiment_on_instance(
             "args": (),
             "kwargs": {},
         },
-        # {
-        #     "name": "Regret-Insertion",
-        #     "func": lambda: ks.regret_insertion_duration(tdvrptw_instance, artfs),
-        #     "args": (),
-        #     "kwargs": {},
-        # },
-        # {
-        #     "name": "Regret-1-Insert",
-        #     "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 1),
-        #     "args": (),
-        #     "kwargs": {},
-        # },
-        # {
-        #     "name": "Regret-2-Insert",
-        #     "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 2),
-        #     "args": (),
-        #     "kwargs": {},
-        # },
-        # {
-        #     "name": "Regret-3-Insert",
-        #     "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 3),
-        #     "args": (),
-        #     "kwargs": {},
-        # },
+        {
+            "name": "Regret-Insertion",
+            "func": lambda: ks.regret_insertion_duration(tdvrptw_instance, artfs),
+            "args": (),
+            "kwargs": {},
+        },
+        {
+            "name": "Regret-1-Insert",
+            "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 1),
+            "args": (),
+            "kwargs": {},
+        },
+        {
+            "name": "Regret-2-Insert",
+            "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 2),
+            "args": (),
+            "kwargs": {},
+        },
+        {
+            "name": "Regret-3-Insert",
+            "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 3),
+            "args": (),
+            "kwargs": {},
+        },
     ]
 
     heuristic_results = []

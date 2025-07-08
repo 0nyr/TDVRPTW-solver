@@ -1,8 +1,6 @@
 #include "heuristics/regret_insertion.h"
 #include "heuristics/greedy_duration.h"
 
-#include <vector>
-
 using namespace std;
 using namespace goc;
 using namespace nyr;
@@ -86,6 +84,18 @@ void RegretInsertionData::visit_max_regret_client(
     }
 }
 
+void RegretInsertionData::print_routes(std::ostream& os) {
+    for (size_t i = 0; i < routes.size(); ++i) {
+        os << "Route " << i << ": ";
+        for (const auto& v : routes[i]) {
+            os << v << " ";
+        }
+        os << "(departure: " << route_departure_times[i]
+           << ", duration: " << route_durations[i] << ")";
+        os << std::endl;
+    }
+}
+
 std::tuple<TimeUnit, TimeUnit, TimeUnit, size_t>
 compute_best_insertion_position(
     const nyr::ARTFs& deltas,
@@ -135,6 +145,7 @@ compute_best_insertion_position(
     );
 }
 
+
 nyr::VRPSolutionDuration random_insertion_duration(
     const nyr::VRPInstance& vrp,
     const nyr::ARTFs& deltas
@@ -152,6 +163,7 @@ nyr::VRPSolutionDuration random_insertion_duration(
             << "/" << n << "]"
             << " nb routes: " << data.routes.size()
             << "\n";
+        // data.print_routes(std::clog);
         #endif
         
         // Select a random unvisited client.
@@ -190,9 +202,18 @@ nyr::VRPSolutionDuration random_insertion_duration(
                 associated_duration, 
                 best_insertion_pos
             ] = compute_best_insertion_position(
-                deltas, data.routes[0], 
-                data.route_durations[0], v
+                deltas, 
+                route, 
+                route_duration,
+                v
             );
+
+            #ifndef NDEBUG
+            std::clog
+                << "    r°" << route_index
+                << " min insert cost: " << min_insertion_cost
+                << std::endl;
+            #endif
 
             if (min_insertion_cost < best_insertion_cost) {
                 best_insertion_cost = min_insertion_cost;
@@ -203,16 +224,11 @@ nyr::VRPSolutionDuration random_insertion_duration(
             }
         }
 
-        // TODO: might be necessary
-        // // If the insertion cost is INFTY, we cannot insert this client.
-        // if (goc::is_plus_infty(best_insertion_cost)) {
-        //     continue; // Skip this client.
-        // }
-
         #ifndef NDEBUG
         std::clog 
             << "Visiting client: " << v 
             << " with min insertion cost: " << best_insertion_cost
+            << " in route n°" << best_route_index
             << ", at pos: " << best_insertion_index
             << ", dep time: " << best_departure_time
             << ", duration: " << best_duration

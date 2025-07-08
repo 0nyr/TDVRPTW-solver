@@ -85,9 +85,11 @@ VRPSolutionMakespan greedy_makespan_heuristic_1(
     const size_t n = vrp.D.NbVertices();
     const auto& V = vrp.D.Vertices();
 
+    #ifndef NDEBUG
     clog << "Horizon: [0, " << vrp.T << "]" << endl;
     clog << "Depot (start & end): " << vrp.o << " - " << vrp.d << endl;
     clog << "Max capacity Q: " << vrp.Q << endl;
+    #endif
 
     // Step 2: Build routes one by one.
     while (nb_bits_set(visited_vertices) + 2 < n)
@@ -128,7 +130,9 @@ VRPSolutionMakespan greedy_makespan_heuristic_1(
 
             if (neighbors.empty()) // If no more vertices to visit, break.
             {
+                #ifndef NDEBUG
                 clog << "*" << endl;
+                #endif
                 break;
             }
 
@@ -180,9 +184,12 @@ VRPSolutionMakespan greedy_makespan_heuristic_1(
             }
             route_capacity += vrp.q[next_vertex];
 
+            #ifndef NDEBUG
             clog << " -> " << next_vertex << " (arrival: "
                  << next_arrival_time
                  << ", route_cap: " << route_capacity << ")"; 
+            #endif
+
             route.path.push_back(next_vertex);
             route.value = next_arrival_time;
             // Remove the vertex from the graph.
@@ -197,13 +204,19 @@ VRPSolutionMakespan greedy_makespan_heuristic_1(
 
         routes.push_back(route);
         total_makespan += route.value;
+
+        #ifndef NDEBUG
         clog << "GMH1: Route: " << route
             << ", route capacity: " << route_capacity 
             << ", nb visited: " << route.path.size()
             << endl;
+        #endif
     }
 
+    #ifndef NDEBUG
     clog << "Found GMH1 Solution: nb routes: " << routes.size() << ", Makespan: " << total_makespan << " - routes: " << routes << endl;
+    #endif
+    
     return VRPSolutionMakespan(total_makespan, routes);
 }
 

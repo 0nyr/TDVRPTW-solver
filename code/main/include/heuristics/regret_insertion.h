@@ -3,6 +3,7 @@
 #include "heuristics/greedy_duration.h"
 
 #include <vector>
+#include <ostream>
 
 #include <goc/goc.h>
 #include <nyr/nyr.h>
@@ -59,6 +60,8 @@ public:
         nyr::TimeUnit max_regret_modified_route_departure_time,
         nyr::TimeUnit max_regret_modified_route_duration
     );
+
+    void print_routes(std::ostream& os);
 };
 
 /**
