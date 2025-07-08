@@ -646,6 +646,21 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     );
 
     m.def(
+        "multi_random_insertion_duration",
+        &solver::multi_random_insertion_duration,
+        py::arg("instance"),
+        py::arg("deltas"),
+        py::arg("num_runs"),
+        R"pbdoc(
+        Run the random insertion algorithm multiple times and return the best solution found.
+        - `instance`: VRPInstance
+        - `deltas`: ARTFs matrix (Matrix<NDCPWLF>)
+        - `num_runs`: number of independent random runs
+        Returns a nyr::VRPSolutionDuration object containing the best solution found.
+        )pbdoc"
+    );
+
+    m.def(
         "regret_insertion_duration",
         &solver::regret_insertion_duration,
         py::arg("instance"),

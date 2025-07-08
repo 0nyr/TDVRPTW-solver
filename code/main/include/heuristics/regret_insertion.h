@@ -77,6 +77,26 @@ nyr::VRPSolutionDuration random_insertion_duration(
     const nyr::ARTFs& deltas
 );
 
+/// Performs Random-Insertion multiple times and return best 
+/// found solution
+inline nyr::VRPSolutionDuration multi_random_insertion_duration(
+    const nyr::VRPInstance& vrp,
+    const nyr::ARTFs& deltas,
+    size_t num_runs
+) {
+    nyr::VRPSolutionDuration best_solution;
+    best_solution.value = goc::INFTY;
+
+    for (size_t i = 0; i < num_runs; ++i) {
+        auto solution = random_insertion_duration(vrp, deltas);
+        if (solution.value < best_solution.value) {
+            best_solution = solution;
+        }
+    }
+
+    return best_solution;
+}
+
 /**
  * Variation of the Regret Insertion Heuristic
  * (See `regret_insertion_duration`)

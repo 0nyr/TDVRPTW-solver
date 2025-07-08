@@ -132,6 +132,12 @@ def run_experiment_on_instance(
             "kwargs": {},
         },
         {
+            "name": "X100-Rand-Insert",
+            "func": lambda: ks.multi_random_insertion_duration(tdvrptw_instance, artfs, 100),
+            "args": (),
+            "kwargs": {},
+        },
+        {
             "name": "Regret-Insertion",
             "func": lambda: ks.regret_insertion_duration(tdvrptw_instance, artfs),
             "args": (),
