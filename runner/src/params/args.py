@@ -23,6 +23,7 @@ def parse_program_args():
     arg_parser.add_argument("--clean-build", help="Clean the obj/ directory before compiling.", action="store_true")
     arg_parser.add_argument("--dry-run", help="Do not run the experiments, only compile the code and load instances and experiments.", action="store_true")
     arg_parser.add_argument("--just-compile", "-c", help="Only compile the code and exit.", action="store_true")
+    arg_parser.add_argument("--save-bks", "-sbks", help="Save new found BKS.", action="store_true")
     arg_parser.add_argument(
         "--build-type","-b",
         choices=("debug","release","fastdebug","all"),

@@ -126,29 +126,35 @@ def run_experiment_on_instance(
             "kwargs": {},
         },
         {
-            "name": "Regret-Insertion",
-            "func": lambda: ks.regret_insertion_duration(tdvrptw_instance, artfs),
+            "name": "Random-Insertion",
+            "func": lambda: ks.random_insertion_duration(tdvrptw_instance, artfs),
             "args": (),
             "kwargs": {},
         },
-        {
-            "name": "Regret-1-Insert",
-            "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 1),
-            "args": (),
-            "kwargs": {},
-        },
-        {
-            "name": "Regret-2-Insert",
-            "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 2),
-            "args": (),
-            "kwargs": {},
-        },
-        {
-            "name": "Regret-3-Insert",
-            "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 3),
-            "args": (),
-            "kwargs": {},
-        },
+        # {
+        #     "name": "Regret-Insertion",
+        #     "func": lambda: ks.regret_insertion_duration(tdvrptw_instance, artfs),
+        #     "args": (),
+        #     "kwargs": {},
+        # },
+        # {
+        #     "name": "Regret-1-Insert",
+        #     "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 1),
+        #     "args": (),
+        #     "kwargs": {},
+        # },
+        # {
+        #     "name": "Regret-2-Insert",
+        #     "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 2),
+        #     "args": (),
+        #     "kwargs": {},
+        # },
+        # {
+        #     "name": "Regret-3-Insert",
+        #     "func": lambda: ks.regret_k_insertion_duration(tdvrptw_instance, artfs, 3),
+        #     "args": (),
+        #     "kwargs": {},
+        # },
     ]
 
     heuristic_results = []
@@ -178,30 +184,31 @@ def run_experiment_on_instance(
     #         print(green(f"Percentage difference between {heuristic_results[i]['name']} and {heuristic_results[j]['name']}: {diff}%"))
 
     # Save new solution is it is better than the current BKS
-    if best_result["duration"] < bks_stats.bks_recomp_dur_onyr:
-        print(green(f"New best solution found: {best_result['name']} with duration {best_result['duration']}"))
-        
-        solution_routes_as_dict = best_result["solution"].to_json()
-        del solution_routes_as_dict["objective"]
-        new_solution = {
-            "value": best_result["duration"],
-            "solution": solution_routes_as_dict,
-            "status": str(SolutionStatus.HEURISTIC),
-            "metadata": {
-                "authors": "0nyr (Florian Rascoussier)",
-                "time": best_result["time_taken"],
-                "program": PROGRAM_SHORT_NAME,
-                "origin": best_result["name"],
-                "commit_hash": PROJECT_COMMIT_HASH,
-                "instexp_start_time": format_date_for_console(RUNNER_START_TIME),
+    if args["save_bks"]:
+        if best_result["duration"] < bks_stats.bks_recomp_dur_onyr:
+            print(green(f"New best solution found: {best_result['name']} with duration {best_result['duration']}"))
+            
+            solution_routes_as_dict = best_result["solution"].to_json()
+            del solution_routes_as_dict["objective"]
+            new_solution = {
+                "value": best_result["duration"],
+                "solution": solution_routes_as_dict,
+                "status": str(SolutionStatus.HEURISTIC),
+                "metadata": {
+                    "authors": "0nyr (Florian Rascoussier)",
+                    "time": best_result["time_taken"],
+                    "program": PROGRAM_SHORT_NAME,
+                    "origin": best_result["name"],
+                    "commit_hash": PROJECT_COMMIT_HASH,
+                    "instexp_start_time": format_date_for_console(RUNNER_START_TIME),
+                }
             }
-        }
-        save_new_bks_in_storage(
-            instance["instance_dirpath"],
-            instance["instance_filename"],
-            new_solution,
-            throw_on_failed_check=False
-        )
+            save_new_bks_in_storage(
+                instance["instance_dirpath"],
+                instance["instance_filename"],
+                new_solution,
+                throw_on_failed_check=False
+            )
 
     # Prepare stats for DataFrame
     stats = {

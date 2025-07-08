@@ -631,6 +631,21 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     );
 
     m.def(
+        "random_insertion_duration",
+        &solver::random_insertion_duration,
+        py::arg("instance"),
+        py::arg("deltas"),
+        R"pbdoc(
+        Random insertion algorithm for constructing a solution.
+        Insert a randomly selected client at its minimal insertion position
+        of its best route.
+        - `instance`: VRPInstance
+        - `deltas`: ARTFs matrix (Matrix<NDCPWLF>)
+        Returns a nyr::VRPSolutionDuration object containing the constructed routes forming the solution.
+        )pbdoc"
+    );
+
+    m.def(
         "regret_insertion_duration",
         &solver::regret_insertion_duration,
         py::arg("instance"),

@@ -62,6 +62,19 @@ public:
 };
 
 /**
+ * Random Insertion Heuristic
+ * 
+ * A simple insertion heuristic that randomly selects the next
+ * client to insert into the routes. The insertion is done
+ * at the best position in the route with the minimum insertion
+ * cost.
+ */
+nyr::VRPSolutionDuration random_insertion_duration(
+    const nyr::VRPInstance& vrp,
+    const nyr::ARTFs& deltas
+);
+
+/**
  * Variation of the Regret Insertion Heuristic
  * (See `regret_insertion_duration`)
  * 

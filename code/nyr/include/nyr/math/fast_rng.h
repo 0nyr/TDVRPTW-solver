@@ -4,8 +4,8 @@
 #include <thread>
 #include <boost/functional/hash.hpp>
 
-namespace nyr
-{
+namespace nyr {
+
 // Global seed for reproducibility
 inline constexpr uint32_t GLOBAL_SEED = 1;
 
@@ -37,4 +37,14 @@ inline uint32_t rand_int(uint32_t a, uint32_t b) {
     return dist(thread_engine());
 }
 
-} // namespace
+// Reproducible thread-local RNG returning a random index 
+// for a container of the provided size
+// Returns an index in integer range [0, size[
+inline std::size_t rand_index(std::size_t size) {
+    if (size == 0) return 0;
+    std::uniform_int_distribution<std::size_t> dist(0, size - 1);
+    return dist(thread_engine());
+}
+
+
+} // namespace nyr

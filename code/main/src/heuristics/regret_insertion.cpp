@@ -86,6 +86,192 @@ void RegretInsertionData::visit_max_regret_client(
     }
 }
 
+std::tuple<TimeUnit, TimeUnit, TimeUnit, size_t>
+compute_best_insertion_position(
+    const nyr::ARTFs& deltas,
+    std::list<goc::Vertex>& route,
+    const TimeUnit route_duration,
+    goc::Vertex v
+) {
+    // Compute the best insertion position for this client in the route.
+    TimeUnit min_insertion_cost = INFTY;
+    TimeUnit associated_departure_time = INFTY;
+    TimeUnit associated_duration = INFTY;
+    size_t best_insertion_pos = -1;
+
+    // WARN: Cannot insert before the first element (start depot).
+    // WARN: Cannot insert after the last element (end depot).
+    for (size_t insertion_index = 1; insertion_index < route.size(); ++insertion_index) {
+        // Insert the client at the current position.
+        route.insert(std::next(route.begin(), insertion_index), v);
+        
+        // Compute the duration of the new route where the client is inserted.
+        NDCPWLF delta_new_route = perform_tree_chain_composition(
+            deltas, route // modified with v inserted
+        );
+        auto [
+            new_departure_time, new_duration
+        ] = compute_optimal_departure_time_and_duration(
+            delta_new_route
+        );
+
+        TimeUnit insertion_cost = new_duration - route_duration;
+        if (insertion_cost < min_insertion_cost) {
+            min_insertion_cost = insertion_cost;
+            associated_departure_time = new_departure_time;
+            associated_duration = new_duration;
+            best_insertion_pos = insertion_index;
+        }
+
+        // Restablish the original route.
+        route.erase(std::next(route.begin(), insertion_index));
+    }
+
+    return std::make_tuple(
+        min_insertion_cost, 
+        associated_departure_time, 
+        associated_duration, 
+        best_insertion_pos
+    );
+}
+
+nyr::VRPSolutionDuration random_insertion_duration(
+    const nyr::VRPInstance& vrp,
+    const nyr::ARTFs& deltas
+) {
+    // Random insertion heuristic.
+    VRPSolutionDuration vrp_solution;
+    RegretInsertionData data(vrp, deltas);
+    const size_t n = vrp.nb_clients();
+
+    // Insert the client with max regret until all clients are visited.
+    while (data.visits_tracker.nb_visited_clients < n)
+    {
+        #ifndef NDEBUG
+        std::clog << "  [iter: " << data.visits_tracker.nb_visited_clients
+            << "/" << n << "]"
+            << " nb routes: " << data.routes.size()
+            << "\n";
+        #endif
+        
+        // Select a random unvisited client.
+        size_t random_index = rand_index(data.visits_tracker.candidates.size());
+        goc::Vertex v = data.visits_tracker.candidates[random_index];
+
+        TimeUnit best_insertion_cost = INFTY;
+        size_t best_insertion_index = -1;
+        size_t best_route_index = -1;
+        TimeUnit best_duration = INFTY;
+        TimeUnit best_departure_time = INFTY;
+
+        for (size_t route_index = 0; route_index < data.routes.size(); ++route_index) {
+            // We use routes as list of vertices to allow fast insertion and removal.
+            auto& route = data.routes[route_index];
+            TimeUnit route_duration = data.route_durations[route_index];
+            if (route_duration >= INFTY) {
+                #ifndef NDEBUG
+                // Check that it is an empty route
+                if (route.size() != 2 || route.front() != vrp.o || route.back() != vrp.d) {
+                    std::clog << "Error: Route duration is INFTY but the route is not empty." << std::endl;
+                    throw std::logic_error("Route duration cannot be INFTY for non-empty routes.");
+                }
+                #endif
+                // For empty route, the insertion cost is the duration of the route,
+                // so we fix route_duration to 0.
+                // WARN: This is a special case for empty routes.
+                // TODO: Modify the insertion of empty routes to directly have a duration of 0
+                route_duration = 0;
+            }
+
+            // Compute the best insertion position for this client in the route.
+            auto [
+                min_insertion_cost, 
+                associated_departure_time, 
+                associated_duration, 
+                best_insertion_pos
+            ] = compute_best_insertion_position(
+                deltas, data.routes[0], 
+                data.route_durations[0], v
+            );
+
+            if (min_insertion_cost < best_insertion_cost) {
+                best_insertion_cost = min_insertion_cost;
+                best_insertion_index = best_insertion_pos;
+                best_route_index = route_index;
+                best_duration = associated_duration;
+                best_departure_time = associated_departure_time;
+            }
+        }
+
+        // TODO: might be necessary
+        // // If the insertion cost is INFTY, we cannot insert this client.
+        // if (goc::is_plus_infty(best_insertion_cost)) {
+        //     continue; // Skip this client.
+        // }
+
+        #ifndef NDEBUG
+        std::clog 
+            << "Visiting client: " << v 
+            << " with min insertion cost: " << best_insertion_cost
+            << ", at pos: " << best_insertion_index
+            << ", dep time: " << best_departure_time
+            << ", duration: " << best_duration
+            << "\n";
+        #endif
+
+        // Visit the randomly selected client at its best insertion location
+        data.visit_max_regret_client(
+            vrp, v, random_index,
+            best_route_index,
+            best_insertion_index,
+            best_departure_time,
+            best_duration
+        );
+    }
+
+    // Build final solution from the routes.
+    // TODO: Make standalone function of the following:
+    TimeUnit duration_sum = 0;
+    for (size_t route_index = 0; route_index < data.routes.size(); ++route_index) {
+        const auto& route = data.routes[route_index];
+        if (route.size() <= 2) {
+            continue; // Skip empty routes (no visited clients).
+        }
+        // Convert the route to a GraphPath.
+        GraphPath solution_route(route.begin(), route.end());
+        TimeUnit route_duration = data.route_durations[route_index];
+        TimeUnit route_departure_time = data.route_departure_times[route_index];
+        
+        #ifndef NDEBUG
+        // NOTE: his is a debug check to ensure correct duration of route.
+        auto [recomputed_departure_time, recomputed_duration] = 
+            compute_optimal_departure_time_and_duration_from_path(
+                deltas, solution_route
+            );
+        if (recomputed_departure_time != route_departure_time ||
+            recomputed_duration != route_duration) {
+            std::clog << "Error: Recomputed departure time or duration does not match the stored values.\n"
+                      << " - Expected: (" << route_departure_time << ", " << route_duration << ")\n"
+                      << " - Got: (" << recomputed_departure_time << ", " << recomputed_duration << ")\n";
+            throw std::logic_error("Recomputed departure time or duration does not match the stored values.");
+        }
+        #endif
+
+        vrp_solution.routes.push_back(
+            // compute_RouteDuration(
+            //     vrp, deltas, solution_route
+            // )
+            RouteDuration(
+                solution_route, route_departure_time, route_duration
+            )
+        );
+        duration_sum += vrp_solution.routes.back().value;
+    }
+    vrp_solution.value = duration_sum;
+
+    return vrp_solution;
+}
+
 nyr::VRPSolutionDuration regret_k_insertion_duration(
     const nyr::VRPInstance& vrp,
     const nyr::ARTFs& deltas,

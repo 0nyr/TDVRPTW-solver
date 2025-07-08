@@ -175,7 +175,7 @@ nyr::VRPSolutionDuration greedy_nearest_neighbor_duration(
             throw_error = true;
             // Try recomputing the delta_route from scratch
             NDCPWLF recomputed_delta_route = 
-                perform_tree_chain_composition(vrp, deltas, route);
+                perform_tree_chain_composition(deltas, route);
             auto [recomputed_departure_time, recomputed_duration] = 
                 compute_optimal_departure_time_and_duration(recomputed_delta_route);
             std::clog << "Recomputed delta_route gives departure_time: "
