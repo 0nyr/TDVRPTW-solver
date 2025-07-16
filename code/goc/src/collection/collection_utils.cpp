@@ -12,8 +12,8 @@ namespace goc
 {
 vector<int> range(int left, int right)
 {
-	vector<int> v;
-	for (int i = left; i < right; ++i) v.push_back(i);
-	return v;
+    vector<int> v;
+    for (int i = left; i < right; ++i) v.push_back(i);
+    return v;
 }
 } // namespace goc
