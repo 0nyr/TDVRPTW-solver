@@ -55,8 +55,8 @@ double latest_arrival(const json& instance, Vertex i, Vertex k)
 double earliest_departure(const json& instance, Vertex i, Vertex k)
 {
 	vector<Interval> tw = instance["time_windows"];
-	if (departing_time(instance, {i, k}, tw[k].left) != INFTY)
-		return departing_time(instance, {i, k}, tw[k].left) != INFTY;
+	double dep = departing_time(instance, {i, k}, tw[k].left);
+	if (!is_plus_infty(dep)) return dep;
 	return tw[i].left;
 }
 

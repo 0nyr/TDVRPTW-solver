@@ -101,7 +101,7 @@ compute_best_insertion_position(
     const nyr::ARTFs& deltas,
     std::list<goc::Vertex>& route,
     const TimeUnit route_duration,
-    goc::Vertex v
+    goc::Vertex v // The client to insert
 ) {
     // Compute the best insertion position for this client in the route.
     TimeUnit min_insertion_cost = INFTY;

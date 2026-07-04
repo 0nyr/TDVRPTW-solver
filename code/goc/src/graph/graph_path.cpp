@@ -12,23 +12,23 @@ using namespace std;
 
 namespace goc {
 
-bool has_cycle(GraphPath p, size_t max_size)
+bool has_cycle(GraphPath p, int max_size)
 {
     unordered_set<int> V;
-    max_size = min(max_size, p.size());
+    size_t window_size = max_size < 0 ? 0 : min(static_cast<size_t>(max_size), p.size());
     
     // Add to V all vertices in (p[0], ..., p[max_size-1]).
     // If any vertex is repeated, then it has a cycle.
-    for (size_t i = 0; i < max_size; ++i)
+    for (size_t i = 0; i < window_size; ++i)
     {
         if (V.find(p[i]) != V.end()) return true;
         V.insert(p[i]);
     }
     
     // Now move the window (p[i-max_size+1], ..., p[i]) until the end i==|p|-1.
-    for (size_t i = max_size; i < p.size(); ++i)
+    for (size_t i = window_size; i < p.size(); ++i)
     {
-        V.erase(p[i-max_size]);
+        V.erase(p[i-window_size]);
         if (V.find(p[i]) != V.end()) return true;
         V.insert(p[i]);
     }

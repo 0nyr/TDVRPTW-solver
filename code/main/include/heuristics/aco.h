@@ -12,8 +12,7 @@ namespace solver
 enum class ACOStatus
 {
     Finished, // The algorithm has finished.
-    Converged, // The algorithm has converged.
-    NoImprovement, // The algorithm has stopped due to no improvement.
+    NoImprovement, // The algorithm has stopped due to no improvement (convergence)
     TimeLimitReached // The algorithm has stopped due to global time limit.
 };
 
@@ -117,7 +116,7 @@ ACOStatus aco(
     std::vector<Solution> solutions(
         options.nb_ants
     );
-    double sum_pheromones_last_iter = 0.0; // Sum to compute the the variation of pheromones since last iteration
+    double sum_pheromones_last_iter = 0.0; // Sum to compute the variation of pheromones since last iteration
     size_t no_improvement_iter = 0;
 
     for(size_t iter = 0; iter < options.max_nb_iterations; ++iter)

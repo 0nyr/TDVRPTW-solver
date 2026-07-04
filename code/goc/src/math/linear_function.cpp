@@ -56,7 +56,13 @@ bool LinearFunction::Intersects(const LinearFunction& f) const
 
 double LinearFunction::Intersection(const LinearFunction& l) const
 {
-    return (l.intercept - intercept) / (slope - l.slope);
+    double denominator = slope - l.slope;
+    if (epsilon_equal(denominator, 0.0))
+    {
+        if (epsilon_equal(intercept, l.intercept)) return domain.left;
+        return epsilon_smaller(intercept, l.intercept) ? INFTY : -INFTY;
+    }
+    return (l.intercept - intercept) / denominator;
 }
 
 LinearFunction LinearFunction::Inverse() const

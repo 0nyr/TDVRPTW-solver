@@ -64,42 +64,8 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
     goc.attr("EPS_SLOPE_ZERO") = goc::EPS_SLOPE_ZERO; 
     goc.attr("INFTY") = goc::INFTY;
 
-    // ==================== GraphPath CLASS ==================== 
-    // Bind GraphPath (alias for std::vector<Vertex> i.e. vector<int>)
-    py::class_<goc::GraphPath>(goc, "GraphPath")
-        .def(py::init<>(), "Create an empty path")
-        .def("__len__", [](const goc::GraphPath &p){ return p.size(); })
-        .def("__getitem__",
-            [](const goc::GraphPath &p, size_t i) {
-                if (i >= p.size()) throw py::index_error();
-                return p[i];
-            })
-        .def("append", [](goc::GraphPath &p, int v){ p.push_back(v); },
-            py::arg("vertex"), "Append a vertex to the end of the path")
-        .def(
-            "__eq__",
-            [](const goc::GraphPath &a, const goc::GraphPath &b) {
-                return a == b;  // calls your operator==
-            },
-            py::arg("other"),
-            "True if two paths have the same sequence of vertices")
-        .def(
-            "__ne__",
-            [](const goc::GraphPath &a, const goc::GraphPath &b) {
-                return a != b;
-            },
-            py::arg("other"),
-            "True if two paths have different sequences of vertices")
-        .def("__repr__", [](const goc::GraphPath &p){
-            std::ostringstream os;
-            os << "[";
-            for (size_t i = 0; i < p.size(); ++i) {
-                if (i) os << ", ";
-                os << p[i];
-            }
-            os << "]";
-            return os.str();
-        });
+    // GraphPath is a typedef of std::vector<Vertex>; pybind11/stl.h already
+    // converts ordinary Python sequences for every GraphPath argument.
 
     goc.def("has_cycle",
         &goc::has_cycle,
@@ -290,7 +256,13 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
             py::arg("x"))
         .def("check_invariant", &nyr::NDCPWLF::check_invariant, "Check function invariant")
         .def("check_normalization", &nyr::NDCPWLF::check_normalization, "Check if function is normalized")
-        .def("compose", &nyr::NDCPWLF::compose_alternative, "Compose with other NDCPWLF",
+        // NOTE (2026-07-04): "compose" was bound TWICE (compose_alternative first,
+        // then compose); pybind11 chains same-name defs as overloads and the first
+        // registered always matched, so Python's .compose silently ran
+        // compose_alternative instead of the visser+nor engine used by the C++
+        // pipeline. Each engine now has its own distinct name.
+        .def("compose_alternative", &nyr::NDCPWLF::compose_alternative,
+            "Compose with the alternative (backward/forward sweep) method",
             py::arg("g"))
         .def("compose_visser", &nyr::NDCPWLF::compose_visser, "Compose with Visser's method without normalization",
             py::arg("g"))
@@ -518,7 +490,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         Perform the (Visser et al 2020) tree-chain composition:
         - `instance`   : a loaded VRPInstance
         - `deltas`     : the ARTFs matrix (Matrix<NDCPWLF>)
-        - `path`       : a goc.GraphPath of vertices
+        - `path`       : a Python sequence of vertices
         Returns an NDCPWLF = composition of the arc-ready-time functions along the path.
         )pbdoc"
     );
@@ -532,7 +504,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         Perform the sequential chain composition:
         - `instance`   : a loaded VRPInstance
         - `deltas`     : the ARTFs matrix (Matrix<NDCPWLF>)
-        - `path`       : a goc.GraphPath of vertices
+        - `path`       : a Python sequence of vertices
         Returns an NDCPWLF equals to the composition of the arc-ready-time functions along the path.
         This is a less optimal version of the tree-chain composition.
         )pbdoc"
@@ -559,7 +531,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         R"pbdoc(
         Return a RouteDuration object that contains its own copy of the path, t0, and duration.
         - `delta_path`: NDCPWLF function for the path
-        - `path`: goc.GraphPath of vertices
+        - `path`: Python sequence of vertices
         Returns a RouteDuration object.
         )pbdoc"
     );
@@ -573,7 +545,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         Returns a RouteDuration provided its path.
         - `instance`: VRPInstance
         - `deltas`: ARTFs matrix (Matrix<NDCPWLF>)
-        - `path`: goc.GraphPath of vertices
+        - `path`: Python sequence of vertices
         Returns a RouteDuration object.
         )pbdoc"
     );
@@ -586,7 +558,7 @@ PYBIND11_MODULE(kairos_tdvrptw, m) {
         R"pbdoc(
         Returns a RouteDuration provided its path using the Lera-Romero procedure (unoptimal).
         - `instance`: VRPInstance
-        - `path`: goc.GraphPath of vertices
+        - `path`: Python sequence of vertices
         Returns a RouteDuration object.
         )pbdoc"
     );
