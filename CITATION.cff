@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: "If you use this research fork, please cite this software and the original article listed in references."
+type: software
+title: "TDVRPTW-solver: PhD research extensions of the Lera-Romero et al. solver"
+authors:
+  - family-names: Lera-Romero
+    given-names: Gonzalo
+  - family-names: Miranda-Bront
+    given-names: Juan José
+  - family-names: Soulignac
+    given-names: Francisco
+  - family-names: Rascoussier
+    given-names: Florian
+    orcid: "https://orcid.org/0009-0005-3253-9814"
+repository-code: "https://github.com/0nyr/TDVRPTW-solver"
+url: "https://github.com/0nyr/TDVRPTW-solver"
+license: MIT
+abstract: "Research project developed by Florian Rascoussier during his PhD, extending the time-dependent vehicle routing solver of Lera-Romero, Miranda-Bront and Soulignac. The implementation and numerical validation work in this fork served as direct groundwork for KAYROS (https://github.com/0nyr/kayros)."
+keywords:
+  - time-dependent vehicle routing
+  - time windows
+  - branch-price-and-cut
+  - piecewise-linear functions
+  - research software
+references:
+  - type: article
+    title: "Linear edge costs and labeling algorithms: The case of the time-dependent vehicle routing problem with time windows"
+    authors:
+      - family-names: Lera-Romero
+        given-names: Gonzalo
+      - family-names: Miranda-Bront
+        given-names: Juan J.
+      - family-names: Soulignac
+        given-names: Francisco J.
+    year: 2020
+    journal: Networks
+    volume: 76
+    issue: 1
+    start: 24
+    end: 53
+    doi: "10.1002/net.21937"
+  - type: software
+    title: KAYROS
+    authors:
+      - family-names: Rascoussier
+        given-names: Florian
+    repository-code: "https://github.com/0nyr/kayros"
+    url: "https://github.com/0nyr/kayros"
